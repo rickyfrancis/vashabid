@@ -1,0 +1,2 @@
+# Keep migration files in version control once schema stabilizes.
+# During local development, Payload uses Drizzle push (DATABASE_PUSH=true) instead.
