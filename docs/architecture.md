@@ -19,7 +19,7 @@ vashabid/
 │   │   ├── words/           # Word browsing, word detail
 │   │   ├── search/          # Search UI and query logic
 │   │   ├── translator/      # Translator UI and service wrapper
-│   │   └── i18n/            # Locale config, message files (future)
+│   │   └── i18n/            # Locale config, message files, support preferences
 │   ├── lib/
 │   │   └── payload/         # Payload Local API helpers
 │   └── styles/
@@ -95,22 +95,44 @@ src/features/words/
 
 Shared components that multiple features need go in `src/components/`.
 
+## Layered feature architecture
+
+Features should use a small layered structure when behavior grows beyond a simple component:
+
+- **Payload collections** define persistence, admin forms, access rules, hooks, and draft/publish behavior.
+- **Access-policy helpers** centralize reusable role and ownership checks.
+- **Repository classes** perform Payload Local API reads and writes.
+- **Service classes** hold business workflows and call repositories or provider interfaces.
+- **DTO/view-model mappers** convert Payload documents into UI-safe data.
+- **Provider interfaces** isolate replaceable systems such as translation, AI, search upgrades, media suggestions, and FSRS scheduling.
+
+Use object-oriented classes where they make dependencies and workflows clearer, such as `WordRepository`, `WordService`, `SearchService`, `TranslatorService`, `LearningQueueService`, `ReviewSchedulerService`, and `AiDraftService`. Keep React components, Payload collection configs, Zod schemas, and simple utilities idiomatic TypeScript rather than forcing classes everywhere.
+
 ## Auth strategy
 
 Payload CMS handles all authentication via the `users` collection with `auth: true`.
 
 - **Admins and editors** use Payload's built-in admin auth (`/admin` login).
 - **Public users** browse without authentication.
-- **Learner accounts** will be added later by extending the `users` collection with a `role` field (`admin`, `editor`, `learner`) and building learner-facing login/signup.
+- **Learner accounts** will be added after the public MVP by extending the `users` collection with a `role` field (`admin`, `editor`, `learner`) and building learner-facing login/signup.
 - No NextAuth/Auth.js unless social login becomes a requirement.
 
 ## i18n approach
 
-The UI starts English-only. Preparation for localization:
+The public UI is bilingual from the first public UI phase.
 
-- `src/features/i18n/` holds locale configuration when `next-intl` is added.
-- Content collections use separate fields for German source content (`de`), English explanations (`en`), and Bangla explanations (`bn`).
-- Language keys: `de`, `en`, `bn`.
+- Public routes use locale prefixes: `/en` and `/bn`.
+- `/` redirects to the preferred locale when known, otherwise `/en`.
+- Payload admin remains outside locale routing at `/admin`.
+- `src/features/i18n/` holds locale configuration, message loading, support-language preferences, and helper types.
+- Content collections use separate fields for German source content (`de`), English learner explanations (`en`), and Bangla learner explanations (`bn`).
+- UI locale is separate from learning support mode:
+  - `uiLocale`: `en` or `bn`
+  - `supportMode`: `en`, `bn`, or `both`
+- German content remains visible as the learning target regardless of UI locale or support mode.
+- English learner content is required for publishing.
+- Bangla learner content can be entered from the first CMS phase, but public display is gated by Bangla review state.
+- If Bangla content is missing or unapproved, public pages show approved English fallback.
 
 ## Seed strategy
 
@@ -128,7 +150,8 @@ Seed data lives in `src/lib/payload/seed/`. Implementation details for Phase 1:
 |---|---|
 | Payload Local API over REST | Avoids HTTP round-trips in server components; faster, typed, same process |
 | Tailwind v4 `@theme` over `tailwind.config.ts` | Native CSS-first approach, no config file drift, works with PostCSS plugin |
-| No NextAuth/Auth.js yet | Payload handles admin auth; learner auth not needed until Phase 7 |
+| No NextAuth/Auth.js yet | Payload handles admin auth; learner auth is planned after the public MVP unless social login becomes necessary |
 | Root-level `src/` | Separates route files from app code; standard Next.js convention |
 | Feature colocation | Components live with their feature, not in a global `components/` dump |
-| Zod + react-hook-form (not installed yet) | Will be added in Phase 2 when form-heavy pages are built |
+| Route-based i18n | `/en` and `/bn` improve accessibility, shareability, and future SEO |
+| Zod + react-hook-form (not installed yet) | Add when validation-heavy public or learner forms are introduced |

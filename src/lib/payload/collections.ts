@@ -1,51 +1,50 @@
 import { getPayloadClient } from './getPayload'
+import type { CollectionSlug, Where } from 'payload'
 
 interface FindOptions {
   depth?: number
   limit?: number
   page?: number
   sort?: string
-  where?: Record<string, unknown>
+  where?: Where
 }
 
 export async function findPublished(
-  collection: string,
+  collection: CollectionSlug,
   options: FindOptions = {},
 ) {
   const payload = await getPayloadClient()
 
-  const baseWhere: Record<string, unknown> = options.where
-    ? { ...options.where }
-    : {}
+  const baseWhere: Where = options.where ? { ...options.where } : {}
 
   const result = await payload.find({
-    collection: collection as 'users',
+    collection,
     ...options,
     where: {
       ...baseWhere,
       _status: { equals: 'published' },
     },
-  } as any)
+  })
 
   return result
 }
 
 export async function findBySlug(
-  collection: string,
+  collection: CollectionSlug,
   slug: string,
   options: Omit<FindOptions, 'where'> = {},
 ) {
   const payload = await getPayloadClient()
 
   const result = await payload.find({
-    collection: collection as 'users',
+    collection,
     ...options,
     limit: 1,
     where: {
       slug: { equals: slug },
       _status: { equals: 'published' },
     },
-  } as any)
+  })
 
   return result.docs[0] ?? null
 }

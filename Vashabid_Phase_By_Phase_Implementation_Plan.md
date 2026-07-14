@@ -1,949 +1,1468 @@
-# Vashabid Phase by Phase Implementation Plan
+# Vashabid Phase-by-Phase Implementation Plan
 
 ## Purpose
 
-This plan is for an AI coding agent that will implement Vashabid in phases. The app is a German learning platform for English and Bangla speakers. The immediate goal is not to build every advanced learning feature. The first goal is to make the app usable: admins can manage content in Payload CMS, users can browse German words, view word pages, search, and use a basic translator experience in English.
+This plan breaks Vashabid into small, runnable, Agile-style implementation phases that an AI coding agent can complete one phase at a time. Each phase must leave the application in a deliverable state, with tests and documentation updated before moving on.
 
-The project already has:
+Vashabid is a German learning platform for English and Bangla speakers. German is always the target language. English and Bangla are learner support languages from the beginning of the product architecture.
 
-- Next.js scaffolded.
-- Payload CMS installed.
-- Database connected.
-- Basic project structure available.
+The project currently has:
 
-The implementation should avoid early overengineering, but the data model and folder structure should be designed so Bangla support, learner accounts, AI generation, FSRS reviews, and story feed can be added later without rewriting the app.
+- Next.js App Router.
+- Payload CMS 3.
+- PostgreSQL database connection.
+- Basic `users` and `media` collections.
+- Basic architecture documentation.
+- A frontend starter page.
+
+The revised strategy is to build vertical slices, not giant milestones. Every phase should teach one useful engineering lesson while moving the product forward.
 
 ## Product Direction
 
-- Target language: German.
-- First learner support language: English.
-- Later learner support languages: Bangla first, then more if needed.
-- Initial UI language: English.
-- Future UI languages: English, Bangla, German.
-- Initial user mode: public browsing without learner login.
-- Admin mode: authenticated Payload admin access for content creation, editing, deletion, publishing, and review.
-- Later user mode: learner accounts, saved words, learning queue, progress, FSRS reviews.
+- Target language: German, using `de` and `de-DE` for Standard German where locale specificity matters.
+- Learner support languages: English `en` and Bangla `bn`.
+- UI locales: `/en` and `/bn` from the first public UI phase.
+- Admin route: `/admin`, using Payload's built-in admin UI.
+- Public visitors can browse published content without an account.
+- Learners can later create accounts, choose support preferences, save progress, and review through FSRS.
+- Admins and editors can create German content with English and Bangla learner support fields.
+- English learner content is required for publishing.
+- Bangla learner content is optional at first, but first-class in the data model and review workflow.
+- AI-generated content must always be draft-only until a human reviews it.
 
-## Recommended Technical Direction
+## Language and Localization Rules
 
-### Core stack
+Vashabid must separate UI language from learning support language.
 
-- Next.js App Router.
-- Payload CMS in the same Next.js project.
-- Existing connected database.
-- TypeScript.
-- Tailwind CSS.
+### UI locale
 
-### Payload usage
+The UI locale controls navigation, buttons, empty states, labels, and system messages.
 
-Use Payload as the main content and application backend:
+Supported values:
 
-- Payload collections for words, grammar topics, scenarios, tags, media, feedback, and later learner progress.
-- Payload built-in auth for admin users.
-- Payload access control for admin/editor/learner/public permissions.
-- Payload Local API for server-side data reads inside Next.js pages and server components.
-- Payload REST API only where client-side access is truly needed.
-- Payload localization fields should be planned early, even if only English content is entered at first.
+- `en`
+- `bn`
 
-### UI direction
+Routing rules:
 
-Use default clean Next.js and Tailwind styling for now, but centralize design decisions.
+- `/` redirects to the preferred locale when known, otherwise `/en`.
+- `/en/...` renders English UI.
+- `/bn/...` renders Bangla UI.
+- Payload admin remains `/admin`.
 
-Suggested setup:
+### Support mode
 
-- Tailwind CSS with CSS variables for tokens.
-- A small `src/styles/theme.css` or equivalent token file for colors, radius, spacing, typography, and shadows.
-- shadcn/ui for reusable accessible components.
-- lucide-react for icons.
-- Avoid hardcoded colors inside feature components. Use tokens and semantic utility classes.
+The support mode controls learner explanations and translations.
 
-This allows the visual style to be changed later by editing theme files rather than rewriting all components.
+Supported values:
 
-### Auth direction
+- `en`: show English learner explanation.
+- `bn`: show Bangla learner explanation when approved, otherwise approved English fallback.
+- `both`: show English and approved Bangla side by side.
 
-For the first phases:
+For anonymous users, store support mode in a cookie or local storage. For logged-in learners, store it on the learner profile.
 
-- Use Payload admin authentication for admins and editors.
-- Do not add NextAuth/Auth.js unless social login or a separate frontend auth system becomes necessary.
-- Create the user model in a way that can later support learner login.
-- Keep admin users and learner users either separated by role or by collection strategy, depending on the current Payload setup.
+### Content fallback rules
 
-Recommended simple starting point:
+- German source content must always remain visible.
+- English learner content is required before public publishing.
+- Bangla learner content can be entered from the first CMS phase.
+- Bangla learner content must have an independent review state.
+- If support mode is `bn` and Bangla is missing or unapproved, show English fallback.
+- If support mode is `both`, show English and Bangla only when Bangla is approved; otherwise show English with a small localized fallback notice.
 
-- One `users` collection with `auth: true`.
-- Add a `role` field: `admin`, `editor`, `learner`.
-- Public users do not need accounts at first.
-- Restrict create/update/delete on content collections to admin/editor roles.
-- Allow public read only for published content.
+## Engineering Direction
 
-### Internationalization direction
+Use a layered, teachable architecture. The goal is not to overengineer the app, but to make each responsibility easy to understand, test, and replace.
 
-Do not translate the whole UI in the first phases. Prepare for it.
+### Recommended layers
 
-- Start with English UI strings in normal components.
-- Create a `messages/en.json` style structure or a simple constants layer early, even before installing full i18n.
-- Add next-intl later when UI localization becomes a phase.
-- Model content fields so German source content is separate from learner support content.
-- Use clear language keys: `de`, `en`, `bn`.
+- Payload collections: persistence, admin forms, access rules, hooks, and draft/publish behavior.
+- Access-policy helpers: reusable role checks and ownership checks.
+- Repository classes: database reads and writes through Payload Local API.
+- Service classes: business logic, validation orchestration, and workflow decisions.
+- DTO/view-model mappers: convert Payload documents into UI-safe data.
+- Provider interfaces: translation, AI, search upgrades, media sourcing, and FSRS scheduler boundaries.
+- React components: present view models and handle interaction.
+- Route handlers/server actions: thin adapters that call services.
 
-### AI direction
+### Object-oriented usage
 
-Do not build AI features in the first few phases. Instead, create clear service boundaries.
+Use classes where they improve clarity:
 
-- Add placeholder service files such as `src/features/ai/contentCopilot.ts` and `src/features/translator/translateText.ts`.
-- Define TypeScript interfaces for expected AI outputs.
-- Store AI generation status fields in content collections if needed: `manual`, `aiDraft`, `needsReview`, `approved`.
-- Require admin approval before any AI-generated learning content is published.
+- `WordRepository`
+- `WordService`
+- `SearchService`
+- `TranslatorService`
+- `LearningQueueService`
+- `ReviewSchedulerService`
+- `AiDraftService`
 
-## Suggested Packages
+Use interfaces for external or replaceable behavior:
 
-Install only when each phase needs them.
+- `TranslatorProvider`
+- `AiContentProvider`
+- `SearchProvider`
+- `SchedulerProvider`
+- `MediaSuggestionProvider`
 
-### Early UI packages
+Do not force OOP where it does not fit. Payload collection configs, React components, Zod schemas, and simple pure functions should remain idiomatic TypeScript.
 
-```bash
-pnpm add lucide-react
-```
+### Dependency direction
 
-Optional if the project does not already include shadcn/ui:
+- UI depends on feature services or view models.
+- Services depend on repositories and provider interfaces.
+- Repositories depend on Payload Local API helpers.
+- Payload collections must not import React UI components except approved Payload admin custom components.
+- Shared code should move to `src/lib` only when at least two features need it.
 
-```bash
-pnpm dlx shadcn@latest init
-pnpm dlx shadcn@latest add button card input textarea badge tabs dialog dropdown-menu select form table separator sheet skeleton alert
-```
+### Testing direction
 
-### Early form and validation packages
-
-Install if not already present:
-
-```bash
-pnpm add zod react-hook-form @hookform/resolvers
-```
-
-### Later i18n package
+Each phase must keep the app runnable with:
 
 ```bash
-pnpm add next-intl
+pnpm dev
+pnpm lint
+pnpm test
+pnpm build
 ```
 
-### Later spaced repetition package
+When a phase adds end-to-end behavior, it should also pass:
 
 ```bash
-pnpm add ts-fsrs
+pnpm test:e2e
 ```
 
-## Phase 0: Project Audit and Architecture Guardrails
+Use:
 
-### Goal
+- Vitest for pure services, access policies, view-model mappers, validation, and provider contracts.
+- React Testing Library for reusable components.
+- Playwright for browser flows.
+- Deterministic seed data for integration and e2e tests.
+- Mock providers for AI, translation, media, and scheduler tests.
 
-Prepare the scaffolded app so future agents can safely work without creating conflicting patterns.
+Public-content tests must verify that drafts and unapproved Bangla content do not leak.
 
-### Work items
+## Definition of Done for Every Phase
 
-- Inspect current Next.js and Payload folder structure.
-- Confirm whether the project uses `src/` or root-level `app/`.
-- Confirm database adapter and environment variables.
-- Confirm Payload admin route and API route.
-- Add or update project conventions in `README.md` or `docs/architecture.md`.
-- Add a basic app folder convention:
-  - `src/components/ui` for reusable UI components.
-  - `src/components/layout` for header, footer, shell, nav.
-  - `src/features/words` for word browsing and word detail logic.
-  - `src/features/search` for search UI and query logic.
-  - `src/features/translator` for translator UI and service wrapper.
-  - `src/features/i18n` for future language configuration.
-  - `src/lib/payload` or `src/lib/cms` for Payload Local API helpers.
-  - `src/styles` for theme tokens.
-- Add basic error, loading, and not-found pages.
-- Add a seed strategy for local development.
-
-### Exit criteria
+Each phase is complete only when:
 
 - The app runs locally.
-- Payload admin is reachable.
-- There is a documented folder convention.
-- Theme tokens exist even if the design is still simple.
-- Future phases know where to put code.
+- Existing functionality still works.
+- New functionality has focused tests.
+- `pnpm lint`, `pnpm test`, and `pnpm build` pass, unless the phase explicitly documents a temporary blocker.
+- Public routes never expose draft content.
+- Access rules protect admin-only and learner-owned data.
+- Documentation is updated.
+- A log exists at `docs/implementation-log/phase-XX.md`.
 
-## Phase 1: Core Payload Data Model and Admin CRUD
+Each implementation log must include:
+
+- What was achieved.
+- How it was implemented.
+- Tests added or updated.
+- What can be learned from the phase.
+- Known follow-ups.
+
+## Revised Timeline
+
+| Phase | Deliverable | Main tests | Learning focus |
+|---:|---|---|---|
+| 0 | Refresh roadmap and architecture around bilingual-first one-run phases. | `pnpm lint` | Planning, scope control, Agile slicing. |
+| 1 | Add test stack, CI scripts, and smoke tests. | Vitest smoke, Playwright smoke, build | Test pyramid and CI readiness. |
+| 2 | Add `/en` and `/bn` locale routing with message files and switchers. | Locale routing, `html lang`, switcher e2e | Internationalized routing. |
+| 3 | Add shared UI/layout system. | Component tests, responsive e2e | Design systems. |
+| 4 | Harden users with roles and access-policy helpers. | Access-policy unit tests | Auth and least privilege. |
+| 5 | Add reusable multilingual CMS field patterns and topic tags. | Schema/helper tests, seed tests | CMS modeling. |
+| 6 | Add words collection MVP with English required and Bangla optional. | Access and publish validation tests | Domain modeling. |
+| 7 | Polish admin word workflow. | Hook and validation tests | Editorial workflows. |
+| 8 | Build localized public home page from Payload data. | `/en` and `/bn` e2e, draft leak tests | Public CMS rendering. |
+| 9 | Build localized word browse page. | Service/filter tests, e2e browse | Query composition. |
+| 10 | Build localized word detail page. | View-model tests, e2e detail | Resilient UI mapping. |
+| 11 | Add search v1. | Search service tests, e2e search | Search normalization. |
+| 12 | Add grammar topics CMS and pages. | Collection and route tests | Reusable content patterns. |
+| 13 | Add scenarios CMS and pages. | Relationship and e2e tests | Relational content. |
+| 14 | Add translator shell with dictionary-assisted fallback. | Provider contract, tokenizer, e2e | Interface-driven design. |
+| 15 | Add public feedback and admin moderation. | Form, access, e2e tests | User input moderation. |
+| 16 | Add learner signup/login/logout and onboarding. | Auth e2e, profile tests | Learner identity. |
+| 17 | Add learning queue and save/unsave words. | Queue service, ownership, e2e | Personalized state. |
+| 18 | Add sentence mining for logged-in learners. | Sentence service, e2e | User-owned learning artifacts. |
+| 19 | Add learner dashboard. | Aggregation tests, e2e | Progress summaries. |
+| 20 | Add FSRS data model and scheduler service. | Scheduler unit tests | Algorithm isolation. |
+| 21 | Add review UI and review logs. | Review flow e2e, persistence tests | Transactional workflows. |
+| 22 | Add multilingual review workflow. | Review-state tests | Content governance. |
+| 23 | Add glossary and translation memory basics. | Glossary lookup tests | Terminology consistency. |
+| 24 | Add real translation provider integration. | Mock provider, fallback, rate-limit tests | External integration. |
+| 25 | Add AI admin copilot. | Mock AI, schema validation, no-auto-publish tests | AI guardrails. |
+| 26 | Add text AI tutor for scenarios. | Mock tutor, moderation tests | AI learning practice. |
+| 27 | Add discovery feed after review data is stable. | Feed e2e, progress action tests | Personalized discovery. |
+
+## Phase 0: Roadmap and Architecture Refresh
 
 ### Goal
 
-Create the content backend so admins can enter and manage German learning content.
+Make the plan decision-complete enough that another agent can implement one phase at a time without reinterpreting product direction.
 
-### Collections to create
+### Implementation direction
 
-#### Users
-
-Purpose: Admin, editor, and later learner accounts.
-
-Important fields:
-
-- Email and password through Payload auth.
-- Role: `admin`, `editor`, `learner`.
-- Display name.
-- Preferred support language, default `en`.
-- Account status.
-
-Access rules:
-
-- Admin can manage all users.
-- Editor cannot manage admin users.
-- Learner account features can remain inactive until later.
-
-#### Words
-
-Purpose: Main German vocabulary collection.
-
-Important fields:
-
-- German lemma.
-- Slug.
-- Word type: noun, verb, adjective, adverb, preposition, conjunction, phrase, idiom, other.
-- CEFR level: A1, A2, B1, B2, C1, C2.
-- German gender for nouns: der, die, das, plural-only, none.
-- Plural form.
-- IPA.
-- Audio references.
-- Register: neutral, formal, informal, slang, academic, official, rude, poetic, archaic.
-- Frequency or usefulness score.
-- Topic tags.
-- English meanings and explanations.
-- Bangla meanings and explanations, optional at first.
-- Example sentences.
-- Collocations.
-- Related words.
-- Grammar notes.
-- Common mistakes.
-- Quiz items.
-- Publish status: draft, review, published, archived.
-
-Implementation notes:
-
-- Keep German source fields separate from support-language explanation fields.
-- English fields are required for publish in MVP.
-- Bangla fields can be optional until localization phase.
-- Use Payload array, group, select, relationship, and upload fields where appropriate.
-- Use field-level localization only where it is clearly useful. Do not localize German lemma fields.
-
-#### Topic Tags
-
-Purpose: Organize vocabulary and scenarios.
-
-Fields:
-
-- Name.
-- Slug.
-- Description.
-- Parent tag, optional.
-- Sort order.
-
-Examples:
-
-- Daily life.
-- Work.
-- University.
-- Health.
-- Immigration.
-- Shopping.
-- Travel.
-- Grammar.
-
-#### Grammar Topics
-
-Purpose: Store German grammar explanations.
-
-Fields:
-
-- Title.
-- Slug.
-- CEFR level.
-- Short summary.
-- English explanation.
-- Bangla explanation, optional at first.
-- German examples.
-- Related words.
-- Related scenarios.
-- Exercises.
-- Publish status.
-
-#### Scenarios
-
-Purpose: Real-world dialogue based learning.
-
-Fields:
-
-- Title.
-- Slug.
-- CEFR level.
-- Situation type.
-- Dialogue lines.
-- English explanation.
-- Bangla explanation, optional at first.
-- Key vocabulary relationship to words.
-- Related grammar topics.
-- Publish status.
-
-#### Media
-
-Purpose: Store audio, images, and future clips.
-
-Fields:
-
-- File upload.
-- Alt text.
-- Caption.
-- Language.
-- Associated word or scenario.
-- Source or license note.
-
-#### Feedback
-
-Purpose: Let users report mistakes or suggest improvements later.
-
-Fields:
-
-- Related word, grammar topic, scenario, or translation.
-- Feedback type.
-- Message.
-- Status: new, reviewed, accepted, rejected.
-- Admin notes.
-
-### Admin requirements
-
-- Admin can create, read, update, delete, and publish content.
-- Editor can create and edit drafts but publishing can be admin-only if desired.
-- Public users can read only published content.
-- Draft content must never appear in public pages.
+- Replace the old large-phase roadmap with this smaller vertical-slice roadmap.
+- Update architecture documentation so it no longer says the UI starts English-only.
+- Document the `/en` and `/bn` route strategy.
+- Document support mode separately from UI locale.
+- Document the layered architecture and when to use classes.
+- Create the first implementation log.
 
 ### Exit criteria
 
-- Admin can log in to Payload.
-- Admin can create, edit, delete, and publish words.
-- Admin can create tags, grammar topics, and scenarios.
-- Public API or server-side queries only return published content.
-- At least 10 seed words exist for testing.
+- The roadmap clearly states the phase order.
+- The architecture docs match bilingual-first delivery.
+- Phase documentation format is established.
 
-## Phase 2: Public App Shell and Home Page
+### Tests
+
+- Run `pnpm lint`.
+- Do not add app behavior in this phase.
+
+### What to learn
+
+- How to turn product ambition into small, safe, deliverable implementation slices.
+- How architecture docs prevent future agents from creating conflicting patterns.
+
+## Phase 1: Test Stack and CI Foundation
 
 ### Goal
 
-Make the app visible and browsable for public users.
+Add the testing foundation before feature work expands.
 
-### Public routes
+### Implementation direction
 
-- `/` for home page.
-- `/words` for vocabulary browsing.
-- `/words/[slug]` for individual word detail page.
-- `/search` for search page.
-- `/translate` for translator page.
-- `/grammar` for grammar topic listing.
-- `/grammar/[slug]` for grammar topic detail.
-- `/scenarios` for scenario listing.
-- `/scenarios/[slug]` for scenario detail.
-
-### Layout work
-
-- Build a simple responsive layout.
-- Add header with logo/name, nav links, and search input or search link.
-- Add footer with basic links.
-- Add reusable page container component.
-- Add basic empty state, loading state, and error state components.
-
-### Home page sections
-
-- Hero area explaining the app.
-- Search input.
-- Word of the day, using newest or curated word first.
-- Beginner words, likely A1.
-- Common categories or topic tags.
-- Grammar starter section.
-- Scenario starter section.
+- Install Vitest, React Testing Library, jsdom, Playwright, and related TypeScript types.
+- Add scripts:
+  - `test`
+  - `test:unit`
+  - `test:e2e`
+  - `test:watch`
+  - `ci`
+- Add `vitest.config.ts` and `playwright.config.ts`.
+- Add `src/test/` helpers for rendering components and creating test fixtures.
+- Add one pure unit smoke test.
+- Add one Playwright smoke test for the public homepage.
+- Add one Playwright smoke test that confirms `/admin` responds.
+- Keep tests deterministic and independent from manually entered CMS data.
 
 ### Exit criteria
 
-- Home page renders real data from Payload.
-- Navigation works.
-- Empty database states do not crash the UI.
-- Design is simple but clean and responsive.
+- `pnpm test` works.
+- `pnpm test:e2e` works when the dev server is available.
+- `pnpm build` still works.
+- CI script runs lint, tests, and build.
 
-## Phase 3: Word Browse and Word Detail Page MVP
+### Tests
+
+- Unit smoke test.
+- Browser smoke test for public route.
+- Browser smoke test for admin route reachability.
+
+### What to learn
+
+- Difference between unit, component, integration, and e2e tests.
+- Why test infrastructure belongs before feature complexity.
+
+## Phase 2: Bilingual Routing and Locale Foundation
 
 ### Goal
 
-Make the core learning experience usable around individual German words.
+Add route-based bilingual UI infrastructure before building public features.
 
-### Word listing page
+### Implementation direction
 
-Features:
+- Install and configure `next-intl`.
+- Create locale routes under `app/(frontend)/[locale]/`.
+- Move the starter frontend page under the locale segment.
+- Add middleware that redirects `/` to `/en` by default.
+- Add supported locale config in `src/features/i18n/`.
+- Add message files:
+  - `messages/en.json`
+  - `messages/bn.json`
+- Add UI strings for navigation, common actions, empty states, errors, and language names.
+- Add a language switcher that keeps the current path when switching between `/en` and `/bn`.
+- Add support-mode preference infrastructure:
+  - `en`
+  - `bn`
+  - `both`
+- For anonymous users, store support mode in a cookie or local storage.
+- Keep Payload admin outside locale routing.
 
-- List published words.
-- Filter by CEFR level.
-- Filter by word type.
-- Filter by topic tag.
-- Basic pagination.
-- Word cards showing German word, article if noun, English meaning, CEFR level, and tags.
+### Exit criteria
 
-### Word detail page
+- `/` redirects to `/en`.
+- `/en` renders English UI.
+- `/bn` renders Bangla UI.
+- The root `<html lang>` matches the route locale.
+- A viewer can switch UI language.
+- Support mode can be selected and persisted for anonymous users.
 
-Sections:
+### Tests
 
-- German lemma and article.
-- Word type.
-- CEFR level.
-- IPA.
-- Audio if uploaded.
-- English meaning.
-- English explanation.
-- German example sentences.
-- English explanation for examples.
-- Noun details, verb details, or adjective details depending on word type.
-- Related words.
-- Collocations.
-- Common mistakes.
-- Mini quiz block if quiz data exists.
+- Locale redirect test.
+- `/en` and `/bn` render tests.
+- Language switcher e2e test.
+- `html lang` accessibility test.
+- Support-mode persistence test.
 
-### Implementation notes
+### What to learn
 
-- Build conditional rendering carefully. A noun should show gender and plural. A verb should show conjugation data if available.
-- Do not block publishing if all advanced fields are missing. MVP content can be partial.
-- Add `generateMetadata` for word pages based on the German word and English meaning.
+- Route-based internationalization.
+- Difference between UI localization and learner content localization.
+- Correct language attributes for accessibility.
+
+## Phase 3: Shared Layout and UI System
+
+### Goal
+
+Create a reusable application shell and design foundation.
+
+### Implementation direction
+
+- Build shared layout components:
+  - `Header`
+  - `Footer`
+  - `AppShell`
+  - `PageContainer`
+  - `LanguageSwitcher`
+  - `SupportModeSwitcher`
+- Add reusable UI primitives:
+  - `Button`
+  - `Input`
+  - `Badge`
+  - `Card`
+  - `Tabs` or segmented control for support mode
+  - `Skeleton`
+  - `EmptyState`
+  - `ErrorState`
+- Prefer shadcn/ui patterns if added; otherwise keep small accessible components.
+- Use lucide-react icons where icons are needed.
+- Use existing Tailwind theme tokens; avoid hardcoded hex colors.
+- Keep cards to real repeated items or framed tools.
+
+### Exit criteria
+
+- Public pages share one consistent shell.
+- Mobile and desktop layouts are usable.
+- All visible text comes from message files where practical.
+- Loading, not-found, and error states use shared UI.
+
+### Tests
+
+- Component tests for language and support-mode switchers.
+- Component tests for empty and error states.
+- Playwright responsive screenshot or viewport checks.
+
+### What to learn
+
+- Building a design system incrementally.
+- Keeping UI reusable without creating unnecessary abstraction.
+
+## Phase 4: Users, Roles, and Access Policies
+
+### Goal
+
+Prepare authentication and authorization for admins, editors, and future learners.
+
+### Implementation direction
+
+- Extend `users` collection with:
+  - `role`: `admin`, `editor`, `learner`
+  - `displayName`
+  - `uiLocale`
+  - `supportMode`
+  - `accountStatus`
+- Add reusable access helpers:
+  - `isAdmin`
+  - `isEditor`
+  - `isAdminOrEditor`
+  - `isLearner`
+  - `isSelf`
+  - `publishedOrAuthenticated`
+- Keep Payload auth as the only auth system.
+- Do not add NextAuth unless a later phase explicitly requires social login.
+- Ensure admins can manage all users.
+- Ensure editors cannot manage admin users.
+- Keep learner-facing auth UI for Phase 16.
+
+### Exit criteria
+
+- User roles are represented in Payload.
+- Access helpers are unit-tested.
+- Future collections can reuse access helpers.
+
+### Tests
+
+- Role helper tests.
+- Access behavior tests for admin, editor, learner, and anonymous contexts.
+- Regression test that anonymous users cannot perform protected writes.
+
+### What to learn
+
+- Role-based access control.
+- Why reusable access-policy helpers reduce security drift.
+
+## Phase 5: CMS Foundations and Topic Tags
+
+### Goal
+
+Add reusable content modeling patterns and the first non-user content collection.
+
+### Implementation direction
+
+- Add shared field helpers for:
+  - slug fields
+  - CEFR select fields
+  - publish/review metadata
+  - English learner fields
+  - Bangla learner fields
+  - source/license metadata
+- Add `TopicTags` collection.
+- Add fields:
+  - name
+  - slug
+  - localized description fields
+  - parent tag
+  - sort order
+  - publish status
+- Use Payload drafts where useful.
+- Add seed strategy with deterministic topic tags.
+
+### Exit criteria
+
+- Admins can manage topic tags.
+- Public reads only return published tags.
+- Shared field helpers are documented and tested.
+
+### Tests
+
+- Field helper unit tests where practical.
+- Access tests for topic tags.
+- Seed test for deterministic tag creation.
+
+### What to learn
+
+- Reusable Payload field helpers.
+- Hierarchical content modeling.
+
+## Phase 6: Words Collection MVP
+
+### Goal
+
+Create the core German word database with English required and Bangla optional.
+
+### Implementation direction
+
+- Add `Words` collection.
+- Add German identity fields:
+  - lemma
+  - slug
+  - word type
+  - CEFR level
+  - gender for nouns
+  - plural form
+  - IPA
+  - register
+  - frequency/usefulness score
+  - topic tags
+- Add English learner fields:
+  - meanings
+  - explanation
+  - example sentence explanations
+  - common mistakes
+- Add Bangla learner fields:
+  - meanings
+  - explanation
+  - pronunciation hints
+  - common Bangla-speaker mistakes
+  - optional romanized Bangla helper text
+- Add review metadata:
+  - German reviewed
+  - English reviewed
+  - Bangla reviewed
+  - audio reviewed
+  - quiz reviewed
+- Add publish validation:
+  - German lemma required.
+  - Word type required.
+  - CEFR required.
+  - At least one English meaning required.
+  - Bangla missing content must not block MVP publishing.
+  - Unapproved Bangla must not be shown publicly.
+- Add 10 seed words with English and some Bangla content.
+
+### Exit criteria
+
+- Admins can create, edit, archive, and publish words.
+- Editors can create and edit drafts.
+- Public reads only return published words.
+- Seed data creates at least 10 test words.
+
+### Tests
+
+- Access tests.
+- Publish validation tests.
+- Seed tests.
+- Draft leak tests for word queries.
+
+### What to learn
+
+- Domain modeling for German vocabulary.
+- How to make multilingual content first-class without blocking early publishing.
+
+## Phase 7: Admin Word Workflow Polish
+
+### Goal
+
+Make word editing realistic for admins and editors.
+
+### Implementation direction
+
+- Organize the Words admin form with tabs or groups:
+  - German identity
+  - English support
+  - Bangla support
+  - Examples
+  - Relationships
+  - Review and publishing
+- Add automatic slug generation from lemma.
+- Add duplicate warning for same lemma and word type.
+- Add preview links to localized public word pages.
+- Add archive status instead of relying on deletion.
+- Add admin descriptions for complex fields.
+- Add validation messages that explain how to fix publish blockers.
+
+### Exit criteria
+
+- Admin word entry is understandable.
+- Duplicate entries are easier to catch.
+- Preview links are available for published words.
+- Archiving is supported.
+
+### Tests
+
+- Slug generation tests.
+- Duplicate-detection tests.
+- Publish validation message tests.
+- Admin route smoke test.
+
+### What to learn
+
+- Editorial UX inside Payload.
+- Hooks, validation, and admin field organization.
+
+## Phase 8: Localized Public Home Page
+
+### Goal
+
+Replace the starter page with a real localized home page backed by Payload content.
+
+### Implementation direction
+
+- Build `/[locale]` home page.
+- Show:
+  - search entry point
+  - word of the day or newest published word
+  - beginner A1/A2 words
+  - topic tags
+  - grammar and scenario placeholders if not built yet
+- Use `WordRepository` and `WordService`.
+- Use view models so UI does not depend on raw Payload documents.
+- Respect UI locale for interface strings.
+- Respect support mode for learner content snippets.
+- Show English fallback when Bangla is unavailable or unapproved.
+
+### Exit criteria
+
+- `/en` and `/bn` render real published content.
+- Empty database states do not crash.
+- Draft words never appear.
+- Support-mode switching affects snippets.
+
+### Tests
+
+- Home service tests.
+- `/en` and `/bn` Playwright tests.
+- Empty state tests.
+- Draft leak tests.
+- Fallback behavior tests.
+
+### What to learn
+
+- Server-side Payload Local API reads.
+- Mapping CMS documents to UI-safe view models.
+
+## Phase 9: Word Browse Page
+
+### Goal
+
+Let public users browse published German words.
+
+### Implementation direction
+
+- Build `/[locale]/words`.
+- Add filters:
+  - CEFR level
+  - word type
+  - topic tag
+  - support mode
+- Add pagination.
+- Add word cards showing:
+  - German lemma
+  - article for nouns
+  - CEFR level
+  - word type
+  - English/Bangla/both meaning based on support mode
+  - tags
+- Implement query logic inside `WordRepository`.
+- Implement business rules inside `WordService`.
+- Keep route components thin.
 
 ### Exit criteria
 
 - Public users can browse words.
-- Public users can open a per-word page.
-- Missing optional fields do not break the page.
-- Admin changes are reflected on public pages after rebuild/revalidation strategy is handled.
+- Filters preserve URL state.
+- Pagination works.
+- Missing optional fields do not break cards.
 
-## Phase 4: Search MVP
+### Tests
+
+- Repository query tests.
+- Filter normalization tests.
+- View-model fallback tests.
+- Browse page e2e tests.
+
+### What to learn
+
+- Query composition.
+- URL-driven UI state.
+- Keeping server components thin.
+
+## Phase 10: Word Detail Page MVP
 
 ### Goal
 
-Let users find words and learning content quickly.
+Make individual German word pages useful for English and Bangla learners.
 
-### Search features
+### Implementation direction
 
-- Search by German lemma.
-- Search by English meaning.
-- Search by slug.
-- Search by tags.
-- Search by CEFR level.
-- Search results should show words first, then grammar topics and scenarios if implemented.
-
-### Implementation levels
-
-Start simple:
-
-- Server-side search using Payload queries and database indexes where possible.
-- Normalize the query by trimming whitespace and lowercasing where appropriate.
-- Add simple fallback matching for German article searches, such as `der Termin` matching `Termin`.
-
-Later improvement:
-
-- Add fuzzy search.
-- Add stemming or inflection support.
-- Add external search service only if database search becomes insufficient.
-
-### Search page UX
-
-- Search input with query preserved in URL.
-- Filter chips for CEFR, word type, and topic.
-- Empty state with suggestions.
-- Result cards linked to the correct detail pages.
+- Build `/[locale]/words/[slug]`.
+- Show:
+  - German lemma and article
+  - word type
+  - CEFR level
+  - IPA
+  - audio placeholder if no audio exists
+  - English meanings and explanation
+  - approved Bangla meanings and explanation when selected
+  - German example sentences
+  - learner-language explanations for examples
+  - noun details, verb details, or adjective details when available
+  - related words
+  - common mistakes
+  - mini quiz placeholder when quiz data exists
+- Add metadata generation.
+- Add localized fallback notice for missing Bangla.
 
 ### Exit criteria
 
-- Search works for seeded words.
-- Search works from home page and search page.
-- Search results are public-only and do not leak drafts.
-- The code has a clear search service function that can be improved later.
+- Public users can open word detail pages.
+- `/en` and `/bn` detail pages work.
+- Support mode `both` shows side-by-side explanations.
+- Missing optional fields do not crash.
 
-## Phase 5: Translator MVP and Sentence Mining Foundation
+### Tests
+
+- Detail view-model tests.
+- Optional-field tests.
+- Metadata tests.
+- Word detail e2e tests.
+
+### What to learn
+
+- Rich content page composition.
+- Conditional rendering without brittle UI.
+
+## Phase 11: Search MVP
 
 ### Goal
 
-Add a translator-style learning tool without making AI or external translation providers mandatory in the first version.
+Let users find learning content quickly.
 
-### MVP translator behavior
+### Implementation direction
 
-Create `/translate` with:
+- Build `/[locale]/search`.
+- Add `SearchService`.
+- Add query normalization:
+  - trim whitespace
+  - lowercase where appropriate
+  - German article stripping
+  - simple umlaut alternatives
+- Search:
+  - German lemma
+  - slug
+  - English meanings
+  - Bangla meanings
+  - CEFR level
+  - word type
+  - tags
+- Show words first.
+- Keep grammar and scenario results ready to add when those collections exist.
+- Never return drafts.
 
-- Text input.
-- Source language selector: German, English, Bangla later.
-- Target language selector: English first, Bangla later, German.
-- Translate button.
-- Output area.
-- Detected known words from the Payload word database.
-- Clickable word chips linking to word pages.
-- Save sentence button placeholder or disabled state until learner accounts exist.
+### Exit criteria
 
-### Translation service design
+- Search works from home and search page.
+- Search supports German, English, and Bangla text.
+- Results are localized and support-mode aware.
+- Empty states give useful suggestions.
 
-Create a translator service boundary:
+### Tests
 
-- `translateText(input, sourceLanguage, targetLanguage)`.
-- First implementation can return a simple dictionary-assisted result if no provider is configured.
-- Later implementation can plug in an external translation or AI provider.
-- The UI should not care which provider is used.
+- Normalization tests.
+- Search service tests.
+- Special-character tests.
+- Draft leak tests.
+- Search e2e tests.
 
-### Dictionary-assisted fallback
+### What to learn
 
-For early MVP:
+- Search service boundaries.
+- Unicode-safe search basics.
 
+## Phase 12: Grammar Topics CMS and Pages
+
+### Goal
+
+Add structured German grammar learning pages.
+
+### Implementation direction
+
+- Add `GrammarTopics` collection.
+- Add fields:
+  - German topic name
+  - slug
+  - CEFR level
+  - short rule
+  - English explanation
+  - Bangla explanation
+  - examples
+  - common mistakes
+  - related words
+  - topic tags
+  - publish/review metadata
+- Build `/[locale]/grammar`.
+- Build `/[locale]/grammar/[slug]`.
+- Reuse localization and fallback helpers from words.
+
+### Exit criteria
+
+- Admins can manage grammar topics.
+- Public users can browse and open grammar topics.
+- English and Bangla support follows the same rules as words.
+
+### Tests
+
+- Collection validation tests.
+- Grammar service tests.
+- Route e2e tests.
+- Fallback tests.
+
+### What to learn
+
+- Reusing content patterns across domains.
+- Modeling grammar as structured content, not loose notes.
+
+## Phase 13: Scenarios CMS and Pages
+
+### Goal
+
+Add real-world German dialogue scenarios.
+
+### Implementation direction
+
+- Add `Scenarios` collection.
+- Add fields:
+  - title
+  - slug
+  - CEFR level
+  - situation type
+  - learner goal
+  - dialogue lines
+  - English explanation
+  - Bangla explanation
+  - cultural notes
+  - key vocabulary relationships
+  - related grammar topics
+  - publish/review metadata
+- Build `/[locale]/scenarios`.
+- Build `/[locale]/scenarios/[slug]`.
+- Add "add vocabulary to learning queue" placeholder until learner accounts exist.
+
+### Exit criteria
+
+- Admins can manage scenarios.
+- Public users can browse and read scenarios.
+- Key vocabulary links to word pages.
+
+### Tests
+
+- Relationship query tests.
+- Scenario service tests.
+- Scenario route e2e tests.
+- Draft leak tests.
+
+### What to learn
+
+- Relationship modeling in Payload.
+- Building learning paths from reusable content.
+
+## Phase 14: Translator Shell and Dictionary-Assisted Fallback
+
+### Goal
+
+Add a translator-style learning tool without depending on a real AI provider yet.
+
+### Implementation direction
+
+- Build `/[locale]/translate`.
+- Add `TranslatorProvider` interface.
+- Add `DictionaryTranslatorProvider` fallback.
+- Add `TranslatorService`.
+- Support source and target selectors:
+  - German to English
+  - German to Bangla
+  - English to German
+  - Bangla to German
+  - German to both when support mode is `both`
 - Tokenize input.
 - Match known German lemmas from the Words collection.
-- Show known word meanings.
-- Show a clear label: `Dictionary-assisted learning view` if full translation is not yet configured.
-- Do not pretend this is a full machine translation if it is only a fallback.
-
-### Sentence mining foundation
-
-Add a future-ready collection or field design for mined sentences:
-
-- Raw sentence.
-- Source language.
-- Target language.
-- Translation output.
-- Related words.
-- Owner user, optional for later.
-- Created from translator or scenario.
+- Show known word chips linked to word pages.
+- Label fallback output clearly as dictionary-assisted learning view.
+- Add disabled or login-prompt sentence mining action until Phase 18.
 
 ### Exit criteria
 
-- `/translate` exists and is usable.
-- Known German words in a sentence are recognized and linked.
-- Translation logic is behind a service interface.
-- The app can later add a real provider without changing the UI structure.
+- Translator page accepts text.
+- Known words are detected and linked.
+- UI does not claim full machine translation when only fallback exists.
+- Provider interface can later accept a real API provider.
 
-## Phase 6: Admin Workflow Polish and Content Quality Controls
+### Tests
+
+- Provider contract tests.
+- Tokenizer tests.
+- Known-word matching tests.
+- Translator e2e tests.
+
+### What to learn
+
+- Interface-driven design.
+- Graceful degradation when external services are not ready.
+
+## Phase 15: Feedback and Moderation
 
 ### Goal
 
-Make content entry realistic for admins and editors.
+Let users report content problems and give admins a moderation queue.
 
-### Work items
+### Implementation direction
 
-- Add useful admin descriptions and labels to Payload fields.
-- Organize large word forms using tabs or groups.
-- Add validation for required publish fields.
-- Add slug generation from German lemma.
-- Add duplicate warning for same lemma and word type.
-- Add preview links from Payload admin to public word pages.
-- Add publish checklist fields if useful.
-- Add seed script for starter vocabulary, grammar topics, and scenarios.
-
-### Content quality controls
-
-- A word cannot be published without German lemma, word type, CEFR level, and at least one English meaning.
-- Bangla missing content should not block MVP publishing.
-- Media should include source or license notes if externally sourced.
-- Admins should be able to archive content instead of only deleting it.
+- Add `Feedback` collection.
+- Add public feedback form on word, grammar, and scenario pages.
+- Feedback fields:
+  - related content type
+  - related content id
+  - feedback type
+  - message
+  - optional email for anonymous users
+  - status
+  - admin notes
+- Add validation and spam-resistant constraints.
+- Admins and editors can update status.
+- Public users cannot read the moderation queue.
 
 ### Exit criteria
 
-- Admin forms are manageable.
-- Admins can create quality MVP content without touching code.
-- Public pages have enough content to feel like a real app.
+- Public users can submit feedback.
+- Admins can review and update feedback status.
+- Feedback cannot expose private data.
 
-## Phase 7: Learner Account Preparation and Saved Items MVP
+### Tests
+
+- Form validation tests.
+- Access tests.
+- Submit feedback e2e test.
+- Moderation status tests.
+
+### What to learn
+
+- Handling user-generated input safely.
+- Moderation workflows.
+
+## Phase 16: Learner Accounts and Onboarding
 
 ### Goal
 
-Prepare the system for personalized learning without building the full spaced repetition system yet.
+Add learner-facing authentication and profile setup.
 
-### Features
+### Implementation direction
 
-- Enable learner registration or keep learner creation admin-only depending on product decision.
-- Add login/logout pages for learners if public account creation is enabled.
-- Add learner profile fields:
-  - Preferred support language.
-  - Target CEFR level.
-  - Learning goal.
-- Add saved words or learning queue.
-- Add `Add to learning queue` button on word detail page.
-- Add `/account` or `/learn` dashboard.
-
-### Collections
-
-#### LearnerProfiles
-
-Fields:
-
-- User relationship.
-- Preferred support language.
-- Current CEFR level.
-- Target CEFR level.
-- Goal tags.
-
-#### LearningItems
-
-Fields:
-
-- User relationship.
-- Word relationship.
-- Status: saved, learning, known, ignored.
-- Created date.
-- Last reviewed date, optional for now.
+- Use Payload auth with the existing `users` collection.
+- Build learner signup, login, and logout routes.
+- Add onboarding flow for:
+  - UI locale
+  - primary support language
+  - optional secondary support language
+  - current German level
+  - learning goal
+  - preferred practice style
+  - daily study target
+- Add `LearnerProfiles` collection if profile data should be separated from auth users.
+- Store support mode on the learner profile.
+- Keep admin/editor users separate by role.
 
 ### Exit criteria
 
-- Logged-in learners can save words.
-- Saved words appear in a basic dashboard.
+- Learners can sign up and log in.
+- Learners can complete onboarding.
 - Anonymous users can still browse public content.
-- The data model is ready for FSRS in a later phase.
+- Learner preferences affect public content display when logged in.
 
-## Phase 8: UI Localization and Bangla Content Support
+### Tests
+
+- Signup e2e test.
+- Login/logout e2e test.
+- Onboarding validation tests.
+- Preference persistence tests.
+
+### What to learn
+
+- Auth flows.
+- Separating identity from profile preferences.
+
+## Phase 17: Learning Queue
 
 ### Goal
 
-Add real multilingual support after the English MVP is working.
+Let logged-in learners save words and track basic progress.
 
-### UI localization
+### Implementation direction
 
-- Install and configure next-intl or the chosen i18n solution.
-- Add locale-aware routing or user-preference based locale handling.
-- Start with `en` and `bn` UI message files.
-- Add `de` UI only if the product wants German interface mode.
-- Add language switcher.
-- Store user preference when logged in.
-- Store anonymous preference in cookie or local storage.
-
-### Content localization
-
-- Enable or refine Payload localization for explanation fields.
-- Add Bangla fields in admin where missing.
-- Add fallback behavior:
-  - If Bangla exists, show Bangla.
-  - If Bangla is missing, show English fallback with a small notice if needed.
-- Add Bangla typography checks.
-- Add Bangla search support for Bangla meanings.
-
-### Bangla learner support
-
-Add content structures for:
-
-- Bangla explanations.
-- Bangla pronunciation hints.
-- Bangla-specific common mistakes.
-- Optional romanized Bangla helper text.
+- Add `LearningItems` collection.
+- Fields:
+  - user
+  - word
+  - status: saved, learning, known, ignored
+  - created date
+  - last reviewed date placeholder
+- Add `LearningQueueService`.
+- Add save/unsave button on word detail pages.
+- Add logged-out prompt for anonymous users.
+- Prevent duplicate active queue items for the same user and word.
+- Add basic `/[locale]/learn` dashboard list.
 
 ### Exit criteria
 
-- User can switch UI between English and Bangla.
-- Word pages can show English or Bangla explanations.
-- Missing Bangla content has a controlled fallback.
-- Admin can enter Bangla content cleanly.
+- Logged-in learners can save and unsave words.
+- Saved words appear in a dashboard.
+- Users cannot see or modify other learners' saved items.
 
-## Phase 9: Real Translation Provider and AI-Ready Translator Upgrade
+### Tests
+
+- Queue service tests.
+- Duplicate prevention tests.
+- Ownership access tests.
+- Save/unsave e2e test.
+
+### What to learn
+
+- User-owned data.
+- Idempotent save workflows.
+
+## Phase 18: Sentence Mining
 
 ### Goal
 
-Turn the translator MVP into a more useful learning translator.
+Let logged-in learners save translated sentences for later study.
 
-### Work items
+### Implementation direction
 
-- Choose provider strategy:
-  - External translation API.
-  - AI provider.
-  - Hybrid of translation API plus internal word linking.
-- Keep all provider calls behind the existing translator service.
-- Add rate limits and abuse protection.
-- Add result caching for repeated translations if useful.
-- Add structured output:
-  - Natural translation.
-  - Literal translation.
-  - Key vocabulary.
-  - Grammar notes.
-  - CEFR difficulty estimate.
-- Add sentence mining for logged-in users.
+- Add `SavedSentences` collection.
+- Fields:
+  - owner user
+  - raw sentence
+  - source language
+  - target language
+  - translation output
+  - selected German words
+  - support languages saved
+  - CEFR estimate placeholder
+  - created from translator or scenario
+- Add `SentenceMiningService`.
+- Enable save action on translator page for logged-in learners.
+- Keep anonymous users on a login prompt.
 
 ### Exit criteria
 
-- Translator gives real translation output.
-- Known words are still linked to database word pages.
-- Logged-in learners can save mined sentences.
-- Translation output clearly separates translation, vocabulary, and grammar notes.
+- Logged-in learners can save translated sentences.
+- Saved sentences are user-owned.
+- Translator integrates with sentence mining.
 
-## Phase 10: AI Admin Copilot for Content Drafting
+### Tests
+
+- Sentence service tests.
+- Ownership access tests.
+- Translator-to-sentence e2e test.
+
+### What to learn
+
+- Capturing user-created learning artifacts.
+- Connecting feature workflows through services.
+
+## Phase 19: Learner Dashboard
 
 ### Goal
 
-Help admins create content faster while keeping human review mandatory.
+Give learners a useful progress overview.
 
-### Features
+### Implementation direction
 
-- Add `Generate draft` button in admin workflow, likely through a custom admin component or separate internal route.
-- Admin inputs German lemma.
-- AI returns structured draft data:
-  - Word type.
-  - CEFR estimate.
-  - English meaning.
-  - Bangla meaning if enabled.
-  - Example sentences.
-  - Grammar notes.
-  - Common mistakes.
-  - Quiz suggestions.
-- Save AI output as draft only.
-- Add status: `aiDraft`, `needsReview`, `approved`.
-- Add audit fields:
-  - Generated by provider.
-  - Generated at.
-  - Reviewed by.
-  - Reviewed at.
-
-### Guardrails
-
-- Never auto-publish AI-generated content.
-- Require admin review before publish.
-- Make the prompt and expected JSON schema versioned.
-- Log failures and invalid outputs.
+- Build `/[locale]/learn` dashboard fully.
+- Show:
+  - saved words count
+  - saved sentences count
+  - words by CEFR
+  - recent saves
+  - continue learning section
+  - due reviews placeholder until FSRS exists
+- Add `LearnerDashboardService`.
+- Keep aggregation server-side.
 
 ### Exit criteria
 
-- Admin can generate a draft word entry.
-- Admin can edit all generated fields before publishing.
-- AI output is validated before saving.
+- Learners can see their saved progress.
+- Dashboard respects locale and support mode.
+- Empty states guide new learners.
 
-## Phase 11: Learning Queue and FSRS Spaced Repetition
+### Tests
+
+- Dashboard aggregation tests.
+- Empty state tests.
+- Logged-in dashboard e2e test.
+
+### What to learn
+
+- Aggregating user data.
+- Designing dashboards around user intent.
+
+## Phase 20: FSRS Data Model and Scheduler
 
 ### Goal
 
-Add real memory scheduling for saved words.
+Add the spaced repetition foundation without building the full review UI yet.
 
-### Package
+### Implementation direction
 
-Use `ts-fsrs` or another TypeScript FSRS implementation.
+- Install `ts-fsrs`.
+- Extend `LearningItems` with FSRS fields:
+  - due date
+  - stability
+  - difficulty
+  - elapsed days
+  - scheduled days
+  - repetitions
+  - lapses
+  - state
+  - last review
+- Add `ReviewLogs` collection.
+- Add `ReviewSchedulerService`.
+- Keep scheduler logic pure and independently tested.
+- Add migration or schema update according to Payload/Postgres project practice.
 
-### Data model changes
+### Exit criteria
 
-Extend `LearningItems` with FSRS fields:
+- Saved words can be initialized for FSRS.
+- Scheduler can calculate next review state.
+- Review logs can be stored.
 
-- Due date.
-- Stability.
-- Difficulty.
-- Elapsed days.
-- Scheduled days.
-- Repetitions.
-- Lapses.
-- State.
-- Last review.
+### Tests
 
-Add `ReviewLogs` collection:
+- Pure scheduler tests.
+- Learning item schema tests.
+- Review log access tests.
 
-- User.
-- Word or learning item.
-- Rating: again, hard, good, easy.
-- Review date.
-- Previous due date.
-- Next due date.
-- Time spent, optional.
+### What to learn
 
-### UX
+- Isolating algorithms from UI and persistence.
+- Modeling time-based learning state.
 
-- `/review` page.
-- Review cards for due words.
-- Rating buttons: Again, Hard, Good, Easy.
-- Dashboard summary:
-  - Due today.
-  - Total learning.
-  - Known words.
-  - Streak placeholder.
+## Phase 21: Review UI and Review Logs
+
+### Goal
+
+Let learners review due words and update FSRS state.
+
+### Implementation direction
+
+- Build `/[locale]/review`.
+- Show due word cards.
+- Add rating buttons:
+  - Again
+  - Hard
+  - Good
+  - Easy
+- Update learning item state through `ReviewSchedulerService`.
+- Create `ReviewLogs` entries for every review.
+- Show review status on word detail pages for logged-in learners.
 
 ### Exit criteria
 
 - Learners can review due words.
 - Ratings update next due dates.
 - Review history is stored.
-- Word detail page shows saved/review status for logged-in users.
+- Dashboard due review count becomes real.
 
-## Phase 12: Scenarios and Roleplay Preparation
+### Tests
 
-### Goal
+- Review transaction tests.
+- Review e2e test.
+- Review log persistence tests.
+- Dashboard due count tests.
 
-Make scenario content useful before full AI voice roleplay.
+### What to learn
 
-### Scenario features
+- Transactional workflows.
+- Turning algorithm output into user-visible behavior.
 
-- Scenario list by CEFR and topic.
-- Scenario detail page with dialogue lines.
-- English and Bangla explanation support.
-- Key vocabulary list with links to word pages.
-- Add all key vocabulary to learning queue.
-- Simple comprehension questions.
-
-### Roleplay preparation
-
-- Add roleplay prompt fields in the Scenario collection.
-- Add actor roles, such as learner and receptionist.
-- Add expected vocabulary and grammar targets.
-- Add difficulty settings.
-- Do not build voice AI yet unless the core product is stable.
-
-### Exit criteria
-
-- Users can learn from real-world dialogues.
-- Users can add scenario vocabulary to their learning queue.
-- Data model can support AI roleplay later.
-
-## Phase 13: AI Tutor and Roleplay
+## Phase 22: Multilingual Review Workflow
 
 ### Goal
 
-Add interactive AI practice after vocabulary, translator, accounts, and reviews are stable.
+Add stronger editorial governance for multilingual content.
 
-### Features
+### Implementation direction
 
-- Text-based AI tutor first.
-- Voice-based roleplay later.
-- AI should adapt explanation language based on user preference.
-- AI should respect CEFR level.
-- AI should use scenario context where available.
-- AI should correct mistakes gently and explain in English or Bangla.
-
-### Safety and quality
-
-- Add prompt templates.
-- Add conversation logging only if privacy policy allows it.
-- Add rate limiting.
-- Add moderation for abusive or irrelevant inputs.
-- Add clear disclaimer that AI answers can be wrong.
+- Add independent review states for major content sections:
+  - German source
+  - English support
+  - Bangla support
+  - audio
+  - quiz
+- Add review timestamps and reviewer relationships where useful.
+- Prevent public Bangla display unless Bangla is approved.
+- Add admin filters for content needing Bangla review.
+- Add clear publish checklist fields.
 
 ### Exit criteria
 
-- User can practice a scenario with AI by text.
-- AI responses use the selected support language.
-- Scenario vocabulary and grammar targets are included in the prompt.
+- Admins can see which language layers are ready.
+- Bangla learner content is review-gated.
+- Public fallback behavior remains predictable.
 
-## Phase 14: Discovery Story Interface
+### Tests
+
+- Review-state tests.
+- Public fallback tests.
+- Admin filter tests where feasible.
+
+### What to learn
+
+- Enterprise content governance.
+- Independent approval workflows for multilingual content.
+
+## Phase 23: Glossary and Translation Memory Basics
 
 ### Goal
 
-Add the vertical story or reel-style discovery feed last, after the learning content and personalization systems are stable.
+Keep recurring grammar and language-learning terms consistent.
 
-### Feed behavior
+### Implementation direction
 
-- Full-screen mobile-first vertical cards.
-- Mix of new words and due review words.
-- Respect CEFR level and learner interests.
-- Support quick actions:
-  - Mark known.
-  - Add to learning queue.
-  - Review now.
-  - Deep dive to word page.
-
-### Card content
-
-- German word.
-- Article for nouns.
-- CEFR badge.
-- Audio if available.
-- Short English or Bangla meaning depending on preference.
-- Quick quiz interaction.
-
-### Implementation notes
-
-- Do not let story feed replace normal browsing.
-- Keep it as an additional discovery mode.
-- Avoid infinite loading until analytics and performance are acceptable.
-- Start with simple pagination before complex recommendation logic.
+- Add `GlossaryTerms` collection.
+- Fields:
+  - German term
+  - approved English term
+  - approved Bangla term
+  - romanized Bangla helper
+  - context note
+  - locked flag
+  - related grammar topics
+- Add `GlossaryService`.
+- Use glossary lookups in admin guidance and later AI prompts.
+- Add starter glossary terms for articles, cases, CEFR labels, and common grammar concepts.
 
 ### Exit criteria
 
-- Mobile story feed works.
-- Cards pull from published words and learner review queue.
+- Admins can manage glossary terms.
+- Locked terms are identifiable.
+- Services can retrieve approved terminology.
+
+### Tests
+
+- Glossary lookup tests.
+- Locked-term tests.
+- Seed tests.
+
+### What to learn
+
+- Translation memory basics.
+- Terminology governance for multilingual products.
+
+## Phase 24: Real Translation Provider Integration
+
+### Goal
+
+Upgrade the translator from dictionary-assisted fallback to real translation while preserving the existing interface.
+
+### Implementation direction
+
+- Add real provider behind `TranslatorProvider`.
+- Choose one provider for the first implementation.
+- Keep dictionary fallback if provider config is missing or provider fails.
+- Add rate limiting and abuse protection.
+- Add result caching for repeated translations if practical.
+- Return structured output:
+  - natural translation
+  - literal translation when useful
+  - key vocabulary
+  - grammar notes
+  - CEFR estimate
+- Keep provider responses clearly separated from database word matches.
+
+### Exit criteria
+
+- Translator gives real translation output when configured.
+- Known database words are still linked.
+- Failure falls back gracefully.
+- Provider can be mocked in tests.
+
+### Tests
+
+- Mock provider tests.
+- Fallback tests.
+- Rate-limit tests.
+- Structured output tests.
+
+### What to learn
+
+- External API integration.
+- Rate limits, caching, and provider abstraction.
+
+## Phase 25: AI Admin Copilot
+
+### Goal
+
+Help admins generate draft content faster while keeping human review mandatory.
+
+### Implementation direction
+
+- Add `AiContentProvider` interface.
+- Add `AiDraftService`.
+- Add admin-only draft generation route or Payload custom admin component.
+- Admin enters German lemma or phrase.
+- AI returns structured draft data:
+  - word identity
+  - IPA
+  - CEFR estimate
+  - noun/verb/adjective details where relevant
+  - English meanings and explanations
+  - Bangla meanings and explanations
+  - example sentences
+  - collocations
+  - common mistakes for English speakers
+  - common mistakes for Bangla speakers
+  - quiz suggestions
+- Validate AI output with Zod.
+- Save AI content as draft only.
+- Add audit fields:
+  - provider
+  - prompt version
+  - generated at
+  - reviewed by
+  - reviewed at
+- Never auto-publish AI content.
+
+### Exit criteria
+
+- Admins can generate draft word content.
+- Drafts are editable before publishing.
+- Invalid AI output is rejected safely.
+- Audit metadata is stored.
+
+### Tests
+
+- Mock AI provider tests.
+- Zod schema validation tests.
+- No-auto-publish tests.
+- Access tests.
+
+### What to learn
+
+- Safe AI workflow design.
+- Structured output validation.
+- Human-in-the-loop publishing.
+
+## Phase 26: Text AI Tutor and Scenario Roleplay
+
+### Goal
+
+Add text-based AI practice after scenarios, learner accounts, and review systems are stable.
+
+### Implementation direction
+
+- Add `AiTutorProvider` interface.
+- Add `AiTutorService`.
+- Add text roleplay entry point on scenario detail pages.
+- Prompt AI with:
+  - scenario context
+  - learner CEFR level
+  - support mode
+  - target vocabulary
+  - grammar goals
+- Keep conversation primarily in German.
+- Use English or Bangla only for hints and corrections based on support mode.
+- Add beginner mode and strict mode.
+- Add AI disclaimer.
+- Add rate limiting and moderation.
+- Store conversation history only if privacy policy and settings allow it.
+
+### Exit criteria
+
+- Learners can practice a scenario by text.
+- AI respects support language.
+- AI uses scenario vocabulary and grammar goals.
+- Sensitive topics are handled as language learning, not advice.
+
+### Tests
+
+- Mock tutor provider tests.
+- Prompt construction tests.
+- Rate-limit tests.
+- Scenario roleplay e2e test.
+
+### What to learn
+
+- AI tutoring boundaries.
+- Prompt construction from domain data.
+- Safety constraints for educational AI.
+
+## Phase 27: Discovery Feed
+
+### Goal
+
+Add a mobile-first discovery feed after content, accounts, and review data are reliable.
+
+### Implementation direction
+
+- Build `/[locale]/feed`.
+- Use paginated feed first, not infinite loading.
+- Feed cards can include:
+  - German word or phrase
+  - audio if available
+  - CEFR level
+  - short German example
+  - English/Bangla/both meaning
+  - quick quiz
+  - save to learning queue
+  - mark known
+  - review now
+  - deep dive link
+- Mix:
+  - new words matching CEFR level
+  - due review words
+  - scenario vocabulary
+  - high-frequency words
+- Add `DiscoveryFeedService`.
+- Keep recommendation rules simple and testable.
+
+### Exit criteria
+
+- Mobile feed works.
+- Cards use published content only.
 - Actions update learner progress correctly.
+- Feed does not replace normal browsing.
 
-## Cross-Phase Engineering Notes
+### Tests
 
-### Data access
+- Feed service tests.
+- Published-only tests.
+- Save/mark known e2e tests.
+- Mobile viewport e2e tests.
 
-- Prefer server-side data loading with Payload Local API for public pages.
-- Keep all collection query logic in feature-level service files.
-- Avoid directly scattering Payload queries across many page components.
+### What to learn
 
-### Publishing and drafts
+- Personalized discovery loops.
+- Starting with simple recommendation rules before complex algorithms.
 
-- Always filter public pages by published status.
-- Admin previews can show drafts only to authorized users.
-- Use archive status instead of destructive deletion where content history matters.
+## Suggested Agent Prompt Template
 
-### SEO
-
-- Add metadata to word, grammar, and scenario pages.
-- Use readable slugs.
-- Avoid indexing draft or private pages.
-
-### Performance
-
-- Start simple.
-- Add indexes on frequently searched fields.
-- Add caching or revalidation only after the data flow is clear.
-- Keep large media out of critical page load paths.
-
-### Testing checklist
-
-Each phase should include at least basic checks for:
-
-- Public pages do not show drafts.
-- Admin-only actions are protected.
-- Empty states work.
-- Word pages handle incomplete optional fields.
-- Search does not crash on special characters.
-- Translation page does not claim full translation if only fallback mode is active.
-- Logged-in and logged-out states behave correctly.
-
-## Suggested First Milestone Definition
-
-The first meaningful milestone should be:
-
-- Payload admin login works.
-- Admin can create, edit, delete, and publish German words.
-- Home page displays real words from Payload.
-- `/words` displays a browsable list.
-- `/words/[slug]` displays a usable word detail page.
-- `/search` can find words by German or English.
-- `/translate` can accept text and identify known German words from the database.
-- UI is English-only but code structure is ready for Bangla localization.
-- Theme is simple but centralized through Tailwind and token files.
-
-## Suggested Agent Prompt for Phase 0
+Use this template for each implementation phase:
 
 ```md
-You are working on an existing Next.js App Router project with Payload CMS already installed and the database already connected. Implement Phase 0 from `Vashabid_Phase_By_Phase_Implementation_Plan.md` only.
+Implement Phase XX only from `Vashabid_Phase_By_Phase_Implementation_Plan.md`.
 
-Do not implement feature pages yet. Audit the current structure, create or update architecture documentation, add theme token files if missing, add shared layout folders, and prepare clean conventions for Payload data access and feature folders. Keep changes small and explain what you changed.
+Keep the app runnable and deliverable. Do not implement later phases. Follow the architecture in `docs/architecture.md`.
+
+Requirements:
+- Implement only the Phase XX deliverable.
+- Add or update focused tests.
+- Run `pnpm lint`, `pnpm test`, and `pnpm build`.
+- Add `docs/implementation-log/phase-XX.md` with what was achieved, how it was done, tests added, what can be learned, and known follow-ups.
+- Do not expose draft content publicly.
+- Preserve English and Bangla support rules.
 ```
 
-## Suggested Agent Prompt for Phase 1
+## First Meaningful Product Milestones
 
-```md
-Implement Phase 1 from `Vashabid_Phase_By_Phase_Implementation_Plan.md` only.
+### Public bilingual content MVP
 
-Create the core Payload collections for Users, Words, Topic Tags, Grammar Topics, Scenarios, Media, and Feedback. Use Payload auth for users with role-based access. Public users can read only published content. Admins can create, update, delete, and publish. Editors can create and edit drafts. Add enough fields for German words with English explanations now and optional Bangla fields later. Add seed data for at least 10 German words.
+Completed after Phase 11:
 
-Do not build the public frontend pages yet except whatever is necessary to verify the collections.
-```
+- Admins can manage words.
+- Viewers can use `/en` and `/bn`.
+- Viewers can browse word lists.
+- Viewers can open word pages.
+- Viewers can search German, English, and Bangla content.
+- Bangla support exists with English fallback.
 
-## Suggested Agent Prompt for Phase 2
+### Structured learning MVP
 
-```md
-Implement Phase 2 from `Vashabid_Phase_By_Phase_Implementation_Plan.md` only.
+Completed after Phase 18:
 
-Build the public app shell and home page using real published content from Payload. Use simple Tailwind styling and centralized theme tokens. Add header, footer, page container, empty states, loading states, and home page sections for search, beginner words, topics, grammar, and scenarios. Do not implement full word detail or search logic beyond links and basic layout.
-```
+- Public content works.
+- Translator shell works.
+- Learners can sign up.
+- Learners can save words.
+- Learners can mine sentences.
 
-## Reference Notes
+### Review-based learning MVP
 
-These references influenced the implementation direction:
+Completed after Phase 21:
 
-- Payload collections are the primary structure for recurring content and can also support authentication through auth-enabled collections.
-- Payload fields define both stored document schema and the generated admin UI.
-- Payload access control should be used for admin/editor/public permissions.
-- Payload Local API is appropriate for server-side operations in the same Node/Next.js app.
-- Payload localization is useful for content translation fields, while application UI i18n is a separate concern.
-- Next.js App Router supports modern routing, layouts, server components, and metadata patterns.
-- shadcn/ui and Tailwind CSS variables are a good fit for a simple design system that can be changed later.
-- lucide-react is a practical icon choice for React.
-- next-intl is a practical future option for UI localization in Next.js App Router.
-- ts-fsrs is a practical future option for implementing FSRS in TypeScript.
+- Learners can save words.
+- Learners can review due words.
+- FSRS scheduling works.
+- Dashboard progress is meaningful.
+
+### AI-assisted MVP
+
+Completed after Phase 26:
+
+- Translator can use a real provider.
+- Admins can generate reviewed AI drafts.
+- Learners can practice scenarios with a text AI tutor.
+
+## Reference Standards
+
+- CEFR for language level classification.
+- WCAG-informed accessibility practices.
+- Unicode-safe storage and search for German, English, and Bangla.
+- Payload access control for admin/editor/learner/public permissions.
+- Human review for all AI-generated learner-facing content.
+- Test pyramid with unit tests first, e2e tests for critical workflows.
