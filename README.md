@@ -4,11 +4,30 @@ Next.js 16 app with [Payload CMS 3](https://payloadcms.com) and PostgreSQL.
 
 ## Prerequisites
 
-- Node.js 20.9+
-- pnpm
-- Docker (for local Postgres)
+- Dev container: Docker and a Dev Container-compatible client such as VS Code or GitHub Codespaces
+- Host development: Node.js 24 LTS, pnpm 11, and Docker
 
-## Local development
+## Dev container (recommended)
+
+1. Open the repository in a Dev Container-compatible client. In VS Code, run **Dev Containers: Reopen in Container**.
+
+2. Wait for the PostgreSQL health check and the automatic `pnpm install --frozen-lockfile` setup to finish.
+
+3. Start the development server manually from the container terminal:
+
+```bash
+pnpm dev
+```
+
+4. Open [http://localhost:3000](http://localhost:3000) for the frontend or [http://localhost:3000/admin](http://localhost:3000/admin) for Payload Admin.
+
+The container pins Node.js 24, uses the repository's pinned pnpm version, keeps pnpm's package store in a persistent Docker volume, and forwards port 3000. Its Compose project and PostgreSQL volume are isolated from the host-development Compose project. It does not start the app automatically, so stopping or restarting the development server remains explicit.
+
+The devcontainer injects development-only values for `DATABASE_URL`, `PAYLOAD_SECRET`, and `DATABASE_PUSH`; no `.env.local` is required inside it. The database hostname is `postgres` on the Compose network, and its port is not published to the host. To replace the disposable default secret, set `VASHABID_DEVCONTAINER_PAYLOAD_SECRET` in the environment that launches the Dev Container and rebuild it. The namespaced override prevents an unrelated host `PAYLOAD_SECRET` from being imported accidentally.
+
+After changing the devcontainer configuration, Node version, or dependency setup, run **Dev Containers: Rebuild Container**.
+
+## Host development
 
 1. Start the local database:
 
@@ -35,11 +54,11 @@ The frontend lives at [http://localhost:3000](http://localhost:3000).
 
 ## Environment variables
 
-| Variable | Local dev | Staging / production |
-|----------|-----------|-------------------|
-| `DATABASE_URL` | `postgresql://payload:payload@localhost:5432/vashabid_dev` | VPS Postgres connection string (deploy secrets only) |
-| `PAYLOAD_SECRET` | Random string (`openssl rand -base64 32`) | Same, stored in deploy secrets |
-| `DATABASE_PUSH` | `true` (default) | `false` — required on any shared/persistent database |
+| Variable | Host development | Dev container | Staging / production |
+|----------|------------------|---------------|----------------------|
+| `DATABASE_URL` | `postgresql://payload:payload@localhost:5432/vashabid_dev` | `postgresql://payload:payload@postgres:5432/vashabid_dev` | VPS Postgres connection string (deploy secrets only) |
+| `PAYLOAD_SECRET` | Random string (`openssl rand -base64 32`) | Disposable development-only default; override from the launch environment | Same, stored in deploy secrets |
+| `DATABASE_PUSH` | `true` (default) | `true` | `false` — required on any shared/persistent database |
 
 Never point local development at your VPS database while `DATABASE_PUSH=true`. Push auto-syncs schema changes and can alter or drop columns destructively.
 
@@ -142,6 +161,7 @@ collections/             # Users, Media, …
 payload.config.ts        # Payload configuration
 migrations/              # SQL migrations (commit when schema stabilizes)
 docker-compose.yml       # Local Postgres
+.devcontainer/           # Reproducible Node + Postgres development environment
 ```
 
 ## Learn more

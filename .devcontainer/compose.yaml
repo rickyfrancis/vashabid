@@ -1,0 +1,26 @@
+name: vashabid-devcontainer
+
+services:
+  devcontainer:
+    image: mcr.microsoft.com/devcontainers/typescript-node:24-bookworm
+    user: node
+    command: sleep infinity
+    volumes:
+      # Compose resolves this path relative to the first file, which is the project root.
+      - .:/workspaces/vashabid:cached
+      - pnpm-store:/home/node/.pnpm-store
+    environment:
+      DATABASE_URL: postgresql://payload:payload@postgres:5432/vashabid_dev
+      PAYLOAD_SECRET: ${VASHABID_DEVCONTAINER_PAYLOAD_SECRET:-vashabid-devcontainer-only-do-not-use-in-production}
+      DATABASE_PUSH: "true"
+      pnpm_config_store_dir: /home/node/.pnpm-store
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    # The workspace reaches Postgres over the Compose network; no host port is needed.
+    ports: !reset []
+
+volumes:
+  pnpm-store:

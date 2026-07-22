@@ -1,0 +1,42 @@
+{
+  "name": "Vashabid",
+  "dockerComposeFile": ["../docker-compose.yml", "compose.yaml"],
+  "service": "devcontainer",
+  "runServices": ["devcontainer", "postgres"],
+  "workspaceFolder": "/workspaces/vashabid",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "node",
+  "updateRemoteUserUID": true,
+  "init": true,
+  "postCreateCommand": "sudo chown -R node:node /home/node/.pnpm-store && pnpm install --frozen-lockfile",
+  "waitFor": "postCreateCommand",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Vashabid web app",
+      "protocol": "http",
+      "onAutoForward": "notify"
+    }
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "16gb"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss"
+      ],
+      "settings": {
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "eslint.workingDirectories": [
+          {
+            "mode": "auto"
+          }
+        ]
+      }
+    }
+  }
+}
