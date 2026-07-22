@@ -104,12 +104,14 @@ The page must include German-specific language data:
 - IPA pronunciation.
 - Standard German audio.
 - Slow audio and natural-speed audio.
+- Regional audio controls for `de-DE`, `de-AT`, and `de-CH` when those pronunciation variants are available.
 - Noun gender: der, die, das.
 - Plural form.
 - Case forms where useful: nominative, accusative, dative, genitive.
 - Verb conjugation tables for present, past, perfect, imperative, subjunctive, and participle forms where relevant.
 - Verb properties: separable prefix, inseparable prefix, auxiliary verb, reflexive use, transitivity, and common preposition patterns.
 - Adjective declension patterns where relevant.
+- Dynamic morphology matrices covering verb conjugations, noun declensions, cases, and article/adjective gender agreement.
 - Common compounds and word family members.
 - Etymology and root notes when useful for memory.
 
@@ -177,6 +179,7 @@ Each word page should include real contextual examples:
 - Short German sentences across difficulty levels.
 - Real-life dialogue examples.
 - Public-domain, licensed, or properly embedded media examples only.
+- Licensed, public-domain, or properly embedded snippets from movies, songs, and literature that demonstrate the word in natural use.
 - Media clips must not be scraped or stored unless licensing permits it.
 - Each example must have English and Bangla explanations.
 
@@ -190,6 +193,7 @@ Each word page must include small learning interactions:
 - Case quiz where relevant.
 - Listening recognition quiz.
 - Example sentence reorder exercise.
+- An inline reinforcement quiz at the end of the page to help the learner retain the word immediately.
 - Add to learning queue button.
 
 ### 1.2 Smart Translator and Sentence Mining Tool
@@ -212,6 +216,7 @@ For pasted text, the app must:
 
 - Detect German words and inflected forms.
 - Link known words to the German word detail page.
+- Open linked words in a word-detail modal or contextual overlay so the learner can inspect them without leaving the translation.
 - Show the root lemma when a user taps an inflected form.
 - Explain grammar patterns in the selected support language.
 - Highlight words already saved in the user's learning queue.
@@ -240,6 +245,7 @@ The search bar must support:
 
 - German words.
 - German inflected forms.
+- Inflected-form results must resolve and route the learner to the root German lemma.
 - Umlaut-insensitive search, such as `Mädchen`, `Madchen`, and `Maedchen`.
 - English meanings.
 - Bangla meanings in Bangla script.
@@ -256,6 +262,7 @@ The homepage must include:
 - Continue learning.
 - Due reviews.
 - Word of the day.
+- Trending German slang.
 - German phrase of the day.
 - Grammar bite.
 - Scenario practice.
@@ -328,9 +335,11 @@ The admin must be able to enter a German root word or phrase. The AI copilot sho
 - Noun gender and plural if applicable.
 - Verb conjugations if applicable.
 - Definitions.
+- Etymology and root notes.
 - English explanations.
 - Bangla explanations.
 - Example sentences at multiple CEFR levels.
+- At least three example sentences spanning different difficulty or CEFR levels.
 - English and Bangla explanations for each example.
 - Collocations.
 - Synonyms and related words.
@@ -373,7 +382,9 @@ The system may integrate with approved APIs for media examples, but all media mu
 Requirements:
 
 - Admins can search for German word usage examples.
+- Approved provider integrations may include services such as PlayPhrase.me or the YouTube API.
 - The system can suggest public-domain, licensed, or embeddable media references.
+- Where provider capabilities and usage rights permit, the system can suggest approximately five-second clips containing the exact German word for admin approval.
 - The system must store source attribution and license metadata.
 - Media cannot be stored locally unless the license allows it.
 - Admin approval is required before learner-facing publication.
@@ -389,6 +400,7 @@ Learners must be able to report:
 - Bad example sentence.
 - Wrong CEFR level.
 - Unclear grammar explanation.
+- Context or usage suggestion for a word page.
 
 Admins must see these reports in a moderation dashboard with status tracking.
 
@@ -422,6 +434,7 @@ Each scenario must include:
 - English explanation.
 - Bangla explanation.
 - Vocabulary extraction.
+- Extraction of the ten most important vocabulary items, with an option to bulk-add them to the learning queue.
 - Grammar notes.
 - Cultural notes.
 - Audio playback.
@@ -435,6 +448,7 @@ The learner can tap a Practice button to roleplay with an AI tutor.
 The roleplay system must:
 
 - Keep the conversation primarily in German.
+- Support voice-based roleplay where voice input and output are technically available.
 - Use English or Bangla for hints based on the learner's preference.
 - Support beginner mode, where the AI gives more help.
 - Support strict mode, where the AI responds naturally in German and corrects mistakes after the learner answers.
@@ -452,6 +466,8 @@ The post-practice report must include:
 ### 3.3 Spaced Review System Using FSRS
 
 The app must include a spaced review system using the Free Spaced Repetition Scheduler algorithm or an equivalent scheduler.
+
+When a learner marks a word or phrase as Learning, the app must add the corresponding review card or cards to the scheduler.
 
 The review system must support multiple card types:
 
@@ -481,6 +497,7 @@ The user dashboard must show:
 
 - Due reviews.
 - Review streak.
+- A study-streak heat map.
 - Vocabulary size.
 - Known words by CEFR level.
 - Difficult words.
@@ -500,6 +517,7 @@ The feed must include:
 
 - German word or phrase.
 - German audio.
+- An auto-playing short audio or video snippet showing the item in context when approved media is available, sourced from the word-page media library and governed by the learner's autoplay, accessibility, and data-saving settings.
 - CEFR level.
 - Short example sentence.
 - Learner support explanation in English, Bangla, or both.
@@ -521,6 +539,8 @@ The feed algorithm must serve a mix of:
 
 ### 4.3 Card Behavior
 
+Tapping the card must flip it between its front and back sides.
+
 The front side of a card should show:
 
 - German word or phrase.
@@ -536,6 +556,8 @@ The back side should show:
 - Quick quiz.
 - Add to learning queue.
 - Deep dive link.
+
+A persistent action bar must group the Mark as known, Add to learning queue, and Deep dive actions for quick access.
 
 ## Phase 5: Grammar Learning System
 
