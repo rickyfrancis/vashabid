@@ -113,8 +113,35 @@ pnpm generate:types       # Regenerate payload-types.ts after schema changes
 pnpm generate:importmap   # Regenerate admin import map
 pnpm migrate:create       # Create migration from current schema
 pnpm migrate              # Run pending migrations
-pnpm ci                   # migrate + build (use in deploy pipelines)
 ```
+
+## Testing
+
+```bash
+pnpm test          # Run unit tests
+pnpm test:watch    # Run unit tests in watch mode
+pnpm test:e2e      # Run E2E tests; Playwright starts the app automatically
+pnpm run ci        # Full CI pipeline: lint → test → build → e2e
+```
+
+### E2E prerequisites
+
+```bash
+pnpm exec playwright install --with-deps chromium
+docker compose up -d   # Start local PostgreSQL
+```
+
+Playwright starts `pnpm dev` for local runs and `pnpm start` when `CI=true`.
+To test an app that is already running, set its origin explicitly:
+
+```bash
+PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 pnpm test:e2e
+```
+
+Use `pnpm run ci` because `pnpm ci` is pnpm's built-in frozen-install command.
+The package script is the verification pipeline used by GitHub Actions. Production
+deployment remains a separate workflow: apply migrations with `pnpm migrate`,
+then build with `pnpm build`.
 
 ## Deployment
 
@@ -125,7 +152,7 @@ Postgres and app on the same VPS — use private networking, no need to expose P
 **Build command:**
 
 ```bash
-pnpm install && pnpm ci
+pnpm install && pnpm migrate && pnpm build
 ```
 
 **Start command:**
@@ -138,9 +165,9 @@ pnpm start
 
 ### Vercel
 
-Add `pnpm ci` as the build command. Ensure Vercel can reach your VPS Postgres (IP allowlist). Set the same deploy secrets.
+Add `pnpm migrate && pnpm build` as the build command. Ensure Vercel can reach your VPS Postgres (IP allowlist). Set the same deploy secrets.
 
-Serverless cold starts may run migrations via the `ci` script at build time — keep migration files small.
+Run migrations before the build so the production database schema is current. Keep migration files small.
 
 ## VPS Postgres hardening
 

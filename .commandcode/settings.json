@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(pnpm:*)",
+      "Shell(psql:*)",
+      "Shell(docker compose exec postgres sh -c \"PGPASSWORD=payload psql -h \\$(hostname -i) -U payload -d vashabid_dev -c 'SELECT 1'\" 2>&1)",
+      "Shell(docker compose down -v 2>&1 && rm -rf .pnpm-store 2>/dev/null; POSTGRES_HOST_AUTH_METHOD=trust docker compose up -d 2>&1)",
+      "Shell(docker:*)",
+      "Shell(grep:*)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}
