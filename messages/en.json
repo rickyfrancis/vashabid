@@ -6,6 +6,11 @@
   "Navigation": {
     "home": "Home"
   },
+  "Shell": {
+    "skipToContent": "Skip to content",
+    "tagline": "A clear path into German, supported by English, Bangla, or both.",
+    "languagePromise": "German at the center"
+  },
   "Home": {
     "eyebrow": "German, clearly connected",
     "title": "Learn German through the language you know.",
