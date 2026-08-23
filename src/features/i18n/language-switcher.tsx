@@ -2,11 +2,12 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
-import { useTransition } from 'react'
+import { useId, useTransition } from 'react'
 import { usePathname, useRouter } from './navigation'
 import { locales, type Locale } from './types'
 
 export function LanguageSwitcher() {
+  const selectId = useId()
   const currentLocale = useLocale()
   const pathname = usePathname()
   const router = useRouter()
@@ -27,12 +28,15 @@ export function LanguageSwitcher() {
   }
 
   return (
-    <label className="flex min-w-44 flex-col gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-200">
-      <span>{t('label')}</span>
+    <div className="flex min-w-0 flex-col gap-2">
+      <label className="text-sm font-semibold text-foreground" htmlFor={selectId}>
+        {t('label')}
+      </label>
       <select
         aria-busy={isPending}
-        className="h-11 rounded-xl border border-neutral-300 bg-background px-3 text-base text-neutral-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-50"
+        className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-base text-foreground shadow-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/20 disabled:cursor-wait disabled:opacity-60"
         disabled={isPending}
+        id={selectId}
         onChange={(event) => changeLocale(event.target.value as Locale)}
         value={currentLocale}
       >
@@ -42,6 +46,6 @@ export function LanguageSwitcher() {
           </option>
         ))}
       </select>
-    </label>
+    </div>
   )
 }

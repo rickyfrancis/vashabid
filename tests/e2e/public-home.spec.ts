@@ -87,11 +87,12 @@ test('support mode defaults from locale and persists independently', async ({
   context,
 }) => {
   await page.goto('/en')
-  const englishSupport = page.getByRole('combobox', {
-    name: /Learning support/,
-  })
-  await expect(englishSupport).toHaveValue('en')
-  await englishSupport.selectOption('both')
+  const englishSupport = page.getByRole('radio', { name: 'English', exact: true })
+  await expect(englishSupport).toBeChecked()
+  await page
+    .getByRole('group', { name: 'Learning support' })
+    .getByText('English + বাংলা', { exact: true })
+    .click()
 
   const supportCookie = (await context.cookies()).find(
     (cookie) => cookie.name === 'vashabid_support_mode',
@@ -99,15 +100,17 @@ test('support mode defaults from locale and persists independently', async ({
   expect(supportCookie?.value).toBe('both')
 
   await page.reload()
-  await expect(englishSupport).toHaveValue('both')
+  await expect(
+    page.getByRole('radio', { name: 'English + বাংলা', exact: true }),
+  ).toBeChecked()
 
   await page
     .getByRole('combobox', { name: /Interface language/ })
     .selectOption('bn')
   await expect(page).toHaveURL(/\/bn$/)
   await expect(
-    page.getByRole('combobox', { name: /শেখার সহায়ক ভাষা/ }),
-  ).toHaveValue('both')
+    page.getByRole('radio', { name: 'ইংরেজি + বাংলা', exact: true }),
+  ).toBeChecked()
 })
 
 test('invalid support mode cookie falls back to the route locale', async ({
@@ -126,9 +129,64 @@ test('invalid support mode cookie falls back to the route locale', async ({
   const page = await context.newPage()
   await page.goto('/bn')
   await expect(
-    page.getByRole('combobox', { name: /শেখার সহায়ক ভাষা/ }),
-  ).toHaveValue('bn')
+    page.getByRole('radio', { name: 'বাংলা', exact: true }),
+  ).toBeChecked()
   await context.close()
+})
+
+for (const viewport of [
+  { height: 844, locale: 'bn', width: 390 },
+  { height: 800, locale: 'en', width: 1280 },
+] as const) {
+  test(`${viewport.locale} shell is usable at ${viewport.width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ height: viewport.height, width: viewport.width })
+    await page.goto(`/${viewport.locale}`)
+
+    await expect(page.getByTestId('site-header')).toBeVisible()
+    await expect(page.getByTestId('site-footer')).toBeVisible()
+    await expect(page.getByRole('main')).toHaveCount(1)
+    await expect(page.getByRole('combobox')).toBeEnabled()
+    await expect(page.getByRole('group')).toBeVisible()
+
+    const hasHorizontalOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    )
+    expect(hasHorizontalOverflow).toBe(false)
+
+    const controlsMeetTouchTarget = await page.evaluate(() => {
+      const select = document.querySelector('select')
+      const radioLabel = document.querySelector('input[type="radio"] + label')
+      return Boolean(
+        select &&
+          radioLabel &&
+          select.getBoundingClientRect().height >= 44 &&
+          radioLabel.getBoundingClientRect().height >= 44,
+      )
+    })
+    expect(controlsMeetTouchTarget).toBe(true)
+  })
+}
+
+test('system dark mode applies the semantic dark palette', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.goto('/en')
+
+  await expect(page.getByTestId('site-header')).toBeVisible()
+  const palette = await page.evaluate(() => {
+    const root = getComputedStyle(document.documentElement)
+    const body = getComputedStyle(document.body)
+    return {
+      colorScheme: root.colorScheme,
+      background: body.backgroundColor,
+      foreground: body.color,
+    }
+  })
+
+  expect(palette.colorScheme).toBe('dark')
+  expect(palette.background).not.toBe('rgba(0, 0, 0, 0)')
+  expect(palette.foreground).not.toBe(palette.background)
 })
 
 test('unknown localized routes render the matching translated 404', async ({

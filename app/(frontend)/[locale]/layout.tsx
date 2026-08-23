@@ -1,8 +1,15 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono, Noto_Sans_Bengali } from 'next/font/google'
+import {
+  Geist,
+  Geist_Mono,
+  Newsreader,
+  Noto_Sans_Bengali,
+  Noto_Serif_Bengali,
+} from 'next/font/google'
 import { notFound } from 'next/navigation'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getMessages, getTranslations } from 'next-intl/server'
+import { AppShell } from '@/components/layout'
 import { SupportModeProvider } from '@/features/i18n/support-mode-provider'
 import { getInitialSupportMode } from '@/features/i18n/support-mode.server'
 import { routing } from '@/features/i18n/routing'
@@ -21,6 +28,18 @@ const geistMono = Geist_Mono({
 
 const notoSansBengali = Noto_Sans_Bengali({
   variable: '--font-bangla',
+  subsets: ['bengali', 'latin'],
+  weight: 'variable',
+})
+
+const newsreader = Newsreader({
+  variable: '--font-newsreader',
+  subsets: ['latin'],
+  weight: 'variable',
+})
+
+const notoSerifBengali = Noto_Serif_Bengali({
+  variable: '--font-bangla-display',
   subsets: ['bengali', 'latin'],
   weight: 'variable',
 })
@@ -65,7 +84,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={typedLocale}
-      className={`${geistSans.variable} ${geistMono.variable} ${notoSansBengali.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} ${notoSansBengali.variable} ${notoSerifBengali.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider locale={typedLocale} messages={messages}>
@@ -73,7 +92,7 @@ export default async function LocaleLayout({
             initialMode={initialSupportMode}
             key={typedLocale}
           >
-            {children}
+            <AppShell>{children}</AppShell>
           </SupportModeProvider>
         </NextIntlClientProvider>
       </body>

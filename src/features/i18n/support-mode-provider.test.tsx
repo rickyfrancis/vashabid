@@ -33,7 +33,7 @@ describe('SupportModeProvider', () => {
     expect(document.cookie).toContain(`${SUPPORT_MODE_COOKIE}=both`)
   })
 
-  test('renders an accessible translated selector for every mode', () => {
+  test('renders an accessible translated radio group for every mode', () => {
     render(
       <NextIntlClientProvider locale="en" messages={enMessages}>
         <SupportModeProvider initialMode="en">
@@ -42,13 +42,19 @@ describe('SupportModeProvider', () => {
       </NextIntlClientProvider>,
     )
 
-    const selector = screen.getByRole('combobox', {
+    const group = screen.getByRole('group', {
       name: /Learning support/,
     })
-    expect(selector).toHaveValue('en')
+    const english = screen.getByRole('radio', { name: 'English' })
+    const bangla = screen.getByRole('radio', { name: 'বাংলা' })
 
-    fireEvent.change(selector, { target: { value: 'bn' } })
-    expect(selector).toHaveValue('bn')
+    expect(group).toHaveAccessibleDescription(
+      'Choose the language used for explanations and translations.',
+    )
+    expect(english).toBeChecked()
+
+    fireEvent.click(bangla)
+    expect(bangla).toBeChecked()
     expect(document.cookie).toContain(`${SUPPORT_MODE_COOKIE}=bn`)
   })
 })

@@ -1,70 +1,69 @@
+import { ArrowDownRight, Languages } from 'lucide-react'
 import { useTranslations } from 'next-intl'
-import { LanguageSwitcher } from '@/features/i18n/language-switcher'
-import { SupportModeSwitcher } from '@/features/i18n/support-mode-switcher'
+import { PageContainer } from '@/components/layout'
+import { Badge, Card } from '@/components/ui'
 
 export default function HomePage() {
-  const t = useTranslations('Home')
+  const home = useTranslations('Home')
+  const support = useTranslations('SupportMode')
 
   return (
-    <div className="relative isolate flex min-h-screen flex-col overflow-hidden bg-background">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-40 -top-48 h-[32rem] w-[32rem] rounded-full bg-brand-100/70 blur-3xl dark:bg-brand-950/30"
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-56 -left-40 h-[30rem] w-[30rem] rounded-full bg-accent-100/80 blur-3xl dark:bg-accent-950/20"
-      />
-
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-7 sm:px-10">
-        <a
-          className="text-xl font-bold tracking-tight text-neutral-950 dark:text-neutral-50"
-          href="#top"
-        >
-          Vashabid<span className="text-accent-500">.</span>
-        </a>
-        <span className="rounded-full border border-neutral-200 bg-background/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-neutral-600 backdrop-blur dark:border-neutral-800 dark:text-neutral-300">
-          {t('targetLanguage')}: <span lang="de">{t('german')}</span>
-        </span>
-      </header>
-
-      <main
-        id="top"
-        className="relative z-10 mx-auto grid w-full max-w-6xl flex-1 items-center gap-14 px-6 py-16 sm:px-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(19rem,0.8fr)] lg:py-24"
-      >
-        <section className="max-w-3xl">
-          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.22em] text-brand-700 dark:text-brand-300">
-            {t('eyebrow')}
+    <PageContainer className="flex flex-1 items-center py-16 sm:py-24 lg:py-28">
+      <div className="grid w-full gap-12 lg:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)] lg:items-center lg:gap-16">
+        <section className="relative max-w-4xl">
+          <div
+            aria-hidden="true"
+            className="absolute -left-5 top-1 hidden h-full w-px bg-accent-500 sm:block"
+          />
+          <p className="flex items-center gap-3 text-sm font-bold uppercase tracking-[0.22em] text-brand-800 dark:text-brand-200">
+            <span className="h-px w-9 bg-brand-700 dark:bg-brand-300" />
+            {home('eyebrow')}
           </p>
-          <h1 className="text-balance text-5xl font-bold leading-[1.04] tracking-[-0.045em] text-neutral-950 sm:text-6xl lg:text-7xl dark:text-neutral-50">
-            {t('title')}
+          <h1 className="mt-6 max-w-4xl text-balance font-display text-5xl font-semibold leading-[0.98] tracking-[-0.035em] text-foreground sm:text-6xl lg:text-7xl">
+            {home('title')}
           </h1>
-          <p className="mt-7 max-w-2xl text-pretty text-lg leading-8 text-neutral-600 sm:text-xl dark:text-neutral-300">
-            {t('description')}
+          <p className="mt-8 max-w-2xl text-pretty text-lg leading-8 text-muted sm:text-xl">
+            {home('description')}
           </p>
+          <div className="mt-8 flex flex-wrap gap-2">
+            <Badge tone="brand">{support('en')}</Badge>
+            <Badge tone="accent">{support('bn')}</Badge>
+            <Badge>{support('both')}</Badge>
+          </div>
         </section>
 
-        <aside className="rounded-3xl border border-neutral-200/80 bg-background/85 p-6 shadow-lg backdrop-blur sm:p-8 dark:border-neutral-800/80">
-          <div className="mb-7 border-b border-neutral-200 pb-6 dark:border-neutral-800">
-            <div className="mb-3 flex items-center gap-3">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-neutral-950 text-sm font-bold text-white dark:bg-neutral-50 dark:text-neutral-950">
-                02
+        <Card className="relative overflow-hidden p-7 sm:p-9">
+          <div
+            aria-hidden="true"
+            className="absolute right-0 top-0 size-24 border-b border-l border-border bg-surface-muted/70"
+          />
+          <div className="relative">
+            <div className="flex items-start justify-between gap-5">
+              <span className="grid size-12 place-items-center rounded-xl bg-brand-800 text-lg font-bold text-white shadow-sm dark:bg-brand-300 dark:text-brand-950">
+                03
               </span>
-              <h2 className="text-xl font-semibold tracking-tight text-neutral-950 dark:text-neutral-50">
-                {t('foundationTitle')}
-              </h2>
+              <ArrowDownRight
+                aria-hidden="true"
+                className="text-accent-600 dark:text-accent-300"
+                size={28}
+                strokeWidth={1.5}
+              />
             </div>
-            <p className="text-sm leading-6 text-neutral-500 dark:text-neutral-400">
-              {t('foundationDescription')}
+            <Languages
+              aria-hidden="true"
+              className="mt-10 text-brand-700 dark:text-brand-300"
+              size={26}
+              strokeWidth={1.7}
+            />
+            <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight text-foreground">
+              {home('foundationTitle')}
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted">
+              {home('foundationDescription')}
             </p>
           </div>
-
-          <div className="grid gap-6">
-            <LanguageSwitcher />
-            <SupportModeSwitcher />
-          </div>
-        </aside>
-      </main>
-    </div>
+        </Card>
+      </div>
+    </PageContainer>
   )
 }
