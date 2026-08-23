@@ -60,7 +60,10 @@ All public pages must filter by `_status: 'published'`. Drafts must never appear
 
 ## Theme system
 
-Tailwind CSS v4 with `@theme` tokens defined in `app/(frontend)/globals.css`. All styling must use semantic tokens, never hardcoded hex values.
+Tailwind CSS v4 with the canonical `@theme` and semantic color variables in
+`src/styles/theme.css`, imported once by the public `globals.css`. Component
+styles use semantic tokens such as `background`, `surface`, `foreground`,
+`muted`, `border`, and `focus`; hardcoded colors belong only in the token file.
 
 ### Color tokens
 
@@ -77,9 +80,31 @@ Tailwind CSS v4 with `@theme` tokens defined in `app/(frontend)/globals.css`. Al
 - **Border radius:** `radius-sm` through `radius-full`
 - **Shadows:** `shadow-sm`, `shadow-md`, `shadow-lg`
 - **Spacing:** Extends Tailwind defaults with `spacing-18`, `spacing-88`, `spacing-128`
-- **Typography:** `font-sans` (Geist), `font-mono` (Geist Mono)
+- **Body typography:** Geist for Latin text and Noto Sans Bengali for Bangla.
+- **Display typography:** Newsreader for Latin headings and Noto Serif Bengali
+  for Bangla headings.
 
-Light/dark mode uses CSS custom properties `--background` and `--foreground` with `prefers-color-scheme`.
+Light/dark mode uses semantic CSS custom properties with
+`prefers-color-scheme`. There is no manual theme setting yet. Both modes must
+be verified when adding shared UI.
+
+## Shared public UI
+
+The localized layout renders one `AppShell` around every public page. The shell
+owns the skip link, header, main landmark, and footer so route components must
+not add another `<main>`. `PageContainer` supplies consistent public gutters
+and content widths.
+
+Small accessible primitives live in `src/components/ui`. They use native HTML
+semantics first: buttons stay buttons, the language selector stays a select,
+and learning-support mode is a native radio group presented as a segmented
+control. `lucide-react` is the shared icon source. Do not add shadcn, Radix, or
+a second component framework without a feature-specific need.
+
+Layout and presentational components remain server-compatible. Only components
+that read browser state or handle interactive preferences use `'use client'`;
+server layouts compose those client boundaries rather than becoming client
+components themselves.
 
 ## Feature folder pattern
 
