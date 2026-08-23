@@ -12,3 +12,13 @@ export {
   isSelf,
   publishedOrAuthenticated,
 } from './policies'
+export {
+  canAccessAdminPanel,
+  canCreateUsers,
+  canDeleteUsers,
+  canManageUserSecurityFields,
+  canReadUsers,
+  canUnlockUsers,
+  canUpdateOwnEmail,
+  canUpdateUsers,
+} from './users'
