@@ -10,6 +10,7 @@ vashabid/
 │   ├── (frontend)/          # Public site — pages, layouts, loading, error
 │   └── (payload)/           # Payload admin route + REST API route
 ├── collections/             # Payload collection configs
+├── messages/                # Type-checked English and Bangla UI catalogs
 ├── migrations/              # SQL migrations (commit when schema stabilizes)
 ├── src/
 │   ├── components/
@@ -19,7 +20,7 @@ vashabid/
 │   │   ├── words/           # Word browsing, word detail
 │   │   ├── search/          # Search UI and query logic
 │   │   ├── translator/      # Translator UI and service wrapper
-│   │   └── i18n/            # Locale config, message files, support preferences
+│   │   └── i18n/            # Locale config, navigation, message loading, support preferences
 │   ├── lib/
 │   │   └── payload/         # Payload Local API helpers
 │   └── styles/
@@ -122,9 +123,14 @@ Payload CMS handles all authentication via the `users` collection with `auth: tr
 The public UI is bilingual from the first public UI phase.
 
 - Public routes use locale prefixes: `/en` and `/bn`.
-- `/` redirects to the preferred locale when known, otherwise `/en`.
+- `/` resolves the `NEXT_LOCALE` cookie first, then a matching English or Bangla
+  browser language, and otherwise redirects to `/en`.
 - Payload admin remains outside locale routing at `/admin`.
-- `src/features/i18n/` holds locale configuration, message loading, support-language preferences, and helper types.
+- The root proxy excludes `/admin`, `/api`, framework internals, and static files
+  from locale handling.
+- `src/features/i18n/` holds locale configuration, navigation wrappers, message
+  loading, support-language preferences, and helper types. UI catalogs live in
+  `messages/en.json` and `messages/bn.json` and must keep the same key structure.
 - Content collections use separate fields for German source content (`de`), English learner explanations (`en`), and Bangla learner explanations (`bn`).
 - UI locale is separate from learning support mode:
   - `uiLocale`: `en` or `bn`
@@ -133,6 +139,10 @@ The public UI is bilingual from the first public UI phase.
 - English learner content is required for publishing.
 - Bangla learner content can be entered from the first CMS phase, but public display is gated by Bangla review state.
 - If Bangla content is missing or unapproved, public pages show approved English fallback.
+- Anonymous support mode is stored in the one-year
+  `vashabid_support_mode` cookie. A missing or invalid value defaults to the
+  current UI locale; an explicit value remains independent when UI locale
+  changes.
 
 ## Seed strategy
 
@@ -154,4 +164,5 @@ Seed data lives in `src/lib/payload/seed/`. Implementation details for Phase 1:
 | Root-level `src/` | Separates route files from app code; standard Next.js convention |
 | Feature colocation | Components live with their feature, not in a global `components/` dump |
 | Route-based i18n | `/en` and `/bn` improve accessibility, shareability, and future SEO |
+| `next-intl` routing and messages | Provides typed locale navigation, request-scoped messages, browser negotiation, and locale cookies while preserving the App Router architecture |
 | Zod + react-hook-form (not installed yet) | Add when validation-heavy public or learner forms are introduced |

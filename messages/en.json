@@ -1,0 +1,44 @@
+{
+  "Metadata": {
+    "title": "Vashabid — Learn German",
+    "description": "Learn German with explanations in English, Bangla, or both."
+  },
+  "Navigation": {
+    "home": "Home"
+  },
+  "Home": {
+    "eyebrow": "German, clearly connected",
+    "title": "Learn German through the language you know.",
+    "description": "German stays at the center. Choose English, Bangla, or both for the explanations that help you get there.",
+    "targetLanguage": "Target language",
+    "german": "German",
+    "foundationTitle": "Your bilingual foundation is ready",
+    "foundationDescription": "Interface language and learning support are separate, so you can shape each part of the experience independently."
+  },
+  "Languages": {
+    "label": "Interface language",
+    "en": "English",
+    "bn": "বাংলা"
+  },
+  "SupportMode": {
+    "label": "Learning support",
+    "description": "Choose the language used for explanations and translations.",
+    "en": "English",
+    "bn": "বাংলা",
+    "both": "English + বাংলা"
+  },
+  "Common": {
+    "loading": "Loading…",
+    "retry": "Try again",
+    "goHome": "Go home"
+  },
+  "Empty": {
+    "noResults": "There is nothing to show yet."
+  },
+  "Errors": {
+    "genericTitle": "Something went wrong",
+    "unexpected": "An unexpected error occurred.",
+    "notFoundTitle": "Page not found",
+    "notFoundDescription": "The page you are looking for does not exist."
+  }
+}

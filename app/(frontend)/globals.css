@@ -56,6 +56,7 @@
 
   /* Typography */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-bengali: var(--font-bangla), var(--font-geist-sans), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   /* Font sizes */
@@ -119,4 +120,13 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+}
+
+html[lang="bn"] body {
+  font-family: var(--font-bengali);
+}
+
+::selection {
+  background: var(--color-accent-200);
+  color: var(--color-neutral-950);
 }
