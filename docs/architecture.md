@@ -187,13 +187,41 @@ The public UI is bilingual from the first public UI phase.
 
 ## Seed strategy
 
-Seed data lives in `src/lib/payload/seed/`. Implementation details for Phase 1:
+Seed data lives in `src/lib/payload/seed/`:
 
 - **Data files:** `src/lib/payload/seed/data/` — TypeScript arrays of seed documents.
 - **Seeders:** One file per collection (`seedWords.ts`, `seedTags.ts`, etc.).
-- **Orchestrator:** `src/lib/payload/seed/seed.ts` — Clears collections and re-inserts seed data.
-- **Execution:** Run via `tsx src/lib/payload/seed/seed.ts` or a Payload admin hook.
+- **Orchestrator:** `src/lib/payload/seed/seed.ts` — Runs collection seeders through Payload's Local API.
+- **Execution:** Run `pnpm seed`; the command loads optional `.env` and `.env.local` files on host development while respecting injected dev-container variables.
+- **Safety:** Seeders upsert canonical records by stable keys such as `slug`, compare before writing, preserve unrelated records, and must be safe to rerun.
+- **Relationships:** Seed parent records before children and resolve stored relationship IDs from the first pass.
 - **Minimum seed:** 10 German A1/A2 words with English meanings, 5 topic tags.
+
+Phase 5 supplies the five topic tags. Phase 6 will extend the same orchestrator
+with the minimum word data rather than resetting existing collections.
+
+## CMS content foundations
+
+Reusable Payload field factories live in `src/lib/payload/fields/`. Content
+collections should use these helpers instead of recreating schema conventions:
+
+- Slugs are required, unique, indexed, and generated from an explicit source field.
+- CEFR values use the canonical `A1`, `A2`, `B1`, `B2`, `C1`, and `C2` options.
+- Learner support is stored in separate `english` and `bangla` groups; it does
+  not use Payload localization because support mode is independent from UI locale.
+- Review metadata uses configurable `<language>Reviewed` flags. Phase 22 will
+  build the richer review workflow on this stable field shape.
+- Optional source metadata keeps attribution, source URL, license name and URL,
+  and usage notes together.
+- Draft-enabled collections reuse the shared content-version configuration and
+  Payload's generated `_status` field instead of defining a second status field.
+
+`topic-tags` is the first collection using these conventions. Active editors can
+read all tags and save drafts; only active admins can publish, unpublish, restore
+published versions, or delete. Learners and anonymous visitors are constrained
+to published records. Pending Bangla groups are omitted from their responses,
+while editors and admins can inspect them for review. Parent relationships are
+limited to one populated level and reject self-references and descendant cycles.
 
 ## Tech decisions
 
