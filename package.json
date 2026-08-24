@@ -23,7 +23,7 @@
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "ci": "pnpm lint && pnpm test:unit && pnpm build && pnpm test:e2e"
+    "ci": "pnpm lint && pnpm test:unit && pnpm build && pnpm seed && pnpm test:e2e"
   },
   "dependencies": {
     "@payloadcms/db-postgres": "^3.85.0",

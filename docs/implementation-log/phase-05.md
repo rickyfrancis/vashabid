@@ -38,6 +38,9 @@
   canonical repairs, duplicate detection, and preservation of unrelated tags.
 - Added a browser API smoke test proving `/api/topic-tags` remains public and is
   not intercepted by locale routing.
+- Updated the CI gate to initialize and seed its disposable PostgreSQL database
+  before production-mode browser tests. This keeps `next start` schema push
+  disabled while ensuring collection tables exist in a fresh GitHub Actions job.
 
 ## Verification
 
@@ -47,6 +50,7 @@
 - `pnpm build`
 - `pnpm test:e2e`
 - `pnpm seed` twice against local PostgreSQL
+- `pnpm run ci` against a fresh disposable PostgreSQL database
 
 The database contained one record for each canonical slug. All five records were
 published, and `essen-und-trinken` referenced `alltag` as its parent.

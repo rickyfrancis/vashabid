@@ -122,8 +122,14 @@ pnpm seed                 # Idempotently upsert deterministic development data
 pnpm test          # Run unit tests
 pnpm test:watch    # Run unit tests in watch mode
 pnpm test:e2e      # Run E2E tests; Playwright starts the app automatically
-pnpm run ci        # Full CI pipeline: lint → test → build → e2e
+pnpm run ci        # Full CI pipeline: lint → test → build → seed → e2e
 ```
+
+The CI pipeline runs the idempotent seed command after the production build and
+before Playwright. In GitHub Actions this initializes the disposable PostgreSQL
+service while `DATABASE_PUSH=true`; the subsequent `next start` process still
+runs with production schema push disabled. Staging and production deployments
+continue to use committed migrations rather than schema push or CI seeding.
 
 ### E2E prerequisites
 
