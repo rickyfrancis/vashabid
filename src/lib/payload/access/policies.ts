@@ -44,3 +44,15 @@ export const publishedOrAuthenticated: Access = ({ req }) => {
     },
   }
 }
+
+export const publishedOrEditorial: Access = ({ req }) => {
+  const user = getActivePayloadUser(req.user)
+
+  if (user?.role === 'admin' || user?.role === 'editor') return true
+
+  return {
+    _status: {
+      equals: 'published',
+    },
+  }
+}

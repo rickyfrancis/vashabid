@@ -8,6 +8,7 @@ import {
   isLearner,
   isSelf,
   publishedOrAuthenticated,
+  publishedOrEditorial,
 } from '.'
 import type { AccountStatus, UserRole } from './values'
 
@@ -122,5 +123,30 @@ describe('row-level access policies', () => {
         createAccessArgs({ id: 1, role: 'admin' }),
       ),
     ).toEqual(publishedConstraint)
+  })
+
+  test('limits learners and anonymous users to published editorial content', async () => {
+    const publishedConstraint = {
+      _status: { equals: 'published' },
+    }
+
+    expect(
+      await publishedOrEditorial(
+        createAccessArgs(createUser({ role: 'admin' })),
+      ),
+    ).toBe(true)
+    expect(
+      await publishedOrEditorial(
+        createAccessArgs(createUser({ role: 'editor' })),
+      ),
+    ).toBe(true)
+    expect(
+      await publishedOrEditorial(
+        createAccessArgs(createUser({ role: 'learner' })),
+      ),
+    ).toEqual(publishedConstraint)
+    expect(await publishedOrEditorial(createAccessArgs(null))).toEqual(
+      publishedConstraint,
+    )
   })
 })

@@ -26,3 +26,18 @@ test('anonymous visitors cannot create users through the collection API', async 
 
   expect(response.status()).toBe(403)
 })
+
+test('topic tags API remains public and outside locale routing', async ({
+  request,
+}) => {
+  const response = await request.get('/api/topic-tags?limit=5')
+  const body = await response.json()
+
+  expect(response.status()).toBe(200)
+  expect(response.url()).toContain('/api/topic-tags')
+  expect(response.url()).not.toMatch(/\/(?:en|bn)\/api/)
+  expect(body.docs).toBeInstanceOf(Array)
+  expect(
+    body.docs.every((doc: { _status?: string }) => doc._status === 'published'),
+  ).toBe(true)
+})

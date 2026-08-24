@@ -69,6 +69,7 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    'topic-tags': TopicTag;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +79,7 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'topic-tags': TopicTagsSelect<false> | TopicTagsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -168,6 +170,42 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "topic-tags".
+ */
+export interface TopicTag {
+  id: number;
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  english: {
+    description: string;
+  };
+  bangla?: {
+    description?: string | null;
+  };
+  parent?: (number | null) | TopicTag;
+  sortOrder: number;
+  review?: {
+    germanReviewed?: boolean | null;
+    englishReviewed?: boolean | null;
+    banglaReviewed?: boolean | null;
+  };
+  source?: {
+    attribution?: string | null;
+    sourceUrl?: string | null;
+    licenseName?: string | null;
+    licenseUrl?: string | null;
+    usageNotes?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -197,6 +235,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'topic-tags';
+        value: number | TopicTag;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -284,6 +326,46 @@ export interface MediaSelect<T extends boolean = true> {
   height?: T;
   focalX?: T;
   focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "topic-tags_select".
+ */
+export interface TopicTagsSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  english?:
+    | T
+    | {
+        description?: T;
+      };
+  bangla?:
+    | T
+    | {
+        description?: T;
+      };
+  parent?: T;
+  sortOrder?: T;
+  review?:
+    | T
+    | {
+        germanReviewed?: T;
+        englishReviewed?: T;
+        banglaReviewed?: T;
+      };
+  source?:
+    | T
+    | {
+        attribution?: T;
+        sourceUrl?: T;
+        licenseName?: T;
+        licenseUrl?: T;
+        usageNotes?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

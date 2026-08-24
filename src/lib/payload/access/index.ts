@@ -11,6 +11,7 @@ export {
   isLearner,
   isSelf,
   publishedOrAuthenticated,
+  publishedOrEditorial,
 } from './policies'
 export {
   canAccessAdminPanel,
