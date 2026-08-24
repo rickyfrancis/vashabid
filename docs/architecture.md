@@ -138,10 +138,26 @@ Use object-oriented classes where they make dependencies and workflows clearer, 
 
 Payload CMS handles all authentication via the `users` collection with `auth: true`.
 
-- **Admins and editors** use Payload's built-in admin auth (`/admin` login).
-- **Public users** browse without authentication.
-- **Learner accounts** will be added after the public MVP by extending the `users` collection with a `role` field (`admin`, `editor`, `learner`) and building learner-facing login/signup.
+- User roles are `admin`, `editor`, and `learner`. Accounts are either `active`
+  or `suspended`; only active accounts pass authenticated access policies.
+- The first Payload user is forced to active admin. Later users default to active
+  learners, while admins can explicitly assign editorial roles.
+- Admins can manage all users. Editors can enter `/admin`, view themselves and
+  learners, and update learner profile preferences, but cannot create or delete
+  users or change learner credentials, roles, or status. Learners are scoped to
+  their own account and cannot enter `/admin`.
+- Role, account status, UI locale, and support mode are stored on each user.
+  Suspended users receive the same generic error as invalid credentials at login.
+- Reusable Payload policies live in `src/lib/payload/access/`. Local API calls
+  made on behalf of a user must pass both `user` and `overrideAccess: false`.
+- Public visitors browse without authentication. Learner-facing signup, login,
+  logout, and onboarding UI remain deferred to Phase 16.
 - No NextAuth/Auth.js unless social login becomes a requirement.
+
+The project still uses schema push for disposable local databases, so Phase 4
+does not introduce a migration. Before applying these rules to a legacy database,
+backfill every pre-Phase-4 user as active admin to preserve their previous
+effective access; administrators can demote accounts afterward.
 
 ## i18n approach
 
