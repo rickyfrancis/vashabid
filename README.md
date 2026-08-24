@@ -113,6 +113,7 @@ pnpm generate:types       # Regenerate payload-types.ts after schema changes
 pnpm generate:importmap   # Regenerate admin import map
 pnpm migrate:create       # Create migration from current schema
 pnpm migrate              # Run pending migrations
+pnpm seed                 # Idempotently upsert deterministic development data
 ```
 
 ## Testing
