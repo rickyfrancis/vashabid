@@ -96,8 +96,8 @@ test('support switching updates snippets and never reveals pending Bangla', asyn
 }) => {
   await page.goto('/en')
 
-  const approvedCard = page.getByTestId('word-card-machen')
-  const pendingCard = page.getByTestId('word-card-das-brot')
+  const approvedCard = page.getByTestId('word-card-machen').first()
+  const pendingCard = page.getByTestId('word-card-das-brot').first()
   await expect(approvedCard).toContainText('to do; to make')
   await expect(pendingCard).toContainText('bread')
 
@@ -106,10 +106,19 @@ test('support switching updates snippets and never reveals pending Bangla', asyn
     .getByText('English + বাংলা', { exact: true })
     .click()
 
-  await expect(approvedCard).toContainText('করা / তৈরি করা')
-  await expect(pendingCard).toContainText('bread')
-  await expect(pendingCard).not.toContainText('রুটি / পাউরুটি')
-  await expect(pendingCard.getByRole('note')).toHaveText(
+  await expect(
+    page.getByRole('radio', { name: 'English + বাংলা', exact: true }),
+  ).toBeChecked()
+  const updatedApprovedCard = page
+    .getByTestId('word-card-machen')
+    .filter({ hasText: 'করা / তৈরি করা' })
+  const updatedPendingCard = page
+    .getByTestId('word-card-das-brot')
+    .filter({ has: page.getByRole('note') })
+  await expect(updatedApprovedCard).toBeVisible()
+  await expect(updatedPendingCard).toContainText('bread')
+  await expect(updatedPendingCard).not.toContainText('রুটি / পাউরুটি')
+  await expect(updatedPendingCard.getByRole('note')).toHaveText(
     'Bangla is still under review, so English is shown for now.',
   )
 })
