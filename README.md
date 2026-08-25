@@ -146,9 +146,9 @@ PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 pnpm test:e2e
 ```
 
 Use `pnpm run ci` because `pnpm ci` is pnpm's built-in frozen-install command.
-The package script is the verification pipeline used by GitHub Actions. Production
-deployment remains a separate workflow: apply migrations with `pnpm migrate`,
-then build with `pnpm build`.
+The package script is the verification pipeline used by GitHub Actions. Coolify
+builds the application with `pnpm build`; its production start command applies
+pending migrations before starting Next.js.
 
 ## Deployment
 
@@ -159,13 +159,13 @@ Postgres and app on the same VPS — use private networking, no need to expose P
 **Build command:**
 
 ```bash
-pnpm install && pnpm migrate && pnpm build
+pnpm build
 ```
 
 **Start command:**
 
 ```bash
-pnpm start
+pnpm start:production
 ```
 
 **Deploy secrets:** `DATABASE_URL`, `PAYLOAD_SECRET`, `DATABASE_PUSH=false`
@@ -174,7 +174,9 @@ pnpm start
 
 Add `pnpm migrate && pnpm build` as the build command. Ensure Vercel can reach your VPS Postgres (IP allowlist). Set the same deploy secrets.
 
-Run migrations before the build so the production database schema is current. Keep migration files small.
+Coolify runs migrations at container startup because its application container
+can reach Postgres over the private network. Vercel runs migrations before the
+build instead. Keep migration files small.
 
 ## VPS Postgres hardening
 

@@ -12,6 +12,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "start:production": "pnpm migrate && next start",
     "lint": "eslint",
     "payload": "payload",
     "generate:types": "payload generate:types",
