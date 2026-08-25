@@ -247,6 +247,15 @@ German identity fields and applies explicit published-and-active filters; Phase
 10 will replace that narrow preview model with the complete learner-facing word
 detail experience.
 
+The Phase 8 homepage is the first complete public CMS rendering slice. Public
+Local API helpers enforce anonymous collection and field access in addition to
+explicit published filters. `WordRepository` and `TopicTagRepository` own the
+homepage queries, while `WordService` and `HomeService` map raw documents into
+narrow view models. Only approved Bangla values enter client props; the small
+client-side support snippet boundary can therefore switch between English,
+Bangla, and both immediately without exposing editorial metadata or pending
+translations. The localized route component remains a thin server adapter.
+
 Phase 6 continues to use schema push for disposable development and CI databases,
 matching the Phase 5 convention. Persistent staging and production databases
 still require a generated, reviewed migration before deployment.

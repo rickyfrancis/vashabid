@@ -84,6 +84,7 @@ export default async function LocaleLayout({
   return (
     <html
       lang={typedLocale}
+      data-scroll-behavior="smooth"
       className={`${geistSans.variable} ${geistMono.variable} ${newsreader.variable} ${notoSansBengali.variable} ${notoSerifBengali.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">

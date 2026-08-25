@@ -1,11 +1,11 @@
 import { getPayloadClient } from './getPayload'
-import type { CollectionSlug, Where } from 'payload'
+import type { CollectionSlug, Sort, Where } from 'payload'
 
 interface FindOptions {
   depth?: number
   limit?: number
   page?: number
-  sort?: string
+  sort?: Sort
   where?: Where
 }
 
@@ -20,6 +20,7 @@ export async function findPublished(
   const result = await payload.find({
     collection,
     ...options,
+    overrideAccess: false,
     where: {
       ...baseWhere,
       _status: { equals: 'published' },
@@ -40,6 +41,7 @@ export async function findBySlug(
     collection,
     ...options,
     limit: 1,
+    overrideAccess: false,
     where: {
       slug: { equals: slug },
       _status: { equals: 'published' },
