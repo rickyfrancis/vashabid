@@ -195,10 +195,12 @@ Seed data lives in `src/lib/payload/seed/`:
 - **Execution:** Run `pnpm seed`; the command loads optional `.env` and `.env.local` files on host development while respecting injected dev-container variables.
 - **Safety:** Seeders upsert canonical records by stable keys such as `slug`, compare before writing, preserve unrelated records, and must be safe to rerun.
 - **Relationships:** Seed parent records before children and resolve stored relationship IDs from the first pass.
-- **Minimum seed:** 10 German A1/A2 words with English meanings, 5 topic tags.
+- **Minimum seed:** 10 published German A1/A2 words with English meanings and
+  examples, 5 topic tags. Five starter words include Bangla support; four are
+  approved and one remains pending to exercise public visibility rules.
 
-Phase 5 supplies the five topic tags. Phase 6 will extend the same orchestrator
-with the minimum word data rather than resetting existing collections.
+Phase 5 supplies the five topic tags. Phase 6 extends the same orchestrator with
+the minimum word data rather than resetting existing collections.
 
 ## CMS content foundations
 
@@ -222,6 +224,22 @@ published versions, or delete. Learners and anonymous visitors are constrained
 to published records. Pending Bangla groups are omitted from their responses,
 while editors and admins can inspect them for review. Parent relationships are
 limited to one populated level and reject self-references and descendant cycles.
+
+`words` is the core vocabulary collection. It stores indexed German identity
+fields, CEFR and usefulness metadata, noun-specific fields, topic relationships,
+separate English and Bangla learner groups, and aligned multilingual examples.
+English requires at least one meaning for publication; Bangla is optional and
+its group and example explanations are omitted from non-editorial reads until
+the Bangla review flag is approved. Payload `_status` remains the draft/publish
+state, while `lifecycleStatus` independently marks active or archived content.
+Public and learner reads require both a published and active word. Editors can
+save drafts, while only admins can publish, archive, restore published versions,
+or delete. Publication validation is enforced in hooks so REST, Local API, and
+version operations follow the same rules as the admin UI.
+
+Phase 6 continues to use schema push for disposable development and CI databases,
+matching the Phase 5 convention. Persistent staging and production databases
+still require a generated, reviewed migration before deployment.
 
 ## Tech decisions
 

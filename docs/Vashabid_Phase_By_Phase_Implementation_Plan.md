@@ -470,6 +470,7 @@ Create the core German word database with English required and Bangla optional.
   - register
   - frequency/usefulness score
   - topic tags
+  - active or archived lifecycle status
 - Add English learner fields:
   - meanings
   - explanation
@@ -494,6 +495,8 @@ Create the core German word database with English required and Bangla optional.
   - At least one English meaning required.
   - Bangla missing content must not block MVP publishing.
   - Unapproved Bangla must not be shown publicly.
+- Store examples as aligned records with one German sentence, its required
+  English explanation, and an optional review-gated Bangla explanation.
 - Add 10 seed words with English and some Bangla content.
 
 ### Exit criteria
@@ -530,10 +533,11 @@ Make word editing realistic for admins and editors.
   - Examples
   - Relationships
   - Review and publishing
-- Add automatic slug generation from lemma.
+- Polish the automatic lemma-to-slug controls established in Phase 6.
 - Add duplicate warning for same lemma and word type.
 - Add preview links to localized public word pages.
-- Add archive status instead of relying on deletion.
+- Polish the Phase 6 archive controls and admin descriptions instead of relying
+  on deletion as the normal removal workflow.
 - Add admin descriptions for complex fields.
 - Add validation messages that explain how to fix publish blockers.
 
