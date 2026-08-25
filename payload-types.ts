@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     'topic-tags': TopicTag;
+    words: Word;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +81,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'topic-tags': TopicTagsSelect<false> | TopicTagsSelect<true>;
+    words: WordsSelect<false> | WordsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -206,6 +208,88 @@ export interface TopicTag {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "words".
+ */
+export interface Word {
+  id: number;
+  lemma: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  wordType: 'noun' | 'verb' | 'adjective' | 'adverb' | 'preposition' | 'conjunction' | 'phrase' | 'idiom';
+  cefrLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  gender?: ('der' | 'die' | 'das') | null;
+  pluralForm?: string | null;
+  ipa?: string | null;
+  register: 'neutral' | 'formal' | 'informal' | 'slang' | 'academic' | 'official' | 'rude' | 'poetic' | 'archaic';
+  usefulnessScore: number;
+  topicTags?: (number | TopicTag)[] | null;
+  english: {
+    meanings: {
+      meaning: string;
+      id?: string | null;
+    }[];
+    explanation?: string | null;
+    commonMistakes?:
+      | {
+          mistake: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  bangla?: {
+    meanings?:
+      | {
+          meaning: string;
+          id?: string | null;
+        }[]
+      | null;
+    explanation?: string | null;
+    pronunciationHints?:
+      | {
+          hint: string;
+          id?: string | null;
+        }[]
+      | null;
+    commonMistakes?:
+      | {
+          mistake: string;
+          id?: string | null;
+        }[]
+      | null;
+    romanizedHelper?: string | null;
+  };
+  examples?:
+    | {
+        germanSentence: string;
+        englishExplanation: string;
+        banglaExplanation?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  review?: {
+    germanReviewed?: boolean | null;
+    englishReviewed?: boolean | null;
+    banglaReviewed?: boolean | null;
+    audioReviewed?: boolean | null;
+    quizReviewed?: boolean | null;
+  };
+  source?: {
+    attribution?: string | null;
+    sourceUrl?: string | null;
+    licenseName?: string | null;
+    licenseUrl?: string | null;
+    usageNotes?: string | null;
+  };
+  lifecycleStatus: 'active' | 'archived';
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -239,6 +323,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'topic-tags';
         value: number | TopicTag;
+      } | null)
+    | ({
+        relationTo: 'words';
+        value: number | Word;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -363,6 +451,94 @@ export interface TopicTagsSelect<T extends boolean = true> {
         licenseUrl?: T;
         usageNotes?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "words_select".
+ */
+export interface WordsSelect<T extends boolean = true> {
+  lemma?: T;
+  generateSlug?: T;
+  slug?: T;
+  wordType?: T;
+  cefrLevel?: T;
+  gender?: T;
+  pluralForm?: T;
+  ipa?: T;
+  register?: T;
+  usefulnessScore?: T;
+  topicTags?: T;
+  english?:
+    | T
+    | {
+        meanings?:
+          | T
+          | {
+              meaning?: T;
+              id?: T;
+            };
+        explanation?: T;
+        commonMistakes?:
+          | T
+          | {
+              mistake?: T;
+              id?: T;
+            };
+      };
+  bangla?:
+    | T
+    | {
+        meanings?:
+          | T
+          | {
+              meaning?: T;
+              id?: T;
+            };
+        explanation?: T;
+        pronunciationHints?:
+          | T
+          | {
+              hint?: T;
+              id?: T;
+            };
+        commonMistakes?:
+          | T
+          | {
+              mistake?: T;
+              id?: T;
+            };
+        romanizedHelper?: T;
+      };
+  examples?:
+    | T
+    | {
+        germanSentence?: T;
+        englishExplanation?: T;
+        banglaExplanation?: T;
+        id?: T;
+      };
+  review?:
+    | T
+    | {
+        germanReviewed?: T;
+        englishReviewed?: T;
+        banglaReviewed?: T;
+        audioReviewed?: T;
+        quizReviewed?: T;
+      };
+  source?:
+    | T
+    | {
+        attribution?: T;
+        sourceUrl?: T;
+        licenseName?: T;
+        licenseUrl?: T;
+        usageNotes?: T;
+      };
+  lifecycleStatus?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;

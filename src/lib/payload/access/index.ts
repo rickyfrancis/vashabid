@@ -11,6 +11,7 @@ export {
   isLearner,
   isSelf,
   publishedOrAuthenticated,
+  publishedActiveOrEditorial,
   publishedOrEditorial,
 } from './policies'
 export {

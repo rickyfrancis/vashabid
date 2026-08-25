@@ -1,4 +1,4 @@
-import type { Access } from 'payload'
+import type { Access, Where } from 'payload'
 
 import { getActivePayloadUser } from './values'
 import type { UserRole } from './values'
@@ -55,4 +55,27 @@ export const publishedOrEditorial: Access = ({ req }) => {
       equals: 'published',
     },
   }
+}
+
+export const publishedActiveOrEditorial: Access = ({ req }) => {
+  const user = getActivePayloadUser(req.user)
+
+  if (user?.role === 'admin' || user?.role === 'editor') return true
+
+  const publicConstraint: Where = {
+    and: [
+      {
+        _status: {
+          equals: 'published',
+        },
+      },
+      {
+        lifecycleStatus: {
+          equals: 'active',
+        },
+      },
+    ],
+  }
+
+  return publicConstraint
 }

@@ -1,11 +1,7 @@
 import type {
-  CollectionBeforeOperationHook,
   PayloadRequest,
   RelationshipFieldSingleValidation,
 } from 'payload'
-import { Forbidden } from 'payload'
-
-import { getActivePayloadUser } from '../../src/lib/payload/access/values'
 
 const cycleMessage = 'A topic tag cannot be its own parent or descendant.'
 
@@ -22,29 +18,6 @@ function relationshipID(value: unknown): number | string | null {
 
 function sameID(left: number | string, right: number | string): boolean {
   return String(left) === String(right)
-}
-
-export const enforceEditorDrafts: CollectionBeforeOperationHook = ({
-  args,
-  operation,
-  overrideAccess,
-  req,
-}) => {
-  if (overrideAccess) return args
-
-  const user = getActivePayloadUser(req.user)
-
-  if (
-    user?.role === 'editor' &&
-    (operation === 'create' ||
-      operation === 'update' ||
-      operation === 'restoreVersion') &&
-    args.draft !== true
-  ) {
-    throw new Forbidden(req.t)
-  }
-
-  return args
 }
 
 export const validateTopicTagParent: RelationshipFieldSingleValidation = async (
