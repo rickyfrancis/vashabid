@@ -61,6 +61,59 @@ test('English and Bangla routes render localized UI and document language', asyn
   ).toBeVisible()
 })
 
+test('localized home pages render published Payload words and topics', async ({
+  page,
+}) => {
+  await page.goto('/en')
+  await expect(
+    page.getByRole('heading', { name: 'Newest published word' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'Beginner words for A1 and A2' }),
+  ).toBeVisible()
+  await expect(page.getByText('Alltag', { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('searchbox', { name: 'Search German vocabulary' }),
+  ).toBeDisabled()
+  await expect(
+    page.getByRole('link', { name: 'Open word preview' }),
+  ).toHaveAttribute('href', /\/en\/words\//)
+
+  await page.goto('/bn')
+  await expect(
+    page.getByRole('heading', { name: 'সর্বশেষ প্রকাশিত শব্দ' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('heading', { name: 'A1 ও A2 স্তরের প্রাথমিক শব্দ' }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('searchbox', { name: 'জার্মান শব্দভাণ্ডারে খুঁজুন' }),
+  ).toBeDisabled()
+})
+
+test('support switching updates snippets and never reveals pending Bangla', async ({
+  page,
+}) => {
+  await page.goto('/en')
+
+  const approvedCard = page.getByTestId('word-card-machen')
+  const pendingCard = page.getByTestId('word-card-das-brot')
+  await expect(approvedCard).toContainText('to do; to make')
+  await expect(pendingCard).toContainText('bread')
+
+  await page
+    .getByRole('group', { name: 'Learning support' })
+    .getByText('English + বাংলা', { exact: true })
+    .click()
+
+  await expect(approvedCard).toContainText('করা / তৈরি করা')
+  await expect(pendingCard).toContainText('bread')
+  await expect(pendingCard).not.toContainText('রুটি / পাউরুটি')
+  await expect(pendingCard.getByRole('note')).toHaveText(
+    'Bangla is still under review, so English is shown for now.',
+  )
+})
+
 test('language switch preserves location and remembers the explicit locale', async ({
   page,
   context,
