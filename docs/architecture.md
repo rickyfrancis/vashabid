@@ -237,6 +237,16 @@ save drafts, while only admins can publish, archive, restore published versions,
 or delete. Publication validation is enforced in hooks so REST, Local API, and
 version operations follow the same rules as the admin UI.
 
+The Phase 7 Words admin workflow keeps those stored paths intact while arranging
+them into identity, English, Bangla, examples, relationships, and publishing
+sections. A debounced UI-only duplicate check queries the authenticated Words API
+for the same normalized lemma and word type; it is advisory and never replaces
+the unique slug constraint. Active published words expose saved English and
+Bangla preview links. The initial localized preview route deliberately maps only
+German identity fields and applies explicit published-and-active filters; Phase
+10 will replace that narrow preview model with the complete learner-facing word
+detail experience.
+
 Phase 6 continues to use schema push for disposable development and CI databases,
 matching the Phase 5 convention. Persistent staging and production databases
 still require a generated, reviewed migration before deployment.
