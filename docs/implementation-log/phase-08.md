@@ -49,6 +49,7 @@
 - `pnpm build`
 - `pnpm seed`
 - `pnpm test:e2e`
+- `CI=true pnpm run ci` using the production Next.js server
 - Agent-browser visual inspection at English desktop and Bangla mobile sizes
 
 The final suite contains 133 passing unit tests and 20 passing Playwright tests.
