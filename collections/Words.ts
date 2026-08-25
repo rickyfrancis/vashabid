@@ -133,6 +133,16 @@ export const Words: CollectionConfig = {
               required: true,
             },
             {
+              name: 'duplicateWordWarning',
+              type: 'ui',
+              admin: {
+                components: {
+                  Field:
+                    '/src/components/admin/words/duplicate-word-warning#DuplicateWordWarning',
+                },
+              },
+            },
+            {
               ...createCefrField(),
               admin: {
                 description:
@@ -412,6 +422,16 @@ export const Words: CollectionConfig = {
           admin: {
             description:
               'Review flags are independent. Bangla remains hidden publicly until Bangla reviewed is enabled.',
+          },
+        },
+        {
+          name: 'localizedPreviewLinks',
+          type: 'ui',
+          admin: {
+            components: {
+              Field:
+                '/src/components/admin/words/localized-preview-links#LocalizedPreviewLinks',
+            },
           },
         },
       ],

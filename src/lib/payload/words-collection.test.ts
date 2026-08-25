@@ -149,6 +149,24 @@ describe('words collection schema', () => {
       admin: { initCollapsed: false, position: 'sidebar' },
       label: 'Review and publishing',
     })
+    expect(namedField('duplicateWordWarning')).toMatchObject({
+      type: 'ui',
+      admin: {
+        components: {
+          Field:
+            '/src/components/admin/words/duplicate-word-warning#DuplicateWordWarning',
+        },
+      },
+    })
+    expect(namedField('localizedPreviewLinks')).toMatchObject({
+      type: 'ui',
+      admin: {
+        components: {
+          Field:
+            '/src/components/admin/words/localized-preview-links#LocalizedPreviewLinks',
+        },
+      },
+    })
   })
 
   test('enables drafts and useful admin defaults', () => {
