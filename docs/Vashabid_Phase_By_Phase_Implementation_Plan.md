@@ -570,16 +570,17 @@ Replace the starter page with a real localized home page backed by Payload conte
 
 - Build `/[locale]` home page.
 - Show:
-  - search entry point
-  - word of the day or newest published word
-  - beginner A1/A2 words
-  - topic tags
-  - grammar and scenario placeholders if not built yet
+  - an accessible disabled search preview until Phase 11
+  - the newest active published word
+  - six active published beginner A1/A2 words, excluding the featured word
+  - six published topic tags in editorial order
+  - localized grammar and scenario placeholders
 - Use `WordRepository` and `WordService`.
 - Use view models so UI does not depend on raw Payload documents.
 - Respect UI locale for interface strings.
-- Respect support mode for learner content snippets.
+- Make support-mode changes update learner content snippets without a reload.
 - Show English fallback when Bangla is unavailable or unapproved.
+- Never serialize unapproved Bangla content into client component props.
 
 ### Exit criteria
 
