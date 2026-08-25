@@ -61,6 +61,7 @@ describe('content field helpers', () => {
     }
 
     expect(slug.required).toBe(true)
+    expect(slug.label).toBeUndefined()
     expect(slug.unique).toBe(true)
     expect(slug.index).toBe(true)
     expect(slug.admin?.components?.Field).toEqual(
@@ -69,6 +70,16 @@ describe('content field helpers', () => {
       }),
     )
     expect(generateSlug.defaultValue).toBe(true)
+
+    const labeledField = createSlugField({
+      label: 'Public URL slug',
+      sourceField: 'name',
+    })
+    const labeledSlug = labeledField.fields.find(
+      (candidate) => 'name' in candidate && candidate.name === 'slug',
+    )
+
+    expect(labeledSlug?.label).toBe('Public URL slug')
   })
 
   test('uses the canonical CEFR values and supports optional fields', () => {

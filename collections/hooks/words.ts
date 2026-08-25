@@ -1,6 +1,6 @@
 import type {
-  CollectionBeforeChangeHook,
   CollectionBeforeOperationHook,
+  CollectionBeforeValidateHook,
   ValidationFieldError,
 } from 'payload'
 import { ValidationError } from 'payload'
@@ -86,28 +86,30 @@ export function validateWordForPublication(
 
   if (!isNonEmptyText(input.lemma)) {
     errors.push({
-      message: 'A German lemma is required before publishing.',
+      message:
+        'Enter the German headword in German identity before publishing.',
       path: 'lemma',
     })
   }
 
   if (!isNonEmptyText(input.wordType)) {
     errors.push({
-      message: 'A word type is required before publishing.',
+      message: 'Choose a word type in German identity before publishing.',
       path: 'wordType',
     })
   }
 
   if (!isNonEmptyText(input.cefrLevel)) {
     errors.push({
-      message: 'A CEFR level is required before publishing.',
+      message: 'Choose a CEFR level in German identity before publishing.',
       path: 'cefrLevel',
     })
   }
 
   if (!hasEnglishMeaning(input.english?.meanings)) {
     errors.push({
-      message: 'At least one English meaning is required before publishing.',
+      message:
+        'Add at least one non-empty meaning in English support before publishing.',
       path: 'english.meanings',
     })
   }
@@ -131,7 +133,7 @@ export const markWordPublicationIntent: CollectionBeforeOperationHook = ({
   return args
 }
 
-export const enforceWordPublication: CollectionBeforeChangeHook = ({
+export const enforceWordPublication: CollectionBeforeValidateHook = ({
   data,
   originalDoc,
   req,

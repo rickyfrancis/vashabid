@@ -20,6 +20,15 @@
     "foundationTitle": "Your bilingual foundation is ready",
     "foundationDescription": "Interface language and learning support are separate, so you can shape each part of the experience independently."
   },
+  "WordPreview": {
+    "eyebrow": "Published word preview",
+    "publishedStatus": "Public and active",
+    "description": "This compact page confirms that the localized public address and publishing state are ready for learners.",
+    "scopeTitle": "A first look",
+    "scopeDescription": "The complete learning page—with meanings, examples, learner support, and practice—arrives in Phase 10.",
+    "wordType": "Word type",
+    "cefrLevel": "CEFR level"
+  },
   "Languages": {
     "label": "Interface language",
     "en": "English",
