@@ -8,9 +8,9 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { TopicTags, validateSortOrder } from '../../../collections/TopicTags'
 import {
-  enforceEditorDrafts,
   validateTopicTagParent,
 } from '../../../collections/hooks/topicTags'
+import { enforceEditorDrafts } from '../../../collections/hooks/content'
 import type { AccountStatus, UserRole } from './access'
 
 interface TestUser {

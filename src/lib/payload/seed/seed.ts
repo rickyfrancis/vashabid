@@ -1,12 +1,17 @@
 import { getPayloadClient } from '../getPayload'
 import { seedTopicTags } from './seedTopicTags'
+import { seedWords } from './seedWords'
 
 async function runSeed(): Promise<void> {
   const payload = await getPayloadClient()
-  const summary = await seedTopicTags(payload)
+  const topicSummary = await seedTopicTags(payload)
+  const wordSummary = await seedWords(payload)
 
   payload.logger.info(
-    `Topic tags seeded: ${summary.created} created, ${summary.updated} updated, ${summary.unchanged} unchanged.`,
+    `Topic tags seeded: ${topicSummary.created} created, ${topicSummary.updated} updated, ${topicSummary.unchanged} unchanged.`,
+  )
+  payload.logger.info(
+    `Words seeded: ${wordSummary.created} created, ${wordSummary.updated} updated, ${wordSummary.unchanged} unchanged.`,
   )
 }
 

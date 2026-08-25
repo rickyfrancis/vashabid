@@ -15,9 +15,9 @@ import {
   createSourceMetadataField,
 } from '../src/lib/payload/fields'
 import {
-  enforceEditorDrafts,
   validateTopicTagParent,
 } from './hooks/topicTags'
+import { enforceEditorDrafts } from './hooks/content'
 
 export const validateSortOrder: NumberFieldSingleValidation = (value) =>
   value === null || value === undefined ||

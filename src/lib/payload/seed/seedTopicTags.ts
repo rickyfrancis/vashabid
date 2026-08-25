@@ -6,14 +6,9 @@ import type {
 import type { TopicTag } from '../../../../payload-types'
 import { topicTagSeeds } from './data/topicTags'
 import type { TopicTagSeed } from './data/topicTags'
+import type { SeedSummary } from './types'
 
 type TopicTagData = RequiredDataFromCollectionSlug<'topic-tags'>
-
-export interface SeedSummary {
-  created: number
-  unchanged: number
-  updated: number
-}
 
 function relationshipID(value: TopicTag['parent']): number | null {
   if (typeof value === 'number') return value
