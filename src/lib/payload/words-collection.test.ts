@@ -1,7 +1,8 @@
 import type {
   AccessArgs,
-  CollectionBeforeChangeHook,
   CollectionBeforeOperationHook,
+  CollectionBeforeValidateHook,
+  Field,
   PayloadRequest,
 } from 'payload'
 import { Forbidden, ValidationError } from 'payload'
@@ -50,9 +51,30 @@ function createAccessArgs(user: unknown): AccessArgs {
 }
 
 function namedField(name: string) {
-  const field = Words.fields.find(
-    (candidate) => 'name' in candidate && candidate.name === name,
-  )
+  function find(fields: Field[]): Field | undefined {
+    for (const field of fields) {
+      if ('name' in field && field.name === name) return field
+
+      if (field.type === 'tabs') {
+        const nested = find(field.tabs.flatMap((tab) => tab.fields))
+        if (nested) return nested
+      }
+
+      if (
+        field.type === 'array' ||
+        field.type === 'collapsible' ||
+        field.type === 'group' ||
+        field.type === 'row'
+      ) {
+        const nested = find(field.fields)
+        if (nested) return nested
+      }
+    }
+
+    return undefined
+  }
+
+  const field = find(Words.fields)
 
   if (!field) throw new Error(`Missing field: ${name}`)
   return field
@@ -91,7 +113,7 @@ function changeArgs(
     req: {
       context,
     } as PayloadRequest,
-  } as unknown as Parameters<CollectionBeforeChangeHook>[0]
+  } as unknown as Parameters<CollectionBeforeValidateHook>[0]
 }
 
 const validPublication = {
@@ -104,6 +126,31 @@ const validPublication = {
 }
 
 describe('words collection schema', () => {
+  test('organizes editing into stable workflow sections', () => {
+    const tabs = Words.fields.find((field) => field.type === 'tabs')
+    const publishing = Words.fields.find(
+      (field) => field.type === 'collapsible',
+    )
+
+    if (!tabs || tabs.type !== 'tabs') throw new Error('Missing workflow tabs')
+    if (!publishing || publishing.type !== 'collapsible') {
+      throw new Error('Missing publishing sidebar')
+    }
+
+    expect(tabs.tabs.map((tab) => tab.label)).toEqual([
+      'German identity',
+      'English support',
+      'Bangla support',
+      'Examples',
+      'Relationships',
+    ])
+    expect(tabs.tabs.every((tab) => !('name' in tab))).toBe(true)
+    expect(publishing).toMatchObject({
+      admin: { initCollapsed: false, position: 'sidebar' },
+      label: 'Review and publishing',
+    })
+  })
+
   test('enables drafts and useful admin defaults', () => {
     expect(Words.slug).toBe('words')
     expect(Words.versions).toEqual({
@@ -162,9 +209,11 @@ describe('words collection schema', () => {
     expect(lifecycle).toMatchObject({
       defaultValue: 'active',
       index: true,
+      label: 'Public lifecycle',
       required: true,
       type: 'select',
     })
+    expect(lifecycle.admin?.description).toContain('Archive instead of deleting')
   })
 
   test('models noun-only fields, usefulness, and topic relationships', async () => {
@@ -382,10 +431,24 @@ describe('words access and workflow', () => {
 describe('word publication validation', () => {
   test('reports each publication blocker with a stable field path', () => {
     expect(validateWordForPublication({})).toEqual([
-      expect.objectContaining({ path: 'lemma' }),
-      expect.objectContaining({ path: 'wordType' }),
-      expect.objectContaining({ path: 'cefrLevel' }),
-      expect.objectContaining({ path: 'english.meanings' }),
+      {
+        message:
+          'Enter the German headword in German identity before publishing.',
+        path: 'lemma',
+      },
+      {
+        message: 'Choose a word type in German identity before publishing.',
+        path: 'wordType',
+      },
+      {
+        message: 'Choose a CEFR level in German identity before publishing.',
+        path: 'cefrLevel',
+      },
+      {
+        message:
+          'Add at least one non-empty meaning in English support before publishing.',
+        path: 'english.meanings',
+      },
     ])
   })
 

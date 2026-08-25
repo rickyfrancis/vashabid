@@ -80,6 +80,8 @@ export const Words: CollectionConfig = {
     update: isAdminOrEditor,
   },
   admin: {
+    description:
+      'Create and review German vocabulary with independent English and Bangla learner support.',
     defaultColumns: [
       'lemma',
       'wordType',
@@ -91,209 +93,334 @@ export const Words: CollectionConfig = {
   },
   fields: [
     {
-      name: 'lemma',
-      type: 'text',
-      index: true,
-      label: 'German lemma',
-      required: true,
-    },
-    createSlugField({ sourceField: 'lemma' }),
-    {
-      name: 'wordType',
-      type: 'select',
-      index: true,
-      label: 'Word type',
-      options: wordTypes.map((wordType) => ({
-        label: wordType[0].toUpperCase() + wordType.slice(1),
-        value: wordType,
-      })),
-      required: true,
-    },
-    {
-      ...createCefrField(),
-      index: true,
-    },
-    {
-      name: 'gender',
-      type: 'select',
-      admin: {
-        condition: isNoun,
-      },
-      label: 'Noun gender',
-      options: ['der', 'die', 'das'],
-    },
-    {
-      name: 'pluralForm',
-      type: 'text',
-      admin: {
-        condition: isNoun,
-      },
-      label: 'Plural form',
-    },
-    {
-      name: 'ipa',
-      type: 'text',
-      label: 'IPA pronunciation',
-    },
-    {
-      name: 'register',
-      type: 'select',
-      defaultValue: 'neutral',
-      options: wordRegisters.map((wordRegister) => ({
-        label: wordRegister[0].toUpperCase() + wordRegister.slice(1),
-        value: wordRegister,
-      })),
-      required: true,
-    },
-    {
-      name: 'usefulnessScore',
-      type: 'number',
-      admin: {
-        position: 'sidebar',
-      },
-      label: 'Usefulness score',
-      required: true,
-      validate: validateUsefulnessScore,
-    },
-    {
-      name: 'topicTags',
-      type: 'relationship',
-      hasMany: true,
-      label: 'Topic tags',
-      maxDepth: 1,
-      relationTo: 'topic-tags',
-    },
-    createEnglishLearnerFields([
-      {
-        name: 'meanings',
-        type: 'array',
-        fields: [
-          {
-            name: 'meaning',
-            type: 'text',
-            required: true,
-          },
-        ],
-        label: 'Meanings',
-        minRows: 1,
-        required: true,
-      },
-      {
-        name: 'explanation',
-        type: 'textarea',
-      },
-      {
-        name: 'commonMistakes',
-        type: 'array',
-        fields: [
-          {
-            name: 'mistake',
-            type: 'textarea',
-            required: true,
-          },
-        ],
-        label: 'Common English-speaker mistakes',
-      },
-    ]),
-    createBanglaLearnerFields([
-      {
-        name: 'meanings',
-        type: 'array',
-        fields: [
-          {
-            name: 'meaning',
-            type: 'text',
-            required: true,
-          },
-        ],
-        label: 'Meanings',
-      },
-      {
-        name: 'explanation',
-        type: 'textarea',
-      },
-      {
-        name: 'pronunciationHints',
-        type: 'array',
-        fields: [
-          {
-            name: 'hint',
-            type: 'textarea',
-            required: true,
-          },
-        ],
-        label: 'Pronunciation hints',
-      },
-      {
-        name: 'commonMistakes',
-        type: 'array',
-        fields: [
-          {
-            name: 'mistake',
-            type: 'textarea',
-            required: true,
-          },
-        ],
-        label: 'Common Bangla-speaker mistakes',
-      },
-      {
-        name: 'romanizedHelper',
-        type: 'text',
-        label: 'Romanized Bangla helper',
-      },
-    ]),
-    {
-      name: 'examples',
-      type: 'array',
-      fields: [
+      type: 'tabs',
+      tabs: [
         {
-          name: 'germanSentence',
-          type: 'textarea',
-          label: 'German sentence',
-          required: true,
+          label: 'German identity',
+          admin: {
+            description:
+              'Define the canonical German headword and the metadata used to classify it.',
+          },
+          fields: [
+            {
+              name: 'lemma',
+              type: 'text',
+              admin: {
+                description:
+                  'Use the dictionary headword, including the article for nouns. The locked public URL slug follows this value.',
+              },
+              index: true,
+              label: 'German lemma',
+              required: true,
+            },
+            createSlugField({
+              label: 'Public URL slug',
+              sourceField: 'lemma',
+            }),
+            {
+              name: 'wordType',
+              type: 'select',
+              admin: {
+                description:
+                  'Choose the grammatical category used to reveal relevant fields and public labels.',
+              },
+              index: true,
+              label: 'Word type',
+              options: wordTypes.map((wordType) => ({
+                label: wordType[0].toUpperCase() + wordType.slice(1),
+                value: wordType,
+              })),
+              required: true,
+            },
+            {
+              ...createCefrField(),
+              admin: {
+                description:
+                  'Choose the earliest CEFR level at which this word should be introduced.',
+                width: '50%',
+              },
+              index: true,
+            },
+            {
+              name: 'gender',
+              type: 'select',
+              admin: {
+                condition: isNoun,
+                description:
+                  'Select the definite article that identifies the noun gender.',
+                width: '50%',
+              },
+              label: 'Noun gender',
+              options: ['der', 'die', 'das'],
+            },
+            {
+              name: 'pluralForm',
+              type: 'text',
+              admin: {
+                condition: isNoun,
+                description:
+                  'Enter the complete plural form, including the article when useful.',
+              },
+              label: 'Plural form',
+            },
+            {
+              name: 'ipa',
+              type: 'text',
+              admin: {
+                description:
+                  'Use a standard German IPA transcription, including slashes when appropriate.',
+              },
+              label: 'IPA pronunciation',
+            },
+            {
+              name: 'register',
+              type: 'select',
+              admin: {
+                description:
+                  'Describe the social or stylistic context in which the word is normally used.',
+                width: '50%',
+              },
+              defaultValue: 'neutral',
+              options: wordRegisters.map((wordRegister) => ({
+                label: wordRegister[0].toUpperCase() + wordRegister.slice(1),
+                value: wordRegister,
+              })),
+              required: true,
+            },
+            {
+              name: 'usefulnessScore',
+              type: 'number',
+              admin: {
+                description:
+                  'Rate practical learning value from 1 (specialized) to 5 (essential).',
+                width: '50%',
+              },
+              label: 'Usefulness score',
+              required: true,
+              validate: validateUsefulnessScore,
+            },
+          ],
         },
         {
-          name: 'englishExplanation',
-          type: 'textarea',
-          label: 'English explanation',
-          required: true,
+          label: 'English support',
+          admin: {
+            description:
+              'English meanings are required for publishing; explanations and learner mistakes add teaching context.',
+          },
+          fields: [
+            createEnglishLearnerFields([
+              {
+                name: 'meanings',
+                type: 'array',
+                admin: {
+                  description:
+                    'Add at least one concise, non-empty English meaning before publishing.',
+                },
+                fields: [
+                  {
+                    name: 'meaning',
+                    type: 'text',
+                    required: true,
+                  },
+                ],
+                label: 'Meanings',
+                minRows: 1,
+                required: true,
+              },
+              {
+                name: 'explanation',
+                type: 'textarea',
+                admin: {
+                  description:
+                    'Explain usage in clear language appropriate for the selected CEFR level.',
+                },
+              },
+              {
+                name: 'commonMistakes',
+                type: 'array',
+                fields: [
+                  {
+                    name: 'mistake',
+                    type: 'textarea',
+                    required: true,
+                  },
+                ],
+                label: 'Common English-speaker mistakes',
+              },
+            ]),
+          ],
         },
         {
-          name: 'banglaExplanation',
-          type: 'textarea',
-          access: {
-            read: canReadBanglaLearnerContent,
+          label: 'Bangla support',
+          admin: {
+            description:
+              'Bangla support is optional for publishing and remains hidden publicly until Bangla review is approved.',
           },
-          label: 'Bangla explanation',
+          fields: [
+            createBanglaLearnerFields([
+              {
+                name: 'meanings',
+                type: 'array',
+                fields: [
+                  {
+                    name: 'meaning',
+                    type: 'text',
+                    required: true,
+                  },
+                ],
+                label: 'Meanings',
+              },
+              {
+                name: 'explanation',
+                type: 'textarea',
+              },
+              {
+                name: 'pronunciationHints',
+                type: 'array',
+                fields: [
+                  {
+                    name: 'hint',
+                    type: 'textarea',
+                    required: true,
+                  },
+                ],
+                label: 'Pronunciation hints',
+              },
+              {
+                name: 'commonMistakes',
+                type: 'array',
+                fields: [
+                  {
+                    name: 'mistake',
+                    type: 'textarea',
+                    required: true,
+                  },
+                ],
+                label: 'Common Bangla-speaker mistakes',
+              },
+              {
+                name: 'romanizedHelper',
+                type: 'text',
+                admin: {
+                  description:
+                    'Optional search or onboarding aid; Bangla script remains the primary learner content.',
+                },
+                label: 'Romanized Bangla helper',
+              },
+            ]),
+          ],
+        },
+        {
+          label: 'Examples',
+          admin: {
+            description:
+              'Keep every German sentence aligned with its learner-language explanations.',
+          },
+          fields: [
+            {
+              name: 'examples',
+              type: 'array',
+              admin: {
+                description:
+                  'English is required for each example. Bangla is optional and follows the word-level Bangla review gate.',
+              },
+              fields: [
+                {
+                  name: 'germanSentence',
+                  type: 'textarea',
+                  label: 'German sentence',
+                  required: true,
+                },
+                {
+                  name: 'englishExplanation',
+                  type: 'textarea',
+                  label: 'English explanation',
+                  required: true,
+                },
+                {
+                  name: 'banglaExplanation',
+                  type: 'textarea',
+                  access: {
+                    read: canReadBanglaLearnerContent,
+                  },
+                  label: 'Bangla explanation',
+                },
+              ],
+              label: 'Example sentences',
+            },
+          ],
+        },
+        {
+          label: 'Relationships',
+          admin: {
+            description:
+              'Connect the word to learning topics and record reusable source and licensing details.',
+          },
+          fields: [
+            {
+              name: 'topicTags',
+              type: 'relationship',
+              admin: {
+                description:
+                  'Choose every topic under which learners should be able to discover this word.',
+              },
+              hasMany: true,
+              label: 'Topic tags',
+              maxDepth: 1,
+              relationTo: 'topic-tags',
+            },
+            {
+              ...createSourceMetadataField(),
+              admin: {
+                description:
+                  'Record attribution, URLs, licensing, and any restrictions before reusing sourced material.',
+              },
+            },
+          ],
         },
       ],
-      label: 'Example sentences',
     },
-    createReviewMetadataField(),
-    createSourceMetadataField(),
     {
-      name: 'lifecycleStatus',
-      type: 'select',
-      access: {
-        create: canManageWordLifecycle,
-        update: canManageWordLifecycle,
-      },
+      type: 'collapsible',
       admin: {
+        initCollapsed: false,
         position: 'sidebar',
       },
-      defaultValue: 'active',
-      index: true,
-      label: 'Lifecycle status',
-      options: wordLifecycleStatuses.map((status) => ({
-        label: status[0].toUpperCase() + status.slice(1),
-        value: status,
-      })),
-      required: true,
+      fields: [
+        {
+          name: 'lifecycleStatus',
+          type: 'select',
+          access: {
+            create: canManageWordLifecycle,
+            update: canManageWordLifecycle,
+          },
+          admin: {
+            description:
+              'Archive instead of deleting: archived words disappear from public pages while versions and references remain intact.',
+          },
+          defaultValue: 'active',
+          index: true,
+          label: 'Public lifecycle',
+          options: wordLifecycleStatuses.map((status) => ({
+            label: status[0].toUpperCase() + status.slice(1),
+            value: status,
+          })),
+          required: true,
+        },
+        {
+          ...createReviewMetadataField(),
+          admin: {
+            description:
+              'Review flags are independent. Bangla remains hidden publicly until Bangla reviewed is enabled.',
+          },
+        },
+      ],
+      label: 'Review and publishing',
     },
   ],
   hooks: {
-    beforeChange: [enforceWordPublication],
     beforeOperation: [enforceEditorDrafts, markWordPublicationIntent],
+    beforeValidate: [enforceWordPublication],
   },
   versions: contentVersions,
 }

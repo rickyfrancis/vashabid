@@ -207,30 +207,61 @@ export interface TopicTag {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Create and review German vocabulary with independent English and Bangla learner support.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "words".
  */
 export interface Word {
   id: number;
+  /**
+   * Use the dictionary headword, including the article for nouns. The locked public URL slug follows this value.
+   */
   lemma: string;
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
   slug: string;
+  /**
+   * Choose the grammatical category used to reveal relevant fields and public labels.
+   */
   wordType: 'noun' | 'verb' | 'adjective' | 'adverb' | 'preposition' | 'conjunction' | 'phrase' | 'idiom';
+  /**
+   * Choose the earliest CEFR level at which this word should be introduced.
+   */
   cefrLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  /**
+   * Select the definite article that identifies the noun gender.
+   */
   gender?: ('der' | 'die' | 'das') | null;
+  /**
+   * Enter the complete plural form, including the article when useful.
+   */
   pluralForm?: string | null;
+  /**
+   * Use a standard German IPA transcription, including slashes when appropriate.
+   */
   ipa?: string | null;
+  /**
+   * Describe the social or stylistic context in which the word is normally used.
+   */
   register: 'neutral' | 'formal' | 'informal' | 'slang' | 'academic' | 'official' | 'rude' | 'poetic' | 'archaic';
+  /**
+   * Rate practical learning value from 1 (specialized) to 5 (essential).
+   */
   usefulnessScore: number;
-  topicTags?: (number | TopicTag)[] | null;
   english: {
+    /**
+     * Add at least one concise, non-empty English meaning before publishing.
+     */
     meanings: {
       meaning: string;
       id?: string | null;
     }[];
+    /**
+     * Explain usage in clear language appropriate for the selected CEFR level.
+     */
     explanation?: string | null;
     commonMistakes?:
       | {
@@ -259,8 +290,14 @@ export interface Word {
           id?: string | null;
         }[]
       | null;
+    /**
+     * Optional search or onboarding aid; Bangla script remains the primary learner content.
+     */
     romanizedHelper?: string | null;
   };
+  /**
+   * English is required for each example. Bangla is optional and follows the word-level Bangla review gate.
+   */
   examples?:
     | {
         germanSentence: string;
@@ -269,13 +306,13 @@ export interface Word {
         id?: string | null;
       }[]
     | null;
-  review?: {
-    germanReviewed?: boolean | null;
-    englishReviewed?: boolean | null;
-    banglaReviewed?: boolean | null;
-    audioReviewed?: boolean | null;
-    quizReviewed?: boolean | null;
-  };
+  /**
+   * Choose every topic under which learners should be able to discover this word.
+   */
+  topicTags?: (number | TopicTag)[] | null;
+  /**
+   * Record attribution, URLs, licensing, and any restrictions before reusing sourced material.
+   */
   source?: {
     attribution?: string | null;
     sourceUrl?: string | null;
@@ -283,7 +320,20 @@ export interface Word {
     licenseUrl?: string | null;
     usageNotes?: string | null;
   };
+  /**
+   * Archive instead of deleting: archived words disappear from public pages while versions and references remain intact.
+   */
   lifecycleStatus: 'active' | 'archived';
+  /**
+   * Review flags are independent. Bangla remains hidden publicly until Bangla reviewed is enabled.
+   */
+  review?: {
+    germanReviewed?: boolean | null;
+    englishReviewed?: boolean | null;
+    banglaReviewed?: boolean | null;
+    audioReviewed?: boolean | null;
+    quizReviewed?: boolean | null;
+  };
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -470,7 +520,6 @@ export interface WordsSelect<T extends boolean = true> {
   ipa?: T;
   register?: T;
   usefulnessScore?: T;
-  topicTags?: T;
   english?:
     | T
     | {
@@ -520,15 +569,7 @@ export interface WordsSelect<T extends boolean = true> {
         banglaExplanation?: T;
         id?: T;
       };
-  review?:
-    | T
-    | {
-        germanReviewed?: T;
-        englishReviewed?: T;
-        banglaReviewed?: T;
-        audioReviewed?: T;
-        quizReviewed?: T;
-      };
+  topicTags?: T;
   source?:
     | T
     | {
@@ -539,6 +580,15 @@ export interface WordsSelect<T extends boolean = true> {
         usageNotes?: T;
       };
   lifecycleStatus?: T;
+  review?:
+    | T
+    | {
+        germanReviewed?: T;
+        englishReviewed?: T;
+        banglaReviewed?: T;
+        audioReviewed?: T;
+        quizReviewed?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;

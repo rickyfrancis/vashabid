@@ -24,6 +24,7 @@ export type ReviewTarget = (typeof reviewTargets)[number]
 
 interface SlugFieldOptions {
   checkboxName?: string
+  label?: string
   name?: string
   sourceField: string
 }
@@ -54,12 +55,22 @@ export const canReadBanglaLearnerContent: FieldAccess = ({ doc, req }) => {
 
 export function createSlugField({
   checkboxName,
+  label,
   name = 'slug',
   sourceField,
 }: SlugFieldOptions): RowField {
   return slugField({
     checkboxName,
     name,
+    overrides: (field) => {
+      for (const candidate of field.fields) {
+        if (candidate.type === 'text' && candidate.name === name && label) {
+          candidate.label = label
+        }
+      }
+
+      return field
+    },
     position: 'sidebar',
     required: true,
     useAsSlug: sourceField,
