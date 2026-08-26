@@ -1,17 +1,9 @@
-import type { Word } from '@payload-types'
+import type {
+  HomeWordViewModel,
+  LearnerSupportViewModel,
+} from '@/features/words/types'
 
-export interface LearnerSupportViewModel {
-  bangla: string | null
-  english: string
-}
-
-export interface HomeWordViewModel {
-  cefrLevel: Word['cefrLevel']
-  lemma: string
-  slug: string
-  support: LearnerSupportViewModel
-  wordType: Word['wordType']
-}
+export type { HomeWordViewModel } from '@/features/words/types'
 
 export interface HomeTopicViewModel {
   description: LearnerSupportViewModel

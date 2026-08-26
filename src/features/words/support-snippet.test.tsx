@@ -2,8 +2,11 @@ import { NextIntlClientProvider } from 'next-intl'
 import { describe, expect, test } from 'vitest'
 
 import enMessages from '../../../messages/en.json'
-import { SupportModeProvider, useSupportMode } from '@/features/i18n/support-mode-provider'
 import type { SupportMode } from '@/features/i18n/support-mode'
+import {
+  SupportModeProvider,
+  useSupportMode,
+} from '@/features/i18n/support-mode-provider'
 import { fireEvent, render, screen } from '@/test/render'
 import { SupportSnippet } from './support-snippet'
 

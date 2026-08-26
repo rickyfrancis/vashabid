@@ -21,23 +21,14 @@ import {
   createSlugField,
   createSourceMetadataField,
 } from '../src/lib/payload/fields'
+import { wordTypes } from '../src/features/words/constants'
 import { enforceEditorDrafts } from './hooks/content'
 import {
   enforceWordPublication,
   markWordPublicationIntent,
 } from './hooks/words'
 
-export const wordTypes = [
-  'noun',
-  'verb',
-  'adjective',
-  'adverb',
-  'preposition',
-  'conjunction',
-  'phrase',
-  'idiom',
-] as const
-export type WordType = (typeof wordTypes)[number]
+export { wordTypes, type WordType } from '../src/features/words/constants'
 
 export const wordRegisters = [
   'neutral',

@@ -38,4 +38,42 @@ describe('WordRepository', () => {
       },
     })
   })
+
+  test('composes a paginated active browse query with every filter', async () => {
+    await new WordRepository().findPublishedPage({
+      cefrLevel: 'A2',
+      page: 2,
+      topicId: 17,
+      wordType: 'noun',
+    })
+
+    expect(findPublished).toHaveBeenCalledWith('words', {
+      depth: 0,
+      limit: 6,
+      page: 2,
+      sort: ['cefrLevel', 'lemma', 'slug'],
+      where: {
+        and: [
+          { lifecycleStatus: { equals: 'active' } },
+          { cefrLevel: { equals: 'A2' } },
+          { wordType: { equals: 'noun' } },
+          { topicTags: { equals: 17 } },
+        ],
+      },
+    })
+  })
+
+  test('keeps the unfiltered browse query published, active, and stable', async () => {
+    await new WordRepository().findPublishedPage({ page: 1 })
+
+    expect(findPublished).toHaveBeenCalledWith('words', {
+      depth: 0,
+      limit: 6,
+      page: 1,
+      sort: ['cefrLevel', 'lemma', 'slug'],
+      where: {
+        and: [{ lifecycleStatus: { equals: 'active' } }],
+      },
+    })
+  })
 })

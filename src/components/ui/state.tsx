@@ -6,6 +6,7 @@ type StateProps = {
   action?: ReactNode
   className?: string
   description: string
+  headingLevel?: 1 | 2
   icon?: LucideIcon
   title: string
 }
@@ -14,6 +15,7 @@ function StatePanel({
   action,
   className,
   description,
+  headingLevel = 1,
   icon: Icon,
   role,
   title,
@@ -32,12 +34,21 @@ function StatePanel({
       <span className="grid size-12 place-items-center rounded-full border border-accent-300 bg-accent-100 text-accent-800 dark:border-accent-800 dark:bg-accent-950 dark:text-accent-200">
         <Icon aria-hidden="true" size={22} strokeWidth={1.8} />
       </span>
-      <h1
-        className="mt-5 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
-        id={titleId}
-      >
-        {title}
-      </h1>
+      {headingLevel === 2 ? (
+        <h2
+          className="mt-5 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+          id={titleId}
+        >
+          {title}
+        </h2>
+      ) : (
+        <h1
+          className="mt-5 font-display text-3xl font-semibold tracking-tight text-foreground sm:text-4xl"
+          id={titleId}
+        >
+          {title}
+        </h1>
+      )}
       <p className="mt-3 max-w-md text-pretty leading-7 text-muted">
         {description}
       </p>

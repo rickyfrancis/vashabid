@@ -256,6 +256,17 @@ client-side support snippet boundary can therefore switch between English,
 Bangla, and both immediately without exposing editorial metadata or pending
 translations. The localized route component remains a thin server adapter.
 
+The Phase 9 word catalogue extends the same boundary at `/[locale]/words`.
+`WordRepository` owns the published-active Payload query and combines optional
+CEFR, word-type, and published topic constraints with a stable six-word page.
+`WordService` treats search parameters as untrusted input, resolves topic slugs
+through the published topic repository, produces narrow card and pagination view
+models, and requests canonical redirects for invalid or out-of-range URLs. The
+public contract uses one optional value each for `level`, `type`, and `topic`,
+plus `page` when greater than one. The global cookie-backed support mode remains
+outside this query contract and updates safe card snippets client-side. Topic IDs,
+review metadata, sources, and unapproved Bangla never enter client props.
+
 Phase 6 continues to use schema push for disposable development and CI databases,
 matching the Phase 5 convention. Persistent staging and production databases
 still require a generated, reviewed migration before deployment.

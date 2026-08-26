@@ -1,6 +1,9 @@
 import type { Word } from '@payload-types'
+import type { PaginatedDocs, Where } from 'payload'
 
 import { findPublished } from '@/lib/payload'
+import { WORD_BROWSE_PAGE_SIZE } from './constants'
+import type { WordBrowseRepositoryFilters } from './types'
 
 export class WordRepository {
   constructor(private readonly find = findPublished) {}
@@ -32,5 +35,31 @@ export class WordRepository {
     })
 
     return docs as Word[]
+  }
+
+  async findPublishedPage(
+    filters: WordBrowseRepositoryFilters,
+  ): Promise<PaginatedDocs<Word>> {
+    const clauses: Where[] = [
+      { lifecycleStatus: { equals: 'active' } },
+    ]
+
+    if (filters.cefrLevel) {
+      clauses.push({ cefrLevel: { equals: filters.cefrLevel } })
+    }
+    if (filters.wordType) {
+      clauses.push({ wordType: { equals: filters.wordType } })
+    }
+    if (filters.topicId !== undefined) {
+      clauses.push({ topicTags: { equals: filters.topicId } })
+    }
+
+    return (await this.find('words', {
+      depth: 0,
+      limit: WORD_BROWSE_PAGE_SIZE,
+      page: filters.page,
+      sort: ['cefrLevel', 'lemma', 'slug'],
+      where: { and: clauses },
+    })) as PaginatedDocs<Word>
   }
 }

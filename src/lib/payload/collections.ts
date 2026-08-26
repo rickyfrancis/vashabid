@@ -5,6 +5,7 @@ interface FindOptions {
   depth?: number
   limit?: number
   page?: number
+  pagination?: boolean
   sort?: Sort
   where?: Where
 }

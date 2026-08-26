@@ -1,8 +1,8 @@
 import type { TopicTag } from '@payload-types'
 
+import { TopicTagRepository } from '@/features/topics/repository'
 import { WordRepository } from '@/features/words/repository'
 import { WordService } from '@/features/words/service'
-import { TopicTagRepository } from './repository'
 import type {
   HomePageViewModel,
   HomeTopicViewModel,
