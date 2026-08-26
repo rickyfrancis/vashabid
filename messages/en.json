@@ -4,7 +4,9 @@
     "description": "Learn German with explanations in English, Bangla, or both."
   },
   "Navigation": {
-    "home": "Home"
+    "home": "Home",
+    "primary": "Primary navigation",
+    "words": "Browse words"
   },
   "Shell": {
     "skipToContent": "Skip to content",
@@ -45,17 +47,42 @@
     "emptyWordsTitle": "The word desk is being prepared",
     "emptyWordsDescription": "Published German words will appear here as soon as the editorial team releases them.",
     "emptyTopicsTitle": "Topics are being organized",
-    "emptyTopicsDescription": "Published vocabulary topics will appear here when they are ready.",
-    "wordTypes": {
-      "noun": "Noun",
-      "verb": "Verb",
-      "adjective": "Adjective",
-      "adverb": "Adverb",
-      "preposition": "Preposition",
-      "conjunction": "Conjunction",
-      "phrase": "Phrase",
-      "idiom": "Idiom"
-    }
+    "emptyTopicsDescription": "Published vocabulary topics will appear here when they are ready."
+  },
+  "WordTypes": {
+    "noun": "Noun",
+    "verb": "Verb",
+    "adjective": "Adjective",
+    "adverb": "Adverb",
+    "preposition": "Preposition",
+    "conjunction": "Conjunction",
+    "phrase": "Phrase",
+    "idiom": "Idiom"
+  },
+  "Words": {
+    "eyebrow": "The vocabulary index",
+    "title": "Browse the German word desk.",
+    "description": "Move through published German vocabulary by level, word type, or learning topic. Your support-language choice follows you across every card.",
+    "filtersTitle": "Refine the index",
+    "filtersEyebrow": "Three ways to narrow",
+    "levelLabel": "CEFR level",
+    "allLevels": "All levels",
+    "typeLabel": "Word type",
+    "allTypes": "All word types",
+    "topicLabel": "Learning topic",
+    "allTopics": "All topics",
+    "applyFilters": "Apply filters",
+    "clearFilters": "Clear filters",
+    "resultCount": "{count, plural, =0 {No published words} one {# published word} other {# published words}}",
+    "supportHint": "Meanings follow the learning support setting above.",
+    "cardTopics": "Learning topics",
+    "noTopics": "No topic assigned",
+    "emptyTitle": "No words match this index",
+    "emptyDescription": "Try clearing one or more filters to return to the full published vocabulary list.",
+    "paginationLabel": "Word browse pages",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pagePosition": "Page {page} of {totalPages}"
   },
   "LearnerSupport": {
     "englishLabel": "English",

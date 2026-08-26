@@ -78,7 +78,7 @@ function HomeEmptyState({
 }
 
 function WordCard({ word }: { word: HomeWordViewModel }) {
-  const t = useTranslations('Home')
+  const wordType = useTranslations('WordTypes')
 
   return (
     <Card
@@ -88,7 +88,7 @@ function WordCard({ word }: { word: HomeWordViewModel }) {
       <div className="flex items-start justify-between gap-4">
         <div className="flex flex-wrap gap-2">
           <Badge tone="brand">{word.cefrLevel}</Badge>
-          <Badge>{t(`wordTypes.${word.wordType}`)}</Badge>
+          <Badge>{wordType(word.wordType)}</Badge>
         </div>
         <ArrowRight
           aria-hidden="true"
@@ -113,6 +113,7 @@ function WordCard({ word }: { word: HomeWordViewModel }) {
 
 export function HomePageContent({ home }: { home: HomePageViewModel }) {
   const t = useTranslations('Home')
+  const wordType = useTranslations('WordTypes')
 
   return (
     <PageContainer className="flex-1 py-12 sm:py-16 lg:py-20">
@@ -201,7 +202,7 @@ export function HomePageContent({ home }: { home: HomePageViewModel }) {
                     <div className="flex flex-wrap gap-2">
                       <Badge tone="accent">{t('newestBadge')}</Badge>
                       <Badge tone="brand">{home.featuredWord.cefrLevel}</Badge>
-                      <Badge>{t(`wordTypes.${home.featuredWord.wordType}`)}</Badge>
+                      <Badge>{wordType(home.featuredWord.wordType)}</Badge>
                     </div>
                     <h3
                       className="mt-7 text-balance font-display text-5xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-6xl"
