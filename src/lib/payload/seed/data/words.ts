@@ -5,6 +5,7 @@ import type {
 import type { CefrLevel } from '../../fields'
 
 interface BanglaWordSeed {
+  commonMistakes?: readonly string[]
   explanation: string
   meaning: string
   pronunciationHint?: string
@@ -21,6 +22,7 @@ interface WordExampleSeed {
 export interface WordSeed {
   bangla?: BanglaWordSeed
   cefrLevel: CefrLevel
+  englishCommonMistakes?: readonly string[]
   englishExplanation: string
   englishMeaning: string
   example: WordExampleSeed
@@ -29,6 +31,7 @@ export interface WordSeed {
   lemma: string
   pluralForm?: string
   register: WordRegister
+  relatedSlugs: readonly string[]
   slug: string
   topicSlugs: readonly string[]
   usefulnessScore: number
@@ -38,13 +41,20 @@ export interface WordSeed {
 export const wordSeeds: readonly WordSeed[] = [
   {
     bangla: {
+      commonMistakes: [
+        'Termin ব্যবহার করার সময় সাধারণত নির্দিষ্ট আর্টিকেলটি বাদ দেবেন না।',
+      ],
       explanation:
         'নির্দিষ্ট সময়ে কারও সঙ্গে দেখা করা বা কোনো সেবা নেওয়ার জন্য ঠিক করা সময়।',
       meaning: 'অ্যাপয়েন্টমেন্ট / নির্ধারিত সময়',
+      pronunciationHint: 'শেষ অংশে দীর্ঘ “ই” ধ্বনি দিন: টেয়ার-মীন।',
       reviewed: true,
       romanizedHelper: 'appointment / nirdharito shomoy',
     },
     cefrLevel: 'A2',
+    englishCommonMistakes: [
+      'Use einen Termin for the accusative form; do not keep the article as der.',
+    ],
     englishExplanation:
       'A scheduled time for a meeting, appointment, or official visit.',
     englishMeaning: 'appointment',
@@ -58,6 +68,7 @@ export const wordSeeds: readonly WordSeed[] = [
     lemma: 'der Termin',
     pluralForm: 'die Termine',
     register: 'neutral',
+    relatedSlugs: ['arbeiten'],
     slug: 'der-termin',
     topicSlugs: ['alltag'],
     usefulnessScore: 5,
@@ -65,12 +76,18 @@ export const wordSeeds: readonly WordSeed[] = [
   },
   {
     bangla: {
+      commonMistakes: [
+        'machen সব ক্ষেত্রে ইংরেজি “make” এর সরাসরি অনুবাদ নয়; বাক্যাংশটি দেখে ব্যবহার করুন।',
+      ],
       explanation: 'কোনো কাজ করা বা কোনো কিছু তৈরি করা বোঝাতে ব্যবহৃত হয়।',
       meaning: 'করা / তৈরি করা',
       reviewed: true,
       romanizedHelper: 'kora / toiri kora',
     },
     cefrLevel: 'A1',
+    englishCommonMistakes: [
+      'Do not translate every English use of “make” with machen; German often uses a more specific verb.',
+    ],
     englishExplanation: 'A common verb meaning to do or to make something.',
     englishMeaning: 'to do; to make',
     example: {
@@ -81,6 +98,7 @@ export const wordSeeds: readonly WordSeed[] = [
     ipa: '/ˈmaxn̩/',
     lemma: 'machen',
     register: 'neutral',
+    relatedSlugs: ['arbeiten', 'lernen'],
     slug: 'machen',
     topicSlugs: ['alltag'],
     usefulnessScore: 5,
@@ -104,6 +122,7 @@ export const wordSeeds: readonly WordSeed[] = [
     ipa: '/ˈɛsn̩/',
     lemma: 'essen',
     register: 'neutral',
+    relatedSlugs: ['trinken', 'das-brot'],
     slug: 'essen',
     topicSlugs: ['essen-und-trinken'],
     usefulnessScore: 5,
@@ -127,6 +146,7 @@ export const wordSeeds: readonly WordSeed[] = [
     ipa: '/ˈtʁɪŋkn̩/',
     lemma: 'trinken',
     register: 'neutral',
+    relatedSlugs: ['essen', 'das-brot'],
     slug: 'trinken',
     topicSlugs: ['essen-und-trinken'],
     usefulnessScore: 5,
@@ -141,6 +161,9 @@ export const wordSeeds: readonly WordSeed[] = [
       romanizedHelper: 'ruti / pauruti',
     },
     cefrLevel: 'A1',
+    englishCommonMistakes: [
+      'Remember that Brot is neuter: say das Brot, not der Brot.',
+    ],
     englishExplanation: 'Bread as a food; German nouns are capitalized.',
     englishMeaning: 'bread',
     example: {
@@ -153,6 +176,7 @@ export const wordSeeds: readonly WordSeed[] = [
     lemma: 'das Brot',
     pluralForm: 'die Brote',
     register: 'neutral',
+    relatedSlugs: ['essen'],
     slug: 'das-brot',
     topicSlugs: ['essen-und-trinken'],
     usefulnessScore: 4,
@@ -169,6 +193,7 @@ export const wordSeeds: readonly WordSeed[] = [
     ipa: '/ˈʁaɪ̯zn̩/',
     lemma: 'reisen',
     register: 'neutral',
+    relatedSlugs: ['der-bahnhof'],
     slug: 'reisen',
     topicSlugs: ['reisen'],
     usefulnessScore: 4,
@@ -187,6 +212,7 @@ export const wordSeeds: readonly WordSeed[] = [
     lemma: 'der Bahnhof',
     pluralForm: 'die Bahnhöfe',
     register: 'neutral',
+    relatedSlugs: ['reisen'],
     slug: 'der-bahnhof',
     topicSlugs: ['reisen'],
     usefulnessScore: 5,
@@ -203,6 +229,7 @@ export const wordSeeds: readonly WordSeed[] = [
     ipa: '/ˈaʁbaɪ̯tn̩/',
     lemma: 'arbeiten',
     register: 'neutral',
+    relatedSlugs: ['lernen', 'der-termin'],
     slug: 'arbeiten',
     topicSlugs: ['arbeit-und-studium'],
     usefulnessScore: 5,
@@ -219,6 +246,7 @@ export const wordSeeds: readonly WordSeed[] = [
     ipa: '/ˈlɛʁnən/',
     lemma: 'lernen',
     register: 'neutral',
+    relatedSlugs: ['arbeiten'],
     slug: 'lernen',
     topicSlugs: ['arbeit-und-studium'],
     usefulnessScore: 5,
@@ -238,6 +266,7 @@ export const wordSeeds: readonly WordSeed[] = [
     lemma: 'der Artikel',
     pluralForm: 'die Artikel',
     register: 'neutral',
+    relatedSlugs: ['lernen'],
     slug: 'der-artikel',
     topicSlugs: ['grammatik'],
     usefulnessScore: 4,

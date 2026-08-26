@@ -5,6 +5,7 @@ import { topicTagSeeds } from './data/topicTags'
 import { wordSeeds } from './data/words'
 import {
   assertUniqueWordSeedSlugs,
+  assertValidWordSeedRelations,
   seedWords,
 } from './seedWords'
 
@@ -109,6 +110,9 @@ describe('word seeding', () => {
     const alltagID = fixture.tags.find((tag) => tag.slug === 'alltag')?.id
     const termin = fixture.docs.get('der-termin')
     expect(termin?.topicTags).toEqual([alltagID])
+    expect(termin?.relatedWords).toEqual([
+      fixture.docs.get('arbeiten')?.id,
+    ])
     expect(termin).toMatchObject({
       _status: 'published',
       lifecycleStatus: 'active',
@@ -118,6 +122,15 @@ describe('word seeding', () => {
         germanReviewed: true,
       },
     })
+    expect(
+      (termin?.english as { commonMistakes?: { mistake: string }[] })
+        .commonMistakes,
+    ).toEqual([
+      {
+        mistake:
+          'Use einen Termin for the accusative form; do not keep the article as der.',
+      },
+    ])
     expect(fixture.spies.create).toHaveBeenCalledWith(
       expect.objectContaining({
         collection: 'words',
@@ -211,6 +224,32 @@ describe('word seeding', () => {
       'Duplicate word seed slug: der-termin',
     )
     expect(fixture.spies.find).not.toHaveBeenCalled()
+  })
+
+  test('rejects missing, duplicate, and self-related seed references', () => {
+    const base = wordSeeds[0]
+
+    expect(() =>
+      assertValidWordSeedRelations([
+        { ...base, relatedSlugs: ['missing-word'] },
+      ]),
+    ).toThrow('Missing related word seed missing-word for word der-termin')
+    expect(() =>
+      assertValidWordSeedRelations([
+        { ...base, relatedSlugs: ['der-termin'] },
+      ]),
+    ).toThrow('Word seed cannot relate to itself: der-termin')
+    expect(() =>
+      assertValidWordSeedRelations([
+        { ...base, relatedSlugs: [] },
+        {
+          ...wordSeeds[1],
+          relatedSlugs: ['der-termin', 'der-termin'],
+        },
+      ]),
+    ).toThrow(
+      'Duplicate related word seed der-termin for word machen',
+    )
   })
 
   test('rejects missing topic tags and duplicate stored words', async () => {
