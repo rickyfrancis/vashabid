@@ -1,6 +1,6 @@
 import type { Word } from '@payload-types'
 
-import type { HomeWordViewModel } from '@/features/home/types'
+import type { HomeWordViewModel } from './types'
 
 function firstMeaning(
   rows: null | undefined | { meaning: string }[],

@@ -13,7 +13,7 @@ export function SupportSnippet({
   className?: string
   support: LearnerSupportViewModel
 }) {
-  const t = useTranslations('Home')
+  const t = useTranslations('LearnerSupport')
   const { supportMode } = useSupportMode()
   const showBangla = supportMode !== 'en' && support.bangla !== null
   const showEnglish = supportMode !== 'bn' || support.bangla === null

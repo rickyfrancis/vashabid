@@ -13,8 +13,8 @@ import { useTranslations } from 'next-intl'
 import { PageContainer } from '@/components/layout'
 import { Badge, Button, Card, Input, buttonStyles } from '@/components/ui'
 import { Link } from '@/features/i18n/navigation'
+import { SupportSnippet } from '@/features/words/support-snippet'
 import { cn } from '@/lib/cn'
-import { SupportSnippet } from './support-snippet'
 import type {
   HomePageViewModel,
   HomeWordViewModel,

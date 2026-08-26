@@ -46,9 +46,6 @@
     "emptyWordsDescription": "সম্পাদকীয় দল প্রকাশ করলেই জার্মান শব্দগুলো এখানে দেখা যাবে।",
     "emptyTopicsTitle": "বিষয়গুলো সাজানো হচ্ছে",
     "emptyTopicsDescription": "প্রকাশিত শব্দভাণ্ডারের বিষয়গুলো প্রস্তুত হলে এখানে দেখা যাবে।",
-    "englishLabel": "ইংরেজি",
-    "banglaLabel": "বাংলা",
-    "fallbackNotice": "বাংলা এখনও পর্যালোচনাধীন, তাই আপাতত ইংরেজি দেখানো হচ্ছে।",
     "wordTypes": {
       "noun": "বিশেষ্য",
       "verb": "ক্রিয়া",
@@ -59,6 +56,11 @@
       "phrase": "বাক্যাংশ",
       "idiom": "বাগধারা"
     }
+  },
+  "LearnerSupport": {
+    "englishLabel": "ইংরেজি",
+    "banglaLabel": "বাংলা",
+    "fallbackNotice": "বাংলা এখনও পর্যালোচনাধীন, তাই আপাতত ইংরেজি দেখানো হচ্ছে।"
   },
   "WordPreview": {
     "eyebrow": "প্রকাশিত শব্দের প্রিভিউ",

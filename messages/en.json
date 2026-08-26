@@ -46,9 +46,6 @@
     "emptyWordsDescription": "Published German words will appear here as soon as the editorial team releases them.",
     "emptyTopicsTitle": "Topics are being organized",
     "emptyTopicsDescription": "Published vocabulary topics will appear here when they are ready.",
-    "englishLabel": "English",
-    "banglaLabel": "বাংলা",
-    "fallbackNotice": "Bangla is still under review, so English is shown for now.",
     "wordTypes": {
       "noun": "Noun",
       "verb": "Verb",
@@ -59,6 +56,11 @@
       "phrase": "Phrase",
       "idiom": "Idiom"
     }
+  },
+  "LearnerSupport": {
+    "englishLabel": "English",
+    "banglaLabel": "বাংলা",
+    "fallbackNotice": "Bangla is still under review, so English is shown for now."
   },
   "WordPreview": {
     "eyebrow": "Published word preview",
