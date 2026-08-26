@@ -74,7 +74,7 @@ test('localized home pages render published Payload words and topics', async ({
   await expect(page.getByText('Alltag', { exact: true })).toBeVisible()
   await expect(
     page.getByRole('searchbox', { name: 'Search German vocabulary' }),
-  ).toBeDisabled()
+  ).toBeEnabled()
   await expect(
     page.getByRole('link', { name: 'Open word page' }),
   ).toHaveAttribute('href', /\/en\/words\//)
@@ -88,7 +88,7 @@ test('localized home pages render published Payload words and topics', async ({
   ).toBeVisible()
   await expect(
     page.getByRole('searchbox', { name: 'জার্মান শব্দভাণ্ডারে খুঁজুন' }),
-  ).toBeDisabled()
+  ).toBeEnabled()
 })
 
 test('support switching updates snippets and never reveals pending Bangla', async ({

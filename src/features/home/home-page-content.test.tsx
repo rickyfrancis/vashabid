@@ -72,16 +72,15 @@ describe('HomePageContent', () => {
     ).toHaveAttribute('href', '/words/der-termin')
   })
 
-  test('renders an accessible unavailable search preview', () => {
+  test('renders an accessible localized search entry point', () => {
     renderHome(populatedHome)
 
     expect(
       screen.getByRole('searchbox', { name: 'Search German vocabulary' }),
-    ).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Search' })).toBeDisabled()
-    expect(
-      screen.getByText(/Search opens in Phase 11/),
-    ).toBeInTheDocument()
+    ).toBeEnabled()
+    expect(screen.getByRole('button', { name: 'Search' })).toBeEnabled()
+    expect(screen.getByRole('search')).toHaveAttribute('action', '/en/search')
+    expect(screen.getByText(/Search published vocabulary/)).toBeInTheDocument()
   })
 
   test('renders independent word and topic empty states', () => {
