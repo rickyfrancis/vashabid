@@ -311,6 +311,10 @@ export interface Word {
    */
   topicTags?: (number | TopicTag)[] | null;
   /**
+   * Choose published vocabulary that helps learners build a useful semantic or situational connection.
+   */
+  relatedWords?: (number | Word)[] | null;
+  /**
    * Record attribution, URLs, licensing, and any restrictions before reusing sourced material.
    */
   source?: {
@@ -570,6 +574,7 @@ export interface WordsSelect<T extends boolean = true> {
         id?: T;
       };
   topicTags?: T;
+  relatedWords?: T;
   source?:
     | T
     | {

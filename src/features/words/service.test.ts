@@ -54,6 +54,21 @@ function pageResult(overrides: Record<string, unknown> = {}) {
   }
 }
 
+function repository(
+  overrides: Partial<{
+    findPublishedByIDs: ReturnType<typeof vi.fn>
+    findPublishedBySlug: ReturnType<typeof vi.fn>
+    findPublishedPage: ReturnType<typeof vi.fn>
+  }> = {},
+) {
+  return {
+    findPublishedByIDs: vi.fn().mockResolvedValue([]),
+    findPublishedBySlug: vi.fn().mockResolvedValue(null),
+    findPublishedPage: vi.fn().mockResolvedValue(pageResult()),
+    ...overrides,
+  }
+}
+
 describe('WordService', () => {
   const service = new WordService()
 
@@ -135,6 +150,133 @@ describe('WordService', () => {
       )?.support,
     ).toEqual({ bangla: null, english: 'bread' })
   })
+
+  test('maps a complete learner-safe detail page and ordered related words', () => {
+    const result = service.toDetailPage(
+      word({
+        bangla: {
+          commonMistakes: [{ mistake: ' ভুল ' }],
+          explanation: ' বাংলা ব্যাখ্যা ',
+          meanings: [{ meaning: ' রুটি ' }, { meaning: ' ' }],
+          pronunciationHints: [{ hint: ' দীর্ঘ ও ' }],
+        },
+        english: {
+          commonMistakes: [{ mistake: ' Wrong article ' }],
+          explanation: ' Bread as food. ',
+          meanings: [{ meaning: ' bread ' }, { meaning: ' loaf ' }],
+        },
+        examples: [
+          {
+            banglaExplanation: ' রুটিটি টাটকা। ',
+            englishExplanation: ' The bread is fresh. ',
+            germanSentence: ' Das Brot ist frisch. ',
+          },
+        ],
+        gender: 'das',
+        ipa: ' /bʁoːt/ ',
+        pluralForm: ' die Brote ',
+        relatedWords: [2, 2, 1, 3, 99],
+        source: { attribution: 'must stay server-side' },
+        topicTags: [10, 88],
+      }),
+      [topic()],
+      [
+        word({ id: 3, lemma: '', slug: 'invalid' }),
+        word({
+          bangla: { meanings: [{ meaning: ' করা ' }] },
+          id: 2,
+          lemma: 'machen',
+          slug: 'machen',
+          wordType: 'verb',
+        }),
+        word({ id: 4, lemma: 'extra', slug: 'extra' }),
+      ],
+    )
+
+    expect(result).toMatchObject({
+      article: 'das',
+      audioAvailable: false,
+      examples: [
+        {
+          germanSentence: 'Das Brot ist frisch.',
+          support: { bangla: 'রুটিটি টাটকা।', english: 'The bread is fresh.' },
+        },
+      ],
+      headword: 'Brot',
+      ipa: '/bʁoːt/',
+      noun: { gender: 'das', pluralForm: 'die Brote' },
+      relatedWords: [
+        {
+          article: null,
+          headword: 'machen',
+          slug: 'machen',
+          support: { bangla: 'করা', english: 'bread' },
+        },
+      ],
+      support: {
+        bangla: {
+          commonMistakes: ['ভুল'],
+          explanation: 'বাংলা ব্যাখ্যা',
+          meanings: ['রুটি'],
+          pronunciationHints: ['দীর্ঘ ও'],
+        },
+        english: {
+          commonMistakes: ['Wrong article'],
+          explanation: 'Bread as food.',
+          meanings: ['bread', 'loaf'],
+        },
+      },
+      topics: [{ name: 'Alltag', slug: 'alltag' }],
+    })
+    expect(result).not.toHaveProperty('source')
+    expect(result).not.toHaveProperty('review')
+    expect(result?.relatedWords[0]).not.toHaveProperty('id')
+  })
+
+  test('tolerates absent optional detail fields and gates all Bangla content', () => {
+    const result = service.toDetailPage(
+      word({
+        bangla: {
+          commonMistakes: [{ mistake: 'secret' }],
+          explanation: 'secret',
+          meanings: [{ meaning: 'গোপন' }],
+          pronunciationHints: [{ hint: 'secret' }],
+        },
+        examples: [
+          {
+            banglaExplanation: 'secret',
+            englishExplanation: 'To work.',
+            germanSentence: 'Ich arbeite.',
+          },
+        ],
+        gender: null,
+        ipa: null,
+        lemma: 'arbeiten',
+        pluralForm: null,
+        review: { banglaReviewed: false },
+        wordType: 'verb',
+      }),
+      [],
+      [],
+    )
+
+    expect(result).toMatchObject({
+      article: null,
+      headword: 'arbeiten',
+      ipa: null,
+      noun: null,
+      relatedWords: [],
+      support: { bangla: null },
+      topics: [],
+    })
+    expect(result?.examples[0].support.bangla).toBeNull()
+  })
+
+  test('rejects malformed details without a usable English meaning', () => {
+    expect(
+      service.toDetailPage(word({ english: { meanings: [] } }), [], []),
+    ).toBeNull()
+  })
 })
 
 describe('browse filter normalization', () => {
@@ -181,9 +323,7 @@ describe('browse filter normalization', () => {
 
 describe('word browse orchestration', () => {
   test('resolves the topic and returns a safe paginated page', async () => {
-    const wordRepository = {
-      findPublishedPage: vi.fn().mockResolvedValue(pageResult()),
-    }
+    const wordRepository = repository()
     const topicRepository = {
       findForBrowse: vi.fn().mockResolvedValue([topic()]),
     }
@@ -212,7 +352,7 @@ describe('word browse orchestration', () => {
   })
 
   test('canonicalizes an unknown or unpublished topic without querying words', async () => {
-    const wordRepository = { findPublishedPage: vi.fn() }
+    const wordRepository = repository({ findPublishedPage: vi.fn() })
     const service = new WordService(wordRepository, {
       findForBrowse: vi.fn().mockResolvedValue([topic()]),
     })
@@ -225,11 +365,11 @@ describe('word browse orchestration', () => {
 
   test('redirects an out-of-range page to the last available page', async () => {
     const service = new WordService(
-      {
+      repository({
         findPublishedPage: vi.fn().mockResolvedValue(
           pageResult({ docs: [], hasNextPage: false, page: 9 }),
         ),
-      },
+      }),
       { findForBrowse: vi.fn().mockResolvedValue([]) },
     )
 
@@ -240,7 +380,7 @@ describe('word browse orchestration', () => {
 
   test('keeps an empty result set on canonical page one', async () => {
     const service = new WordService(
-      {
+      repository({
         findPublishedPage: vi.fn().mockResolvedValue(
           pageResult({
             docs: [],
@@ -249,7 +389,7 @@ describe('word browse orchestration', () => {
             totalPages: 0,
           }),
         ),
-      },
+      }),
       { findForBrowse: vi.fn().mockResolvedValue([]) },
     )
 
@@ -261,5 +401,38 @@ describe('word browse orchestration', () => {
         words: [],
       },
     })
+  })
+})
+
+describe('word detail orchestration', () => {
+  test('loads one word and resolves only its related IDs', async () => {
+    const detail = word({ relatedWords: [4, 2, 4] })
+    const wordRepository = repository({
+      findPublishedByIDs: vi
+        .fn()
+        .mockResolvedValue([word({ id: 2, slug: 'machen' })]),
+      findPublishedBySlug: vi.fn().mockResolvedValue(detail),
+    })
+    const topicRepository = {
+      findForBrowse: vi.fn().mockResolvedValue([topic()]),
+    }
+    const service = new WordService(wordRepository, topicRepository)
+
+    await expect(service.getDetailPage('das-brot')).resolves.toMatchObject({
+      slug: 'das-brot',
+    })
+    expect(wordRepository.findPublishedBySlug).toHaveBeenCalledWith('das-brot')
+    expect(wordRepository.findPublishedByIDs).toHaveBeenCalledWith([4, 2])
+    expect(topicRepository.findForBrowse).toHaveBeenCalledOnce()
+  })
+
+  test('returns null without loading topics or relationships when absent', async () => {
+    const wordRepository = repository()
+    const topicRepository = { findForBrowse: vi.fn() }
+    const service = new WordService(wordRepository, topicRepository)
+
+    await expect(service.getDetailPage('missing')).resolves.toBeNull()
+    expect(wordRepository.findPublishedByIDs).not.toHaveBeenCalled()
+    expect(topicRepository.findForBrowse).not.toHaveBeenCalled()
   })
 })

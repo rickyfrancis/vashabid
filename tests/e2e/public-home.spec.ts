@@ -76,7 +76,7 @@ test('localized home pages render published Payload words and topics', async ({
     page.getByRole('searchbox', { name: 'Search German vocabulary' }),
   ).toBeDisabled()
   await expect(
-    page.getByRole('link', { name: 'Open word preview' }),
+    page.getByRole('link', { name: 'Open word page' }),
   ).toHaveAttribute('href', /\/en\/words\//)
 
   await page.goto('/bn')

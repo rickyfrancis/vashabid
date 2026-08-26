@@ -234,11 +234,12 @@ describe('words collection schema', () => {
     expect(lifecycle.admin?.description).toContain('Archive instead of deleting')
   })
 
-  test('models noun-only fields, usefulness, and topic relationships', async () => {
+  test('models noun-only fields, usefulness, and public relationships', async () => {
     const gender = namedField('gender')
     const pluralForm = namedField('pluralForm')
     const usefulness = namedField('usefulnessScore')
     const topicTags = namedField('topicTags')
+    const relatedWords = namedField('relatedWords')
 
     if (gender.type !== 'select' || pluralForm.type !== 'text') {
       throw new Error('Unexpected noun field type')
@@ -248,6 +249,9 @@ describe('words collection schema', () => {
     }
     if (topicTags.type !== 'relationship') {
       throw new Error('Topic tags must be a relationship')
+    }
+    if (relatedWords.type !== 'relationship') {
+      throw new Error('Related words must be a relationship')
     }
 
     expect(
@@ -276,6 +280,11 @@ describe('words collection schema', () => {
       hasMany: true,
       maxDepth: 1,
       relationTo: 'topic-tags',
+    })
+    expect(relatedWords).toMatchObject({
+      hasMany: true,
+      maxDepth: 0,
+      relationTo: 'words',
     })
   })
 

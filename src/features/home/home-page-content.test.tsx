@@ -55,7 +55,7 @@ function renderHome(home: HomePageViewModel) {
 }
 
 describe('HomePageContent', () => {
-  test('renders CMS view models and working localized preview links', () => {
+  test('renders CMS view models and working localized word links', () => {
     renderHome(populatedHome)
 
     expect(
@@ -68,7 +68,7 @@ describe('HomePageContent', () => {
     expect(screen.getByText('machen')).toBeInTheDocument()
     expect(screen.getByText('Alltag')).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'Open word preview' }),
+      screen.getByRole('link', { name: 'Open word page' }),
     ).toHaveAttribute('href', '/words/der-termin')
   })
 

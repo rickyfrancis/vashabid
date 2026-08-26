@@ -39,6 +39,46 @@ describe('WordRepository', () => {
     })
   })
 
+  test('queries one active published word by exact slug at depth zero', async () => {
+    findPublished.mockResolvedValueOnce({ docs: [{ id: 7, slug: 'machen' }] })
+
+    await expect(
+      new WordRepository().findPublishedBySlug('machen'),
+    ).resolves.toMatchObject({ id: 7, slug: 'machen' })
+    expect(findPublished).toHaveBeenCalledWith('words', {
+      depth: 0,
+      limit: 1,
+      where: {
+        and: [
+          { slug: { equals: 'machen' } },
+          { lifecycleStatus: { equals: 'active' } },
+        ],
+      },
+    })
+  })
+
+  test('queries active published related IDs without populating relationships', async () => {
+    await new WordRepository().findPublishedByIDs([9, 4])
+
+    expect(findPublished).toHaveBeenCalledWith('words', {
+      depth: 0,
+      limit: 2,
+      where: {
+        and: [
+          { id: { in: [9, 4] } },
+          { lifecycleStatus: { equals: 'active' } },
+        ],
+      },
+    })
+  })
+
+  test('does not query Payload for an empty related-ID list', async () => {
+    await expect(new WordRepository().findPublishedByIDs([])).resolves.toEqual(
+      [],
+    )
+    expect(findPublished).not.toHaveBeenCalled()
+  })
+
   test('composes a paginated active browse query with every filter', async () => {
     await new WordRepository().findPublishedPage({
       cefrLevel: 'A2',

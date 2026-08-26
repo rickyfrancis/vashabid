@@ -40,7 +40,7 @@ export function SupportSnippet({
           {support.bangla}
         </p>
       ) : null}
-      {supportMode === 'both' && support.bangla === null ? (
+      {supportMode !== 'en' && support.bangla === null ? (
         <p className="text-xs font-medium text-warning" role="note">
           {t('fallbackNotice')}
         </p>

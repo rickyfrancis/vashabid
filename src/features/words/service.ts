@@ -12,6 +12,10 @@ import type {
   WordBrowseResult,
   WordBrowseSearchParams,
   WordBrowseTopicViewModel,
+  WordDetailBanglaViewModel,
+  WordDetailLanguageViewModel,
+  WordDetailPageViewModel,
+  WordDetailRelatedWordViewModel,
 } from './types'
 
 function firstMeaning(
@@ -22,6 +26,76 @@ function firstMeaning(
       typeof row.meaning === 'string' && row.meaning.trim().length > 0,
   )?.meaning
   return value?.trim() || null
+}
+
+function cleanText(value: null | string | undefined): string | null {
+  const trimmed = value?.trim()
+  return trimmed || null
+}
+
+function cleanRows<K extends string>(
+  rows: null | undefined | Array<Record<K, null | string | undefined>>,
+  key: K,
+): string[] {
+  return (
+    rows
+      ?.map((row) => cleanText(row[key]))
+      .filter((value): value is string => value !== null) ?? []
+  )
+}
+
+function relationshipID(value: number | Word): number {
+  return typeof value === 'number' ? value : value.id
+}
+
+export function splitGermanHeadword(word: Word): {
+  article: 'das' | 'der' | 'die' | null
+  headword: string
+} {
+  const storedLemma = word.lemma.trim()
+  const article = word.wordType === 'noun' ? (word.gender ?? null) : null
+  const articlePrefix = article ? `${article} ` : null
+  const headword =
+    articlePrefix &&
+    storedLemma.toLocaleLowerCase('de-DE').startsWith(articlePrefix)
+      ? storedLemma.slice(articlePrefix.length).trim() || storedLemma
+      : storedLemma
+
+  return { article, headword }
+}
+
+function toEnglishDetail(word: Word): WordDetailLanguageViewModel | null {
+  const meanings = cleanRows(word.english.meanings, 'meaning')
+  if (meanings.length === 0) return null
+
+  return {
+    commonMistakes: cleanRows(word.english.commonMistakes, 'mistake'),
+    explanation: cleanText(word.english.explanation),
+    meanings,
+  }
+}
+
+function toBanglaDetail(word: Word): WordDetailBanglaViewModel | null {
+  if (word.review?.banglaReviewed !== true || !word.bangla) return null
+
+  const meanings = cleanRows(word.bangla.meanings, 'meaning')
+  const explanation = cleanText(word.bangla.explanation)
+  const commonMistakes = cleanRows(word.bangla.commonMistakes, 'mistake')
+  const pronunciationHints = cleanRows(
+    word.bangla.pronunciationHints,
+    'hint',
+  )
+
+  if (
+    meanings.length === 0 &&
+    explanation === null &&
+    commonMistakes.length === 0 &&
+    pronunciationHints.length === 0
+  ) {
+    return null
+  }
+
+  return { commonMistakes, explanation, meanings, pronunciationHints }
 }
 
 function readSingleValue(
@@ -115,7 +189,7 @@ export class WordService {
   constructor(
     private readonly wordRepository: Pick<
       WordRepository,
-      'findPublishedPage'
+      'findPublishedByIDs' | 'findPublishedBySlug' | 'findPublishedPage'
     > = new WordRepository(),
     private readonly topicRepository: Pick<
       TopicTagRepository,
@@ -154,13 +228,7 @@ export class WordService {
 
     if (!english || !storedLemma) return null
 
-    const article = word.wordType === 'noun' ? (word.gender ?? null) : null
-    const articlePrefix = article ? `${article} ` : null
-    const headword =
-      articlePrefix &&
-      storedLemma.toLocaleLowerCase('de-DE').startsWith(articlePrefix)
-        ? storedLemma.slice(articlePrefix.length).trim() || storedLemma
-        : storedLemma
+    const { article, headword } = splitGermanHeadword(word)
     const relatedTopicIds = new Set(
       (word.topicTags ?? []).map((topic) =>
         typeof topic === 'number' ? topic : topic.id,
@@ -186,6 +254,119 @@ export class WordService {
       topics,
       wordType: word.wordType,
     }
+  }
+
+  toRelatedWord(word: Word): WordDetailRelatedWordViewModel | null {
+    const english = firstMeaning(word.english.meanings)
+    const { article, headword } = splitGermanHeadword(word)
+
+    if (!english || !headword) return null
+
+    return {
+      article,
+      cefrLevel: word.cefrLevel,
+      headword,
+      slug: word.slug,
+      support: {
+        bangla:
+          word.review?.banglaReviewed === true
+            ? firstMeaning(word.bangla?.meanings)
+            : null,
+        english,
+      },
+      wordType: word.wordType,
+    }
+  }
+
+  toDetailPage(
+    word: Word,
+    publishedTopics: TopicTag[],
+    relatedWords: Word[],
+  ): WordDetailPageViewModel | null {
+    const english = toEnglishDetail(word)
+    const lemma = word.lemma.trim()
+    const { article, headword } = splitGermanHeadword(word)
+
+    if (!english || !lemma || !headword) return null
+
+    const relatedTopicIDs = new Set(
+      (word.topicTags ?? []).map((topic) =>
+        typeof topic === 'number' ? topic : topic.id,
+      ),
+    )
+    const topics = publishedTopics
+      .filter((topic) => relatedTopicIDs.has(topic.id))
+      .map(toTopicOption)
+      .filter((topic) => topic !== null)
+    const approvedBangla = word.review?.banglaReviewed === true
+    const examples = (word.examples ?? [])
+      .map((example) => {
+        const germanSentence = cleanText(example.germanSentence)
+        const englishExplanation = cleanText(example.englishExplanation)
+        if (!germanSentence || !englishExplanation) return null
+
+        return {
+          germanSentence,
+          support: {
+            bangla: approvedBangla
+              ? cleanText(example.banglaExplanation)
+              : null,
+            english: englishExplanation,
+          },
+        }
+      })
+      .filter((example) => example !== null)
+    const expectedRelatedIDs = (word.relatedWords ?? []).map(relationshipID)
+    const relatedByID = new Map(relatedWords.map((related) => [related.id, related]))
+    const seen = new Set<number>([word.id])
+    const safeRelated = expectedRelatedIDs
+      .map((id) => {
+        if (seen.has(id)) return null
+        seen.add(id)
+        const related = relatedByID.get(id)
+        return related ? this.toRelatedWord(related) : null
+      })
+      .filter((related) => related !== null)
+
+    return {
+      article,
+      audioAvailable: false,
+      cefrLevel: word.cefrLevel,
+      examples,
+      headword,
+      ipa: cleanText(word.ipa),
+      lemma,
+      noun:
+        word.wordType === 'noun'
+          ? {
+              gender: word.gender ?? null,
+              pluralForm: cleanText(word.pluralForm),
+            }
+          : null,
+      register: word.register,
+      relatedWords: safeRelated,
+      slug: word.slug,
+      support: {
+        bangla: toBanglaDetail(word),
+        english,
+      },
+      topics,
+      usefulnessScore: word.usefulnessScore,
+      wordType: word.wordType,
+    }
+  }
+
+  async getDetailPage(slug: string): Promise<WordDetailPageViewModel | null> {
+    const word = await this.wordRepository.findPublishedBySlug(slug)
+    if (!word) return null
+
+    const relatedIDs = [...new Set((word.relatedWords ?? []).map(relationshipID))]
+    const [publishedTopics, relatedWords] = await Promise.all([
+      this.topicRepository.findForBrowse(),
+      this.wordRepository.findPublishedByIDs(relatedIDs),
+    ])
+
+    return this.toDetailPage(word, publishedTopics, relatedWords)
   }
 
   async getBrowsePage(

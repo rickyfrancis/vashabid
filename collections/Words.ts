@@ -371,6 +371,18 @@ export const Words: CollectionConfig = {
               relationTo: 'topic-tags',
             },
             {
+              name: 'relatedWords',
+              type: 'relationship',
+              admin: {
+                description:
+                  'Choose published vocabulary that helps learners build a useful semantic or situational connection.',
+              },
+              hasMany: true,
+              label: 'Related words',
+              maxDepth: 0,
+              relationTo: 'words',
+            },
+            {
               ...createSourceMetadataField(),
               admin: {
                 description:

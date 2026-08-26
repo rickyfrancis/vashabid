@@ -49,6 +49,55 @@ export interface WordBrowseCardViewModel {
   wordType: WordType
 }
 
+export interface WordDetailLanguageViewModel {
+  commonMistakes: string[]
+  explanation: string | null
+  meanings: string[]
+}
+
+export interface WordDetailBanglaViewModel
+  extends WordDetailLanguageViewModel {
+  pronunciationHints: string[]
+}
+
+export interface WordDetailExampleViewModel {
+  germanSentence: string
+  support: LearnerSupportViewModel
+}
+
+export interface WordDetailRelatedWordViewModel {
+  article: 'das' | 'der' | 'die' | null
+  cefrLevel: CefrLevel
+  headword: string
+  slug: string
+  support: LearnerSupportViewModel
+  wordType: WordType
+}
+
+export interface WordDetailPageViewModel {
+  article: 'das' | 'der' | 'die' | null
+  audioAvailable: false
+  cefrLevel: CefrLevel
+  examples: WordDetailExampleViewModel[]
+  headword: string
+  ipa: string | null
+  lemma: string
+  noun: {
+    gender: 'das' | 'der' | 'die' | null
+    pluralForm: string | null
+  } | null
+  register: Word['register']
+  relatedWords: WordDetailRelatedWordViewModel[]
+  slug: string
+  support: {
+    bangla: WordDetailBanglaViewModel | null
+    english: WordDetailLanguageViewModel
+  }
+  topics: WordBrowseTopicViewModel[]
+  usefulnessScore: number
+  wordType: WordType
+}
+
 export interface WordBrowsePaginationViewModel {
   hasNextPage: boolean
   hasPrevPage: boolean
