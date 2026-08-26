@@ -612,11 +612,12 @@ Let public users browse published German words.
 
 - Build `/[locale]/words`.
 - Add filters:
-  - CEFR level
-  - word type
-  - topic tag
-  - support mode
-- Add pagination.
+  - one CEFR level through `level`
+  - one word type through `type`
+  - one published topic tag through `topic`
+  - the existing global cookie-backed support mode for card meanings
+- Add stable six-word pagination through `page`, ordered by CEFR, lemma, and
+  slug.
 - Add word cards showing:
   - German lemma
   - article for nouns
@@ -626,6 +627,8 @@ Let public users browse published German words.
   - tags
 - Implement query logic inside `WordRepository`.
 - Implement business rules inside `WordService`.
+- Normalize invalid query state and redirect to canonical localized URLs.
+- Keep raw IDs, editorial metadata, and unapproved Bangla out of client props.
 - Keep route components thin.
 
 ### Exit criteria
