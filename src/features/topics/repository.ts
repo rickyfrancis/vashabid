@@ -14,4 +14,14 @@ export class TopicTagRepository {
 
     return docs as TopicTag[]
   }
+
+  async findForBrowse(): Promise<TopicTag[]> {
+    const { docs } = await this.find('topic-tags', {
+      depth: 0,
+      pagination: false,
+      sort: ['sortOrder', 'name'],
+    })
+
+    return docs as TopicTag[]
+  }
 }

@@ -55,4 +55,21 @@ describe('public Payload collection helpers', () => {
       },
     })
   })
+
+  test('passes through pagination controls without weakening access', async () => {
+    await findPublished('topic-tags', {
+      depth: 0,
+      pagination: false,
+      sort: ['sortOrder', 'name'],
+    })
+
+    expect(find).toHaveBeenCalledWith({
+      collection: 'topic-tags',
+      depth: 0,
+      overrideAccess: false,
+      pagination: false,
+      sort: ['sortOrder', 'name'],
+      where: { _status: { equals: 'published' } },
+    })
+  })
 })

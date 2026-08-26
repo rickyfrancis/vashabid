@@ -1,7 +1,11 @@
-import type { Word } from '@payload-types'
-import { describe, expect, test } from 'vitest'
+import type { TopicTag, Word } from '@payload-types'
+import { describe, expect, test, vi } from 'vitest'
 
-import { WordService } from './service'
+import {
+  normalizeWordBrowseSearchParams,
+  toWordBrowseQuery,
+  WordService,
+} from './service'
 
 function word(overrides: Partial<Word> = {}): Word {
   return {
@@ -17,6 +21,35 @@ function word(overrides: Partial<Word> = {}): Word {
     updatedAt: '2026-01-01T00:00:00.000Z',
     usefulnessScore: 4,
     wordType: 'noun',
+    ...overrides,
+  }
+}
+
+function topic(overrides: Partial<TopicTag> = {}): TopicTag {
+  return {
+    createdAt: '2026-01-01T00:00:00.000Z',
+    english: { description: 'Daily life vocabulary.' },
+    id: 10,
+    name: 'Alltag',
+    slug: 'alltag',
+    sortOrder: 10,
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  }
+}
+
+function pageResult(overrides: Record<string, unknown> = {}) {
+  return {
+    docs: [word({ topicTags: [10] })],
+    hasNextPage: true,
+    hasPrevPage: false,
+    limit: 6,
+    nextPage: 2,
+    page: 1,
+    pagingCounter: 1,
+    prevPage: null,
+    totalDocs: 10,
+    totalPages: 2,
     ...overrides,
   }
 }
@@ -55,5 +88,178 @@ describe('WordService', () => {
 
   test('rejects a malformed document without an English meaning', () => {
     expect(service.toHomeCard(word({ english: { meanings: [] } }))).toBeNull()
+  })
+
+  test('maps a safe browse card with an article rendered exactly once', () => {
+    const result = service.toBrowseCard(
+      word({
+        bangla: { meanings: [{ meaning: ' রুটি ' }] },
+        gender: 'das',
+        source: { attribution: 'must stay server-side' },
+        topicTags: [10, 99],
+      }),
+      [topic()],
+    )
+
+    expect(result).toEqual({
+      article: 'das',
+      cefrLevel: 'A1',
+      headword: 'Brot',
+      slug: 'das-brot',
+      support: { bangla: 'রুটি', english: 'bread' },
+      topics: [{ name: 'Alltag', slug: 'alltag' }],
+      wordType: 'noun',
+    })
+    expect(result).not.toHaveProperty('source')
+    expect(result).not.toHaveProperty('review')
+    expect(result?.topics[0]).not.toHaveProperty('id')
+  })
+
+  test('tolerates missing noun gender and optional relationships', () => {
+    expect(
+      service.toBrowseCard(
+        word({ gender: null, topicTags: null }),
+        [topic()],
+      ),
+    ).toMatchObject({ article: null, headword: 'das Brot', topics: [] })
+  })
+
+  test('never maps unapproved Bangla into browse cards', () => {
+    expect(
+      service.toBrowseCard(
+        word({
+          bangla: { meanings: [{ meaning: 'গোপন' }] },
+          review: { banglaReviewed: false },
+        }),
+        [],
+      )?.support,
+    ).toEqual({ bangla: null, english: 'bread' })
+  })
+})
+
+describe('browse filter normalization', () => {
+  test('accepts the supported single-value URL contract', () => {
+    expect(
+      normalizeWordBrowseSearchParams({
+        level: 'A2',
+        page: '2',
+        topic: 'alltag',
+        type: 'noun',
+      }),
+    ).toEqual({
+      filters: { level: 'A2', page: 2, topic: 'alltag', type: 'noun' },
+      isCanonical: true,
+    })
+  })
+
+  test.each([
+    [{ level: ['A1', 'A2'] }, { page: 1 }],
+    [{ level: 'a1' }, { page: 1 }],
+    [{ page: '0' }, { page: 1 }],
+    [{ page: '01' }, { page: 1 }],
+    [{ page: 'word' }, { page: 1 }],
+    [{ topic: ' alltag ' }, { page: 1 }],
+    [{ type: 'article' }, { page: 1 }],
+    [{ extra: 'value' }, { page: 1 }],
+  ])('rejects noncanonical parameters %#', (searchParams, filters) => {
+    expect(normalizeWordBrowseSearchParams(searchParams)).toEqual({
+      filters,
+      isCanonical: false,
+    })
+  })
+
+  test('omits defaults when creating canonical queries', () => {
+    expect(
+      toWordBrowseQuery({ level: 'B1', page: 1, topic: 'reisen' }),
+    ).toEqual({ level: 'B1', topic: 'reisen' })
+    expect(toWordBrowseQuery({ page: 3, type: 'verb' })).toEqual({
+      page: '3',
+      type: 'verb',
+    })
+  })
+})
+
+describe('word browse orchestration', () => {
+  test('resolves the topic and returns a safe paginated page', async () => {
+    const wordRepository = {
+      findPublishedPage: vi.fn().mockResolvedValue(pageResult()),
+    }
+    const topicRepository = {
+      findForBrowse: vi.fn().mockResolvedValue([topic()]),
+    }
+    const service = new WordService(wordRepository, topicRepository)
+
+    const result = await service.getBrowsePage({
+      level: 'A1',
+      topic: 'alltag',
+      type: 'noun',
+    })
+
+    expect(wordRepository.findPublishedPage).toHaveBeenCalledWith({
+      cefrLevel: 'A1',
+      page: 1,
+      topicId: 10,
+      wordType: 'noun',
+    })
+    expect(result).toMatchObject({
+      kind: 'page',
+      page: {
+        filters: { level: 'A1', page: 1, topic: 'alltag', type: 'noun' },
+        pagination: { page: 1, totalDocs: 10, totalPages: 2 },
+        words: [{ article: null, headword: 'das Brot' }],
+      },
+    })
+  })
+
+  test('canonicalizes an unknown or unpublished topic without querying words', async () => {
+    const wordRepository = { findPublishedPage: vi.fn() }
+    const service = new WordService(wordRepository, {
+      findForBrowse: vi.fn().mockResolvedValue([topic()]),
+    })
+
+    await expect(
+      service.getBrowsePage({ level: 'A1', topic: 'private-topic' }),
+    ).resolves.toEqual({ kind: 'redirect', query: { level: 'A1' } })
+    expect(wordRepository.findPublishedPage).not.toHaveBeenCalled()
+  })
+
+  test('redirects an out-of-range page to the last available page', async () => {
+    const service = new WordService(
+      {
+        findPublishedPage: vi.fn().mockResolvedValue(
+          pageResult({ docs: [], hasNextPage: false, page: 9 }),
+        ),
+      },
+      { findForBrowse: vi.fn().mockResolvedValue([]) },
+    )
+
+    await expect(service.getBrowsePage({ page: '9', type: 'verb' })).resolves.toEqual(
+      { kind: 'redirect', query: { page: '2', type: 'verb' } },
+    )
+  })
+
+  test('keeps an empty result set on canonical page one', async () => {
+    const service = new WordService(
+      {
+        findPublishedPage: vi.fn().mockResolvedValue(
+          pageResult({
+            docs: [],
+            hasNextPage: false,
+            totalDocs: 0,
+            totalPages: 0,
+          }),
+        ),
+      },
+      { findForBrowse: vi.fn().mockResolvedValue([]) },
+    )
+
+    await expect(service.getBrowsePage({})).resolves.toMatchObject({
+      kind: 'page',
+      page: {
+        filters: { page: 1 },
+        pagination: { page: 1, totalDocs: 0, totalPages: 0 },
+        words: [],
+      },
+    })
   })
 })

@@ -21,4 +21,14 @@ describe('TopicTagRepository', () => {
       sort: ['sortOrder', 'name'],
     })
   })
+
+  test('queries every published browse option in editorial order', async () => {
+    await new TopicTagRepository().findForBrowse()
+
+    expect(findPublished).toHaveBeenCalledWith('topic-tags', {
+      depth: 0,
+      pagination: false,
+      sort: ['sortOrder', 'name'],
+    })
+  })
 })
