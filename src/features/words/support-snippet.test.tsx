@@ -52,11 +52,13 @@ describe('SupportSnippet', () => {
     expect(screen.queryByText('bread')).not.toBeInTheDocument()
   })
 
-  test('falls back silently to English in Bangla support mode', () => {
+  test('explains the English fallback in Bangla support mode', () => {
     renderSnippet('bn', { bangla: null, english: 'bread' })
 
     expect(screen.getByText('bread')).toBeInTheDocument()
-    expect(screen.queryByRole('note')).not.toBeInTheDocument()
+    expect(screen.getByRole('note')).toHaveTextContent(
+      'Bangla is still under review, so English is shown for now.',
+    )
   })
 
   test('shows both approved languages in both mode', () => {

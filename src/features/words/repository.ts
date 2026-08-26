@@ -37,6 +37,38 @@ export class WordRepository {
     return docs as Word[]
   }
 
+  async findPublishedBySlug(slug: string): Promise<Word | null> {
+    const { docs } = await this.find('words', {
+      depth: 0,
+      limit: 1,
+      where: {
+        and: [
+          { slug: { equals: slug } },
+          { lifecycleStatus: { equals: 'active' } },
+        ],
+      },
+    })
+
+    return (docs[0] as Word | undefined) ?? null
+  }
+
+  async findPublishedByIDs(ids: number[]): Promise<Word[]> {
+    if (ids.length === 0) return []
+
+    const { docs } = await this.find('words', {
+      depth: 0,
+      limit: ids.length,
+      where: {
+        and: [
+          { id: { in: ids } },
+          { lifecycleStatus: { equals: 'active' } },
+        ],
+      },
+    })
+
+    return docs as Word[]
+  }
+
   async findPublishedPage(
     filters: WordBrowseRepositoryFilters,
   ): Promise<PaginatedDocs<Word>> {
