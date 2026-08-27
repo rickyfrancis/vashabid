@@ -8,7 +8,7 @@ import {
   Sparkles,
   Tags,
 } from 'lucide-react'
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 
 import { PageContainer } from '@/components/layout'
 import { Badge, Button, Card, Input, buttonStyles } from '@/components/ui'
@@ -112,6 +112,7 @@ function WordCard({ word }: { word: HomeWordViewModel }) {
 }
 
 export function HomePageContent({ home }: { home: HomePageViewModel }) {
+  const locale = useLocale()
   const t = useTranslations('Home')
   const wordType = useTranslations('WordTypes')
 
@@ -151,11 +152,17 @@ export function HomePageContent({ home }: { home: HomePageViewModel }) {
                     {t('searchTitle')}
                   </h2>
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent-700 dark:text-accent-300">
-                    {t('comingSoon')}
+                    {t('searchReady')}
                   </p>
                 </div>
               </div>
-              <div aria-describedby="home-search-note" className="mt-7">
+              <form
+                action={`/${locale}/search`}
+                aria-describedby="home-search-note"
+                className="mt-7"
+                method="get"
+                role="search"
+              >
                 <label
                   className="mb-2 block text-sm font-semibold text-foreground"
                   htmlFor="home-search-preview"
@@ -164,19 +171,19 @@ export function HomePageContent({ home }: { home: HomePageViewModel }) {
                 </label>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Input
-                    disabled
                     id="home-search-preview"
+                    name="q"
                     placeholder={t('searchPlaceholder')}
                     type="search"
                   />
-                  <Button disabled type="button">
+                  <Button type="submit">
                     {t('searchAction')}
                   </Button>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-muted" id="home-search-note">
-                  {t('searchComingSoon')}
+                  {t('searchDescription')}
                 </p>
-              </div>
+              </form>
             </div>
           </Card>
         </section>
