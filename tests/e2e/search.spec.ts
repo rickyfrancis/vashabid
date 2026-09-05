@@ -103,3 +103,32 @@ test('search remains usable on mobile and in dark mode', async ({ page }) => {
   expect(layout.hasOverflow).toBe(false)
   expect(layout.searchHeight).toBeGreaterThanOrEqual(44)
 })
+
+test('grammar topics are searchable in German, English, and approved Bangla', async ({
+  page,
+}) => {
+  await page.goto('/en/search?q=Perfekt')
+  await expect(page.getByTestId('search-grammar-grid')).toBeVisible()
+  await expect(
+    page.getByTestId('search-grammar-perfekt-mit-haben-und-sein'),
+  ).toBeVisible()
+
+  await page.goto('/en/search?q=modal%20verbs')
+  await expect(page.getByTestId('search-grammar-modalverben')).toBeVisible()
+
+  await page.goto('/en/search?q=%E0%A6%B8%E0%A6%B9%E0%A6%BE%E0%A7%9F%E0%A6%95')
+  await expect(
+    page.getByTestId('search-grammar-perfekt-mit-haben-und-sein'),
+  ).toBeVisible()
+})
+
+test('unapproved Bangla grammar content is not discoverable through search', async ({
+  page,
+}) => {
+  await page.goto(
+    '/en/search?q=%E0%A6%AC%E0%A6%BF%E0%A6%9A%E0%A7%8D%E0%A6%9B%E0%A7%87%E0%A6%A6%E0%A7%8D%E0%A6%AF',
+  )
+
+  await expect(page.getByTestId('search-grammar-grid')).toHaveCount(0)
+  await expect(page.locator('body')).not.toContainText('বিচ্ছেদ্য উপসর্গ')
+})

@@ -250,7 +250,10 @@ export function GrammarDetailPageContent({
   const t = useTranslations('GrammarDetail')
 
   return (
-    <PageContainer className="flex-1 py-12 sm:py-16 lg:py-20">
+    <PageContainer
+      className="flex-1 py-12 sm:py-16 lg:py-20"
+      data-testid={`grammar-detail-${topic.slug}`}
+    >
       <Link
         className="inline-flex items-center gap-2 text-sm font-semibold text-muted underline-offset-4 hover:text-foreground hover:underline"
         href="/grammar"
