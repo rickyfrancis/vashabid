@@ -7,7 +7,8 @@
     "home": "Home",
     "primary": "Primary navigation",
     "search": "Search",
-    "words": "Browse words"
+    "words": "Browse words",
+    "grammar": "Grammar"
   },
   "Shell": {
     "skipToContent": "Skip to content",
@@ -49,7 +50,8 @@
     "emptyWordsTitle": "The word desk is being prepared",
     "emptyWordsDescription": "Published German words will appear here as soon as the editorial team releases them.",
     "emptyTopicsTitle": "Topics are being organized",
-    "emptyTopicsDescription": "Published vocabulary topics will appear here when they are ready."
+    "emptyTopicsDescription": "Published vocabulary topics will appear here when they are ready.",
+    "grammarAction": "Browse grammar topics"
   },
   "WordTypes": {
     "noun": "Noun",
@@ -109,7 +111,9 @@
     "paginationLabel": "Search result pages",
     "previousPage": "Previous",
     "nextPage": "Next",
-    "pagePosition": "Page {page} of {totalPages}"
+    "pagePosition": "Page {page} of {totalPages}",
+    "sectionGrammar": "Grammar patterns",
+    "grammarResultCount": "{count, plural, =0 {No matching topics} one {# matching topic} other {# matching topics}}"
   },
   "LearnerSupport": {
     "englishLabel": "English",
@@ -152,7 +156,49 @@
       "rude": "Rude",
       "poetic": "Poetic",
       "archaic": "Archaic"
-    }
+    },
+    "relatedGrammarTitle": "Grammar behind this word"
+  },
+  "Grammar": {
+    "eyebrow": "The pattern workbook",
+    "title": "Learn the patterns behind German.",
+    "description": "Work through published German grammar topics by level or learning theme, with support in English, Bangla, or both.",
+    "filtersTitle": "Refine the workbook",
+    "filtersEyebrow": "Two ways to narrow",
+    "levelLabel": "CEFR level",
+    "allLevels": "All levels",
+    "topicLabel": "Learning topic",
+    "allTopics": "All topics",
+    "applyFilters": "Apply filters",
+    "clearFilters": "Clear filters",
+    "resultCount": "{count, plural, =0 {No published topics} one {# published topic} other {# published topics}}",
+    "supportHint": "Explanations follow the learning support setting above.",
+    "ruleLabel": "The rule",
+    "cardTopics": "Learning topics",
+    "noTopics": "No topic assigned",
+    "emptyTitle": "No topics match this workbook",
+    "emptyDescription": "Try clearing one or more filters to return to the full published grammar list.",
+    "paginationLabel": "Grammar topic pages",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pagePosition": "Page {page} of {totalPages}"
+  },
+  "GrammarDetail": {
+    "metadataTitle": "{topic} — German grammar | Vashabid",
+    "metadataDescription": "Learn the German grammar pattern {topic}: {summary}",
+    "backToGrammar": "Back to grammar index",
+    "eyebrow": "From the pattern workbook",
+    "quickFactsTitle": "At a glance",
+    "levelLabel": "CEFR level",
+    "topicsLabel": "Learning topics",
+    "ruleTitle": "The rule in one line",
+    "supportEyebrow": "How the pattern works",
+    "explanationTitle": "Explanation",
+    "fallbackNotice": "Bangla guidance is not available for this section, so English is shown instead.",
+    "practiceEyebrow": "See it in motion",
+    "examplesTitle": "German examples",
+    "mistakesTitle": "Common mistakes",
+    "relatedWordsTitle": "Vocabulary that shows this pattern"
   },
   "Languages": {
     "label": "Interface language",
