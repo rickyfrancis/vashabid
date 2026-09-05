@@ -18,10 +18,12 @@ vashabid/
 │   │   └── layout/          # Header, footer, shell, nav
 │   ├── features/
 │   │   ├── words/           # Word browsing, word detail
+│   │   ├── grammar/         # Grammar topic browsing and detail
 │   │   ├── search/          # Search UI and query logic
 │   │   ├── translator/      # Translator UI and service wrapper
 │   │   └── i18n/            # Locale config, navigation, message loading, support preferences
 │   ├── lib/
+│   │   ├── content/         # Shared text normalization for view-model mappers
 │   │   └── payload/         # Payload Local API helpers
 │   └── styles/
 │       └── theme.css        # Design tokens reference
@@ -200,7 +202,15 @@ Seed data lives in `src/lib/payload/seed/`:
   approved and one remains pending to exercise public visibility rules.
 
 Phase 5 supplies the five topic tags. Phase 6 extends the same orchestrator with
-the minimum word data rather than resetting existing collections.
+the minimum word data rather than resetting existing collections. Phase 12 adds
+eight grammar topics, seeded after words because they reference both topic tags
+and words by slug. Exactly one grammar topic keeps Bangla unapproved so public
+fallback and search gating stay exercised.
+
+Rich text is stored as `jsonb`, which does not preserve key order. Seed
+comparisons must therefore serialize rich-text values with sorted keys;
+a plain `JSON.stringify` comparison reports drift on every run and breaks
+idempotence.
 
 ## CMS content foundations
 
@@ -213,6 +223,17 @@ collections should use these helpers instead of recreating schema conventions:
   not use Payload localization because support mode is independent from UI locale.
 - Review metadata uses configurable `<language>Reviewed` flags. Phase 22 will
   build the richer review workflow on this stable field shape.
+- Learner rich text uses `createLearnerRichTextEditor()` from
+  `src/lib/payload/fields/rich-text.ts`. The feature set is deliberately narrow
+  (headings, lists, bold, italic, inline code, links) so the public render
+  surface stays small and predictable. `richTextParagraphs()` builds
+  deterministic values for seeds and tests, and `richTextToPlainText()` flattens
+  stored values for search and metadata.
+- Publish gating is built from `createPublicationIntentHook()` and
+  `createPublicationValidationHook()` in `collections/hooks/content.ts`. Because
+  `versions.drafts.validate` is `false`, drafts may be incomplete; the
+  `beforeOperation` hook records publish intent on `req.context` and the matching
+  `beforeValidate` hook enforces the collection's publish rules.
 - Optional source metadata keeps attribution, source URL, license name and URL,
   and usage notes together.
 - Draft-enabled collections reuse the shared content-version configuration and
@@ -267,9 +288,35 @@ plus `page` when greater than one. The global cookie-backed support mode remains
 outside this query contract and updates safe card snippets client-side. Topic IDs,
 review metadata, sources, and unapproved Bangla never enter client props.
 
+The Phase 12 grammar workbook reuses that boundary at `/[locale]/grammar` and
+`/[locale]/grammar/[slug]`. `GrammarRepository` owns the published queries,
+including the reverse lookup that finds the topics referencing a given word.
+`GrammarService` normalizes `level`, `topic`, and `page` exactly as the word
+catalogue does, redirecting to a canonical URL before querying. English
+explanations are required to publish; Bangla explanations, Bangla mistakes, and
+each example's Bangla line are withheld until `review.banglaReviewed` is set, so
+pending translations never reach client props or search.
+
+**Import direction between words and grammar:** the two features link to each
+other, so the dependency must stay one-way at the service layer. `WordService`
+imports `GrammarRepository` only — never `GrammarService`. `GrammarService`
+imports `WordRepository` and `WordService`. Because repositories never import
+services, the graph stays acyclic.
+
+Search treats words as the paginated primary list. Grammar results are a capped
+secondary section rendered only alongside the first page, which keeps the
+existing pagination contract unchanged.
+
+Helpers needed by two or more feature services move to `src/lib`. `cleanText`,
+`cleanRows`, and `firstRow` live in `src/lib/content/text.ts` now that both the
+word and grammar mappers normalize stored strings the same way.
+
 Phase 6 continues to use schema push for disposable development and CI databases,
 matching the Phase 5 convention. Persistent staging and production databases
-still require a generated, reviewed migration before deployment.
+still require a generated, reviewed migration before deployment. A new
+collection generates a migration whose `down` statements drop tables with
+`CASCADE`; the follow-up constraint and index drops must use `IF EXISTS` so the
+migration reverses cleanly.
 
 ## Tech decisions
 
