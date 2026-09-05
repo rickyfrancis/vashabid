@@ -404,6 +404,10 @@ describe('word browse orchestration', () => {
   })
 })
 
+function grammarRepository(topics: unknown[] = []) {
+  return { findPublishedByRelatedWordID: vi.fn().mockResolvedValue(topics) }
+}
+
 describe('word detail orchestration', () => {
   test('loads one word and resolves only its related IDs', async () => {
     const detail = word({ relatedWords: [4, 2, 4] })
@@ -416,11 +420,30 @@ describe('word detail orchestration', () => {
     const topicRepository = {
       findForBrowse: vi.fn().mockResolvedValue([topic()]),
     }
-    const service = new WordService(wordRepository, topicRepository)
+    const grammar = grammarRepository([
+      {
+        cefrLevel: 'A1',
+        name: 'Bestimmter Artikel',
+        slug: 'bestimmter-artikel',
+      },
+    ])
+    const service = new WordService(
+      wordRepository,
+      topicRepository,
+      grammar as never,
+    )
 
     await expect(service.getDetailPage('das-brot')).resolves.toMatchObject({
+      grammar: [
+        {
+          cefrLevel: 'A1',
+          name: 'Bestimmter Artikel',
+          slug: 'bestimmter-artikel',
+        },
+      ],
       slug: 'das-brot',
     })
+    expect(grammar.findPublishedByRelatedWordID).toHaveBeenCalledWith(1)
     expect(wordRepository.findPublishedBySlug).toHaveBeenCalledWith('das-brot')
     expect(wordRepository.findPublishedByIDs).toHaveBeenCalledWith([4, 2])
     expect(topicRepository.findForBrowse).toHaveBeenCalledOnce()
@@ -429,10 +452,16 @@ describe('word detail orchestration', () => {
   test('returns null without loading topics or relationships when absent', async () => {
     const wordRepository = repository()
     const topicRepository = { findForBrowse: vi.fn() }
-    const service = new WordService(wordRepository, topicRepository)
+    const grammar = grammarRepository()
+    const service = new WordService(
+      wordRepository,
+      topicRepository,
+      grammar as never,
+    )
 
     await expect(service.getDetailPage('missing')).resolves.toBeNull()
     expect(wordRepository.findPublishedByIDs).not.toHaveBeenCalled()
     expect(topicRepository.findForBrowse).not.toHaveBeenCalled()
+    expect(grammar.findPublishedByRelatedWordID).not.toHaveBeenCalled()
   })
 })

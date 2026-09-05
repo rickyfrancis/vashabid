@@ -51,13 +51,18 @@ function repositoryResult(overrides: Record<string, unknown> = {}) {
 }
 
 function createService({
+  grammar = [],
   topics = [topic()],
   result = repositoryResult(),
 }: {
+  grammar?: unknown[]
   topics?: TopicTag[]
   result?: ReturnType<typeof repositoryResult>
 } = {}) {
-  const searchRepository = { findWordPage: vi.fn().mockResolvedValue(result) }
+  const searchRepository = {
+    findGrammarMatches: vi.fn().mockResolvedValue(grammar),
+    findWordPage: vi.fn().mockResolvedValue(result),
+  }
   const topicRepository = { findForBrowse: vi.fn().mockResolvedValue(topics) }
   const wordService = {
     toBrowseCard: vi.fn().mockReturnValue({
@@ -71,9 +76,26 @@ function createService({
     }),
   }
 
+  const grammarService = {
+    toBrowseCard: vi.fn((value: { slug: string }) => ({
+      cefrLevel: 'A2',
+      name: 'Modalverben',
+      shortRule: 'Das Modalverb wird konjugiert.',
+      slug: value.slug,
+      support: { bangla: null, english: 'Modal verbs.' },
+      topics: [],
+    })),
+  }
+
   return {
+    grammarService,
     searchRepository,
-    service: new SearchService(searchRepository, topicRepository, wordService),
+    service: new SearchService(
+      searchRepository,
+      topicRepository,
+      wordService,
+      grammarService as never,
+    ),
     topicRepository,
     wordService,
   }
@@ -85,7 +107,7 @@ describe('SearchService', () => {
 
     await expect(fixture.service.getPage({})).resolves.toMatchObject({
       kind: 'page',
-      page: { query: '', state: 'idle', words: [] },
+      page: { grammar: [], query: '', state: 'idle', words: [] },
     })
     expect(fixture.topicRepository.findForBrowse).not.toHaveBeenCalled()
     expect(fixture.searchRepository.findWordPage).not.toHaveBeenCalled()
@@ -161,5 +183,68 @@ describe('SearchService', () => {
       kind: 'redirect',
       query: { q: 'travel', page: '2' },
     })
+  })
+})
+
+describe('SearchService grammar results', () => {
+  test('returns capped grammar matches alongside the first page of words', async () => {
+    const fixture = createService({
+      grammar: [{ slug: 'modalverben' }, { slug: 'relativsaetze' }],
+    })
+
+    const result = await fixture.service.getPage({ q: 'verben' })
+
+    expect(result.kind).toBe('page')
+    if (result.kind !== 'page') return
+
+    expect(result.page.grammar.map((topic) => topic.slug)).toEqual([
+      'modalverben',
+      'relativsaetze',
+    ])
+    expect(fixture.searchRepository.findGrammarMatches).toHaveBeenCalledWith(
+      expect.any(Array),
+      6,
+    )
+  })
+
+  test('keeps words paginated by omitting grammar beyond the first page', async () => {
+    const fixture = createService({
+      grammar: [{ slug: 'modalverben' }],
+      result: repositoryResult({ page: 2, totalDocs: 14, totalPages: 2 }),
+    })
+
+    const result = await fixture.service.getPage({ q: 'verben', page: '2' })
+
+    expect(result.kind).toBe('page')
+    if (result.kind !== 'page') return
+
+    expect(result.page.grammar).toEqual([])
+    expect(fixture.searchRepository.findGrammarMatches).not.toHaveBeenCalled()
+  })
+
+  test('drops grammar topics the view-model mapper rejects', async () => {
+    const fixture = createService({ grammar: [{ slug: 'broken' }] })
+    fixture.grammarService.toBrowseCard.mockReturnValue(
+      null as unknown as ReturnType<typeof fixture.grammarService.toBrowseCard>,
+    )
+
+    const result = await fixture.service.getPage({ q: 'verben' })
+
+    expect(result.kind).toBe('page')
+    if (result.kind !== 'page') return
+
+    expect(result.page.grammar).toEqual([])
+  })
+
+  test('returns no grammar for an idle query without querying', async () => {
+    const fixture = createService({ grammar: [{ slug: 'modalverben' }] })
+
+    const result = await fixture.service.getPage({})
+
+    expect(result.kind).toBe('page')
+    if (result.kind !== 'page') return
+
+    expect(result.page.grammar).toEqual([])
+    expect(fixture.searchRepository.findGrammarMatches).not.toHaveBeenCalled()
   })
 })

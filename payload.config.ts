@@ -5,6 +5,7 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { buildConfig } from 'payload'
 import sharp from 'sharp'
 
+import { GrammarTopics } from './collections/GrammarTopics'
 import { Media } from './collections/Media'
 import { TopicTags } from './collections/TopicTags'
 import { Users } from './collections/Users'
@@ -23,7 +24,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, TopicTags, Words],
+  collections: [Users, Media, TopicTags, Words, GrammarTopics],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

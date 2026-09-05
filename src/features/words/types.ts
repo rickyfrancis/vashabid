@@ -60,6 +60,16 @@ export interface WordDetailBanglaViewModel
   pronunciationHints: string[]
 }
 
+/**
+ * Reverse link into the grammar feature: the published patterns that name this
+ * word as an example.
+ */
+export interface WordDetailGrammarViewModel {
+  cefrLevel: CefrLevel
+  name: string
+  slug: string
+}
+
 export interface WordDetailExampleViewModel {
   germanSentence: string
   support: LearnerSupportViewModel
@@ -79,6 +89,7 @@ export interface WordDetailPageViewModel {
   audioAvailable: false
   cefrLevel: CefrLevel
   examples: WordDetailExampleViewModel[]
+  grammar: WordDetailGrammarViewModel[]
   headword: string
   ipa: string | null
   lemma: string

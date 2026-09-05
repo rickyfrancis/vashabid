@@ -23,6 +23,9 @@ const detail: WordDetailPageViewModel = {
   article: 'der',
   audioAvailable: false,
   cefrLevel: 'A2',
+  grammar: [
+    { cefrLevel: 'B1', name: 'Relativsätze', slug: 'relativsaetze' },
+  ],
   examples: [
     {
       germanSentence: 'Ich habe morgen einen Termin.',
@@ -160,10 +163,22 @@ describe('WordDetailPageContent', () => {
     expect(screen.queryByText('অ্যাপয়েন্টমেন্ট')).not.toBeInTheDocument()
   })
 
+  test('links out to the grammar patterns behind the word', () => {
+    renderDetail(detail)
+
+    const card = screen.getByTestId('word-grammar-relativsaetze')
+
+    expect(
+      within(card).getByRole('link', { name: 'Relativsätze' }),
+    ).toHaveAttribute('href', '/grammar/relativsaetze')
+    expect(within(card).getByText('B1')).toBeInTheDocument()
+  })
+
   test('omits optional sections without crashing', () => {
     renderDetail({
       ...detail,
       examples: [],
+      grammar: [],
       ipa: null,
       noun: null,
       relatedWords: [],
@@ -180,5 +195,8 @@ describe('WordDetailPageContent', () => {
     expect(screen.queryByText('Common mistakes')).not.toBeInTheDocument()
     expect(screen.queryByText('Noun notes')).not.toBeInTheDocument()
     expect(screen.queryByText('Keep following the thread')).not.toBeInTheDocument()
+    expect(
+      screen.queryByText('Grammar behind this word'),
+    ).not.toBeInTheDocument()
   })
 })

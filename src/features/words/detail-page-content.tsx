@@ -8,6 +8,7 @@ import {
   BookOpenText,
   Gauge,
   Languages,
+  NotebookPen,
   NotebookTabs,
   Quote,
   Sparkles,
@@ -420,6 +421,52 @@ export function WordDetailPageContent({
               <Examples examples={word.examples} />
             ) : null}
             <Mistakes support={word.support} />
+
+            {word.grammar.length > 0 ? (
+              <section aria-labelledby="related-grammar-title">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-xl bg-accent-100 text-accent-800 dark:bg-accent-950 dark:text-accent-200">
+                    <NotebookPen aria-hidden="true" size={18} strokeWidth={1.8} />
+                  </span>
+                  <h2
+                    className="font-display text-3xl font-semibold tracking-tight text-foreground"
+                    id="related-grammar-title"
+                  >
+                    {t('relatedGrammarTitle')}
+                  </h2>
+                </div>
+                <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {word.grammar.map((topic) => (
+                    <li key={topic.slug}>
+                      <Card
+                        className="group relative flex items-center justify-between gap-4 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+                        data-testid={`word-grammar-${topic.slug}`}
+                      >
+                        <div className="min-w-0">
+                          <Badge tone="brand">{topic.cefrLevel}</Badge>
+                          <p
+                            className="mt-2 font-display text-lg font-semibold text-foreground"
+                            lang="de"
+                          >
+                            <Link
+                              className="rounded-md underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                              href={`/grammar/${topic.slug}`}
+                            >
+                              {topic.name}
+                            </Link>
+                          </p>
+                        </div>
+                        <ArrowRight
+                          aria-hidden="true"
+                          className="shrink-0 text-accent-600 transition group-hover:translate-x-1 dark:text-accent-300"
+                          size={18}
+                        />
+                      </Card>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
             {word.relatedWords.length > 0 ? (
               <section aria-labelledby="related-words-title">

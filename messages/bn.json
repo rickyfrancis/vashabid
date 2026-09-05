@@ -7,7 +7,8 @@
     "home": "হোম",
     "primary": "প্রধান ন্যাভিগেশন",
     "search": "খুঁজুন",
-    "words": "শব্দ দেখুন"
+    "words": "শব্দ দেখুন",
+    "grammar": "ব্যাকরণ"
   },
   "Shell": {
     "skipToContent": "মূল কনটেন্টে যান",
@@ -49,7 +50,8 @@
     "emptyWordsTitle": "শব্দের তালিকা প্রস্তুত হচ্ছে",
     "emptyWordsDescription": "সম্পাদকীয় দল প্রকাশ করলেই জার্মান শব্দগুলো এখানে দেখা যাবে।",
     "emptyTopicsTitle": "বিষয়গুলো সাজানো হচ্ছে",
-    "emptyTopicsDescription": "প্রকাশিত শব্দভাণ্ডারের বিষয়গুলো প্রস্তুত হলে এখানে দেখা যাবে।"
+    "emptyTopicsDescription": "প্রকাশিত শব্দভাণ্ডারের বিষয়গুলো প্রস্তুত হলে এখানে দেখা যাবে।",
+    "grammarAction": "ব্যাকরণ বিষয় দেখুন"
   },
   "WordTypes": {
     "noun": "বিশেষ্য",
@@ -109,7 +111,9 @@
     "paginationLabel": "সার্চ ফলাফলের পাতা",
     "previousPage": "আগের",
     "nextPage": "পরের",
-    "pagePosition": "{totalPages}টি পাতার মধ্যে {page}"
+    "pagePosition": "{totalPages}টি পাতার মধ্যে {page}",
+    "sectionGrammar": "ব্যাকরণের নিয়ম",
+    "grammarResultCount": "{count, plural, =0 {কোনো বিষয় মেলেনি} one {# টি বিষয় মিলেছে} other {# টি বিষয় মিলেছে}}"
   },
   "LearnerSupport": {
     "englishLabel": "ইংরেজি",
@@ -152,7 +156,49 @@
       "rude": "অশিষ্ট",
       "poetic": "কাব্যিক",
       "archaic": "প্রাচীন"
-    }
+    },
+    "relatedGrammarTitle": "এই শব্দের পেছনের ব্যাকরণ"
+  },
+  "Grammar": {
+    "eyebrow": "প্যাটার্ন ওয়ার্কবুক",
+    "title": "জার্মানের পেছনের নিয়মগুলো শিখুন।",
+    "description": "প্রকাশিত জার্মান ব্যাকরণ বিষয়গুলো স্তর বা শেখার থিম অনুযায়ী দেখুন, ইংরেজি, বাংলা বা দুটোতেই সহায়তা নিয়ে।",
+    "filtersTitle": "ওয়ার্কবুক সাজান",
+    "filtersEyebrow": "দুইভাবে সংকুচিত করুন",
+    "levelLabel": "CEFR স্তর",
+    "allLevels": "সব স্তর",
+    "topicLabel": "শেখার বিষয়",
+    "allTopics": "সব বিষয়",
+    "applyFilters": "ফিল্টার প্রয়োগ করুন",
+    "clearFilters": "ফিল্টার মুছুন",
+    "resultCount": "{count, plural, =0 {কোনো প্রকাশিত বিষয় নেই} one {# টি প্রকাশিত বিষয়} other {# টি প্রকাশিত বিষয়}}",
+    "supportHint": "ব্যাখ্যা উপরের শেখার সহায়তা সেটিং অনুসরণ করে।",
+    "ruleLabel": "নিয়ম",
+    "cardTopics": "শেখার বিষয়",
+    "noTopics": "কোনো বিষয় নির্ধারিত নেই",
+    "emptyTitle": "এই ওয়ার্কবুকে কোনো বিষয় মেলেনি",
+    "emptyDescription": "সম্পূর্ণ প্রকাশিত ব্যাকরণ তালিকায় ফিরতে এক বা একাধিক ফিল্টার মুছে দেখুন।",
+    "paginationLabel": "ব্যাকরণ বিষয়ের পাতা",
+    "previousPage": "আগের",
+    "nextPage": "পরের",
+    "pagePosition": "{totalPages} পাতার মধ্যে {page} নম্বর"
+  },
+  "GrammarDetail": {
+    "metadataTitle": "{topic} — জার্মান ব্যাকরণ | Vashabid",
+    "metadataDescription": "জার্মান ব্যাকরণের নিয়ম {topic} শিখুন: {summary}",
+    "backToGrammar": "ব্যাকরণ সূচিতে ফিরুন",
+    "eyebrow": "প্যাটার্ন ওয়ার্কবুক থেকে",
+    "quickFactsTitle": "এক নজরে",
+    "levelLabel": "CEFR স্তর",
+    "topicsLabel": "শেখার বিষয়",
+    "ruleTitle": "এক লাইনে নিয়ম",
+    "supportEyebrow": "নিয়মটি যেভাবে কাজ করে",
+    "explanationTitle": "ব্যাখ্যা",
+    "fallbackNotice": "এই অংশের জন্য বাংলা নির্দেশনা এখনও নেই, তাই ইংরেজি দেখানো হচ্ছে।",
+    "practiceEyebrow": "ব্যবহারে দেখুন",
+    "examplesTitle": "জার্মান উদাহরণ",
+    "mistakesTitle": "সাধারণ ভুল",
+    "relatedWordsTitle": "যে শব্দগুলোতে এই নিয়ম দেখা যায়"
   },
   "Languages": {
     "label": "ইন্টারফেসের ভাষা",

@@ -1,11 +1,16 @@
-import type { Word } from '@payload-types'
+import type { GrammarTopic, Word } from '@payload-types'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { findPublished } = vi.hoisted(() => ({ findPublished: vi.fn() }))
 
 vi.mock('@/lib/payload', () => ({ findPublished }))
 
-import { matchesSearchToken, SearchRepository } from './repository'
+import { richTextParagraphs } from '@/lib/payload/fields'
+import {
+  matchesGrammarSearchToken,
+  matchesSearchToken,
+  SearchRepository,
+} from './repository'
 import type { SearchToken } from './types'
 
 const word = (overrides: Partial<Word> = {}): Word => ({
@@ -118,5 +123,107 @@ describe('SearchRepository', () => {
 
     expect(result.docs).toHaveLength(1)
     expect(result.docs[0].id).toBe(3)
+  })
+})
+
+const grammarTopic = (overrides: Record<string, unknown> = {}) =>
+  ({
+    _status: 'published',
+    bangla: { explanation: richTextParagraphs('মোডাল ক্রিয়া বাংলা।') },
+    cefrLevel: 'A2',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    english: { explanation: richTextParagraphs('Modal verbs change meaning.') },
+    id: 11,
+    name: 'Modalverben',
+    review: { banglaReviewed: true },
+    shortRule: 'Das Modalverb wird konjugiert.',
+    slug: 'modalverben',
+    topicTags: [7],
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  }) as unknown as GrammarTopic
+
+describe('matchesGrammarSearchToken', () => {
+  test.each([
+    ['the German name', ['modalverben']],
+    ['the slug', ['modalverben']],
+    ['the German short rule', ['konjugiert']],
+    ['the English explanation', ['change meaning']],
+    ['the approved Bangla explanation', ['মোডাল']],
+  ])('matches through %s', (_label, variants) => {
+    expect(
+      matchesGrammarSearchToken(grammarTopic(), token({ variants })),
+    ).toBe(true)
+  })
+
+  test('matches a CEFR level or a topic tag', () => {
+    expect(
+      matchesGrammarSearchToken(grammarTopic(), token({ cefrLevel: 'A2' })),
+    ).toBe(true)
+    expect(
+      matchesGrammarSearchToken(grammarTopic(), token({ topicIDs: [7] })),
+    ).toBe(true)
+  })
+
+  test('never searches Bangla content without the review gate', () => {
+    const pending = grammarTopic({ review: { banglaReviewed: false } })
+
+    expect(
+      matchesGrammarSearchToken(pending, token({ variants: ['মোডাল'] })),
+    ).toBe(false)
+    expect(
+      matchesGrammarSearchToken(pending, token({ variants: ['konjugiert'] })),
+    ).toBe(true)
+  })
+
+  test('rejects a topic that matches nothing', () => {
+    expect(
+      matchesGrammarSearchToken(grammarTopic(), token({ variants: ['zzz'] })),
+    ).toBe(false)
+  })
+})
+
+describe('SearchRepository.findGrammarMatches', () => {
+  beforeEach(() => {
+    findPublished.mockReset()
+    findPublished.mockResolvedValue({ docs: [] })
+  })
+
+  test('reads published topics in a stable order', async () => {
+    await new SearchRepository().findGrammarMatches([token()], 6)
+
+    expect(findPublished).toHaveBeenCalledWith('grammar-topics', {
+      depth: 0,
+      pagination: false,
+      sort: ['cefrLevel', 'name', 'slug'],
+    })
+  })
+
+  test('applies AND token semantics and caps the result', async () => {
+    findPublished.mockResolvedValue({
+      docs: Array.from({ length: 9 }, (_, index) =>
+        grammarTopic({ id: index + 1, slug: `topic-${index + 1}` }),
+      ),
+    })
+
+    const matches = await new SearchRepository().findGrammarMatches(
+      [token({ variants: ['konjugiert'] }), token({ cefrLevel: 'A2' })],
+      6,
+    )
+
+    expect(matches).toHaveLength(6)
+  })
+
+  test('excludes topics that fail any token', async () => {
+    findPublished.mockResolvedValue({
+      docs: [grammarTopic(), grammarTopic({ id: 2, cefrLevel: 'B2' })],
+    })
+
+    const matches = await new SearchRepository().findGrammarMatches(
+      [token({ variants: ['konjugiert'] }), token({ cefrLevel: 'A2' })],
+      6,
+    )
+
+    expect(matches.map((match) => match.id)).toEqual([11])
   })
 })

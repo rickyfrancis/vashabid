@@ -1,4 +1,4 @@
-import { BookMarked, LibraryBig, Search } from 'lucide-react'
+import { BookMarked, LibraryBig, NotebookPen, Search } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { LanguageSwitcher } from '@/features/i18n/language-switcher'
 import { Link } from '@/features/i18n/navigation'
@@ -46,6 +46,13 @@ export function Header() {
               >
                 <LibraryBig aria-hidden="true" size={17} strokeWidth={1.8} />
                 {navigation('words')}
+              </Link>
+              <Link
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface-muted px-4 text-sm font-semibold text-foreground transition hover:border-brand-300 hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus dark:hover:border-brand-700"
+                href="/grammar"
+              >
+                <NotebookPen aria-hidden="true" size={17} strokeWidth={1.8} />
+                {navigation('grammar')}
               </Link>
               <Link
                 className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface-muted px-4 text-sm font-semibold text-foreground transition hover:border-brand-300 hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus dark:hover:border-brand-700"

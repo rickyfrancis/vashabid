@@ -323,26 +323,46 @@ export function HomePageContent({ home }: { home: HomePageViewModel }) {
             {[
               {
                 description: t('grammarDescription'),
+                href: '/grammar',
                 icon: BookOpenCheck,
                 title: t('grammarTitle'),
               },
               {
                 description: t('scenariosDescription'),
+                href: null,
                 icon: MessageCircleMore,
                 title: t('scenariosTitle'),
               },
-            ].map(({ description, icon: Icon, title }) => (
-              <Card className="relative overflow-hidden bg-surface-muted/70 p-7 sm:p-8" key={title}>
+            ].map(({ description, href, icon: Icon, title }) => (
+              <Card
+                className="relative overflow-hidden bg-surface-muted/70 p-7 sm:p-8"
+                key={title}
+              >
                 <div className="flex items-start justify-between gap-5">
                   <span className="grid size-12 place-items-center rounded-xl bg-brand-800 text-white dark:bg-brand-300 dark:text-brand-950">
                     <Icon aria-hidden="true" size={22} strokeWidth={1.8} />
                   </span>
-                  <Badge tone="accent">{t('comingSoon')}</Badge>
+                  {href ? null : <Badge tone="accent">{t('comingSoon')}</Badge>}
                 </div>
                 <h3 className="mt-8 font-display text-3xl font-semibold text-foreground">
-                  {title}
+                  {href ? (
+                    <Link
+                      className="rounded-md underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                      href={href}
+                    >
+                      {title}
+                    </Link>
+                  ) : (
+                    title
+                  )}
                 </h3>
                 <p className="mt-3 max-w-xl leading-7 text-muted">{description}</p>
+                {href ? (
+                  <p className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-brand-200">
+                    {t('grammarAction')}
+                    <ArrowRight aria-hidden="true" size={16} />
+                  </p>
+                ) : null}
               </Card>
             ))}
           </div>

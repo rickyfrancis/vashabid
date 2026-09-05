@@ -7,7 +7,7 @@ import {
   SupportModeProvider,
   useSupportMode,
 } from '@/features/i18n/support-mode-provider'
-import { fireEvent, render, screen } from '@/test/render'
+import { fireEvent, render, screen, within } from '@/test/render'
 import { SearchPageContent } from './search-page-content'
 import type { SearchPageViewModel } from './types'
 
@@ -28,6 +28,7 @@ const populatedSearch: SearchPageViewModel = {
     totalPages: 3,
   },
   query: 'bread',
+  grammar: [],
   state: 'results',
   words: [
     {
@@ -94,6 +95,7 @@ describe('SearchPageContent', () => {
         totalPages: 0,
       },
       query: '',
+      grammar: [],
       state: 'idle',
       words: [],
     })
@@ -164,5 +166,34 @@ describe('SearchPageContent', () => {
     expect(
       screen.queryByRole('navigation', { name: 'Search result pages' }),
     ).not.toBeInTheDocument()
+  })
+
+  test('lists matching grammar topics as a secondary section', () => {
+    renderSearch({
+      ...populatedSearch,
+      grammar: [
+        {
+          cefrLevel: 'A2',
+          name: 'Modalverben',
+          shortRule: 'Das Modalverb wird konjugiert.',
+          slug: 'modalverben',
+          support: { bangla: null, english: 'Modal verbs.' },
+          topics: [],
+        },
+      ],
+    })
+
+    const grid = screen.getByTestId('search-grammar-grid')
+
+    expect(
+      within(grid).getByRole('link', { name: 'Modalverben' }),
+    ).toHaveAttribute('href', '/grammar/modalverben')
+    expect(screen.getByText('1 matching topic')).toBeInTheDocument()
+  })
+
+  test('omits the grammar section when nothing matches', () => {
+    renderSearch({ ...populatedSearch, grammar: [] })
+
+    expect(screen.queryByTestId('search-grammar-grid')).not.toBeInTheDocument()
   })
 })
