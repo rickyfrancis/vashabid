@@ -1,8 +1,15 @@
-import type { TopicTag, Word } from '@payload-types'
+import type { GrammarTopic, TopicTag, Word } from '@payload-types'
 import type { PaginatedDocs } from 'payload'
 
 import { findPublished } from '@/lib/payload'
+import { richTextToPlainText } from '@/lib/payload/fields'
 import { SEARCH_PAGE_SIZE, type SearchToken } from './types'
+
+function normalized(values: string[]): string[] {
+  return values
+    .filter((value) => value.length > 0)
+    .map((value) => value.normalize('NFC').toLocaleLowerCase('de-DE'))
+}
 
 function searchableText(word: Word): string[] {
   const values = [
@@ -18,9 +25,28 @@ function searchableText(word: Word): string[] {
     )
   }
 
-  return values.map((value) =>
-    value.normalize('NFC').toLocaleLowerCase('de-DE'),
-  )
+  return normalized(values)
+}
+
+/**
+ * Grammar topics are searchable through their German name, their one-line rule,
+ * and the flattened text of their learner explanations. Bangla is only
+ * searchable once the independent Bangla review flag is set, so pending
+ * translations cannot be discovered indirectly.
+ */
+function grammarSearchableText(topic: GrammarTopic): string[] {
+  const values = [
+    topic.name,
+    topic.slug,
+    topic.shortRule,
+    richTextToPlainText(topic.english?.explanation),
+  ]
+
+  if (topic.review?.banglaReviewed === true && topic.bangla) {
+    values.push(richTextToPlainText(topic.bangla.explanation))
+  }
+
+  return normalized(values)
 }
 
 function relationshipID(value: number | TopicTag): number {
@@ -39,6 +65,22 @@ export function matchesSearchToken(word: Word, token: SearchToken): boolean {
   )
 
   return textMatches || cefrMatches || wordTypeMatches || topicMatches
+}
+
+export function matchesGrammarSearchToken(
+  topic: GrammarTopic,
+  token: SearchToken,
+): boolean {
+  const textMatches = token.variants.some((variant) =>
+    grammarSearchableText(topic).some((value) => value.includes(variant)),
+  )
+  const cefrMatches = token.cefrLevel === topic.cefrLevel
+  const expectedTopics = new Set(token.topicIDs)
+  const topicMatches = (topic.topicTags ?? []).some((tag) =>
+    expectedTopics.has(relationshipID(tag)),
+  )
+
+  return textMatches || cefrMatches || topicMatches
 }
 
 function paginate(words: Word[], page: number): PaginatedDocs<Word> {
@@ -81,5 +123,22 @@ export class SearchRepository {
     )
 
     return paginate(matches, page)
+  }
+
+  async findGrammarMatches(
+    tokens: SearchToken[],
+    limit: number,
+  ): Promise<GrammarTopic[]> {
+    const { docs } = await this.find('grammar-topics', {
+      depth: 0,
+      pagination: false,
+      sort: ['cefrLevel', 'name', 'slug'],
+    })
+
+    return (docs as GrammarTopic[])
+      .filter((topic) =>
+        tokens.every((token) => matchesGrammarSearchToken(topic, token)),
+      )
+      .slice(0, limit)
   }
 }

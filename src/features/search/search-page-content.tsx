@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BookOpenText,
   Languages,
+  NotebookPen,
   Search,
   Sparkles,
 } from 'lucide-react'
@@ -18,6 +19,7 @@ import {
   buttonStyles,
 } from '@/components/ui'
 import { Link } from '@/features/i18n/navigation'
+import { GrammarCard } from '@/features/grammar/grammar-card'
 import { WordCard } from '@/features/words/word-card'
 import { cn } from '@/lib/cn'
 import { toSearchQuery } from './normalization'
@@ -284,6 +286,43 @@ export function SearchPageContent({
             )}
 
             <SearchPagination search={search} />
+
+            {search.grammar.length > 0 ? (
+              <section
+                aria-labelledby="search-grammar-heading"
+                className="mt-14 border-t border-border pt-10"
+              >
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+                      {t('sectionGrammar')}
+                    </p>
+                    <h2
+                      className="mt-2 font-display text-3xl font-semibold text-foreground"
+                      id="search-grammar-heading"
+                    >
+                      {t('sectionGrammar')}
+                    </h2>
+                  </div>
+                  <Badge className="gap-2" tone="accent">
+                    <NotebookPen aria-hidden="true" size={14} />
+                    {t('grammarResultCount', { count: search.grammar.length })}
+                  </Badge>
+                </div>
+                <div
+                  className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+                  data-testid="search-grammar-grid"
+                >
+                  {search.grammar.map((topic) => (
+                    <GrammarCard
+                      key={topic.slug}
+                      testIdPrefix="search-grammar"
+                      topic={topic}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </section>
         )}
       </div>

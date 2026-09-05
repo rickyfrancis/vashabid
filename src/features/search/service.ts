@@ -1,5 +1,7 @@
 import type { TopicTag } from '@payload-types'
 
+import { GRAMMAR_SEARCH_LIMIT } from '@/features/grammar/constants'
+import { GrammarService } from '@/features/grammar/service'
 import { TopicTagRepository } from '@/features/topics/repository'
 import { WordService } from '@/features/words/service'
 import { normalizeSearchParams, normalizeSearchQuery, toSearchQuery } from './normalization'
@@ -43,6 +45,7 @@ function idlePage(): SearchPageViewModel {
       totalDocs: 0,
       totalPages: 0,
     },
+    grammar: [],
     query: '',
     state: 'idle',
     words: [],
@@ -51,14 +54,18 @@ function idlePage(): SearchPageViewModel {
 
 export class SearchService {
   constructor(
-    private readonly searchRepository: Pick<SearchRepository, 'findWordPage'> =
-      new SearchRepository(),
+    private readonly searchRepository: Pick<
+      SearchRepository,
+      'findGrammarMatches' | 'findWordPage'
+    > = new SearchRepository(),
     private readonly topicRepository: Pick<
       TopicTagRepository,
       'findForBrowse'
     > = new TopicTagRepository(),
     private readonly wordService: Pick<WordService, 'toBrowseCard'> =
       new WordService(),
+    private readonly grammarService: Pick<GrammarService, 'toBrowseCard'> =
+      new GrammarService(),
   ) {}
 
   async getPage(params: SearchParams): Promise<SearchResult> {
@@ -94,9 +101,22 @@ export class SearchService {
       }
     }
 
+    // Words are the paginated primary list, so grammar is a capped secondary
+    // section shown only alongside the first page of word results.
+    const grammarTopics =
+      normalizedParams.page === 1
+        ? await this.searchRepository.findGrammarMatches(
+            tokens,
+            GRAMMAR_SEARCH_LIMIT,
+          )
+        : []
+
     return {
       kind: 'page',
       page: {
+        grammar: grammarTopics
+          .map((topic) => this.grammarService.toBrowseCard(topic, publishedTopics))
+          .filter((topic) => topic !== null),
         pagination: {
           hasNextPage: result.hasNextPage,
           hasPrevPage: result.hasPrevPage,

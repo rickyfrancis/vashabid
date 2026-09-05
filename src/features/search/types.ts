@@ -1,3 +1,4 @@
+import type { GrammarBrowseCardViewModel } from '@/features/grammar/types'
 import type { CefrLevel } from '@/lib/payload/fields'
 import type { WordType } from '@/features/words/constants'
 import type { WordBrowseCardViewModel } from '@/features/words/types'
@@ -27,6 +28,11 @@ export interface SearchPaginationViewModel {
 }
 
 export interface SearchPageViewModel {
+  /**
+   * Secondary results. Words stay the paginated primary list, so grammar is
+   * capped and only present on the first page.
+   */
+  grammar: GrammarBrowseCardViewModel[]
   pagination: SearchPaginationViewModel
   query: string
   state: 'idle' | 'results'
