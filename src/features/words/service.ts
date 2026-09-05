@@ -1,6 +1,7 @@
 import type { TopicTag, Word } from '@payload-types'
 
 import { TopicTagRepository } from '@/features/topics/repository'
+import { cleanRows, cleanText, firstRow } from '@/lib/content'
 import { cefrLevels, type CefrLevel } from '@/lib/payload/fields'
 import { wordTypes, type WordType } from './constants'
 import { WordRepository } from './repository'
@@ -21,27 +22,7 @@ import type {
 function firstMeaning(
   rows: null | undefined | { meaning: string }[],
 ): string | null {
-  const value = rows?.find(
-    (row) =>
-      typeof row.meaning === 'string' && row.meaning.trim().length > 0,
-  )?.meaning
-  return value?.trim() || null
-}
-
-function cleanText(value: null | string | undefined): string | null {
-  const trimmed = value?.trim()
-  return trimmed || null
-}
-
-function cleanRows<K extends string>(
-  rows: null | undefined | Array<Record<K, null | string | undefined>>,
-  key: K,
-): string[] {
-  return (
-    rows
-      ?.map((row) => cleanText(row[key]))
-      .filter((value): value is string => value !== null) ?? []
-  )
+  return firstRow(rows, 'meaning')
 }
 
 function relationshipID(value: number | Word): number {

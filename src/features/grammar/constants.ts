@@ -1,0 +1,3 @@
+export const GRAMMAR_BROWSE_PAGE_SIZE = 6
+
+export const GRAMMAR_SEARCH_LIMIT = 6

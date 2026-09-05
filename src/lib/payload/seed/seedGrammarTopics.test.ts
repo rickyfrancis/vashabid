@@ -254,7 +254,12 @@ describe('grammar topic seeding', () => {
         return { docs: referenceDocs(topicSlugs, 100) }
       }
       if (collection === 'words') return { docs: referenceDocs(wordSlugs, 200) }
-      return { docs: [{ id: 1 }, { id: 2 }] }
+      return {
+        docs: [
+          { id: 1, slug: 'bestimmter-artikel' },
+          { id: 2, slug: 'bestimmter-artikel' },
+        ],
+      }
     })
 
     await expect(seedGrammarTopics(fixture.payload)).rejects.toThrow(

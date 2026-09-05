@@ -9,8 +9,6 @@ import {
   UnorderedListFeature,
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
-import type { RichTextAdapterProvider } from 'payload'
-
 /**
  * Structural shape of a stored Lexical value.
  *
@@ -45,7 +43,7 @@ export interface RichTextValue {
  * on German endings) but never uploads, blocks, or relationships. Restricting
  * the feature set keeps the public render surface small and predictable.
  */
-export function createLearnerRichTextEditor(): RichTextAdapterProvider {
+export function createLearnerRichTextEditor() {
   return lexicalEditor({
     features: () => [
       ParagraphFeature(),

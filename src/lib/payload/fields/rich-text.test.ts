@@ -4,6 +4,7 @@ import {
   isRichTextEmpty,
   richTextParagraphs,
   richTextToPlainText,
+  type RichTextNode,
   type RichTextValue,
 } from './rich-text'
 
@@ -18,7 +19,10 @@ describe('richTextParagraphs', () => {
       type: 'paragraph',
       version: 1,
     })
-    expect(value.root.children[0].children?.[0]).toMatchObject({
+    const [paragraph] = value.root.children as RichTextNode[]
+    const [text] = paragraph.children as RichTextNode[]
+
+    expect(text).toMatchObject({
       text: 'Erste Regel.',
       type: 'text',
       version: 1,
