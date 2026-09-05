@@ -113,3 +113,8 @@ grammar topics unchanged.
 - `docs/implementation-log/phase-11.md` is still missing even though Phase 11 is
   merged, which leaves the Phase 11 record short of the plan's definition of
   done.
+- `next start` logs `TypeError: controller[kState].transformAlgorithm is not a
+  function` during Playwright runs. It predates this phase: it reproduces with
+  only the Phase 8 and Phase 10 specs, never appears for grammar routes, and no
+  test fails because of it. Worth tracing to a Next or Node streaming change
+  before it hides a real error.
