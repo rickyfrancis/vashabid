@@ -1,11 +1,13 @@
 import type { TopicTag, Word } from '@payload-types'
 
+import { GrammarRepository } from '@/features/grammar/repository'
 import { TopicTagRepository } from '@/features/topics/repository'
 import { cleanRows, cleanText, firstRow } from '@/lib/content'
 import { cefrLevels, type CefrLevel } from '@/lib/payload/fields'
 import { wordTypes, type WordType } from './constants'
 import { WordRepository } from './repository'
 import type { HomeWordViewModel } from './types'
+import type { GrammarTopic } from '@payload-types'
 import type {
   WordBrowseCanonicalQuery,
   WordBrowseCardViewModel,
@@ -15,6 +17,7 @@ import type {
   WordBrowseTopicViewModel,
   WordDetailBanglaViewModel,
   WordDetailLanguageViewModel,
+  WordDetailGrammarViewModel,
   WordDetailPageViewModel,
   WordDetailRelatedWordViewModel,
 } from './types'
@@ -176,7 +179,20 @@ export class WordService {
       TopicTagRepository,
       'findForBrowse'
     > = new TopicTagRepository(),
+    private readonly grammarRepository: Pick<
+      GrammarRepository,
+      'findPublishedByRelatedWordID'
+    > = new GrammarRepository(),
   ) {}
+
+  toGrammarLink(topic: GrammarTopic): WordDetailGrammarViewModel | null {
+    const name = cleanText(topic.name)
+    const slug = cleanText(topic.slug)
+
+    if (!name || !slug) return null
+
+    return { cefrLevel: topic.cefrLevel, name, slug }
+  }
 
   toHomeCard(word: Word): HomeWordViewModel | null {
     const english = firstMeaning(word.english.meanings)
@@ -263,6 +279,7 @@ export class WordService {
     word: Word,
     publishedTopics: TopicTag[],
     relatedWords: Word[],
+    grammarTopics: GrammarTopic[] = [],
   ): WordDetailPageViewModel | null {
     const english = toEnglishDetail(word)
     const lemma = word.lemma.trim()
@@ -314,6 +331,9 @@ export class WordService {
       audioAvailable: false,
       cefrLevel: word.cefrLevel,
       examples,
+      grammar: grammarTopics
+        .map((topic) => this.toGrammarLink(topic))
+        .filter((topic) => topic !== null),
       headword,
       ipa: cleanText(word.ipa),
       lemma,
@@ -342,12 +362,18 @@ export class WordService {
     if (!word) return null
 
     const relatedIDs = [...new Set((word.relatedWords ?? []).map(relationshipID))]
-    const [publishedTopics, relatedWords] = await Promise.all([
+    const [publishedTopics, relatedWords, grammarTopics] = await Promise.all([
       this.topicRepository.findForBrowse(),
       this.wordRepository.findPublishedByIDs(relatedIDs),
+      this.grammarRepository.findPublishedByRelatedWordID(word.id),
     ])
 
-    return this.toDetailPage(word, publishedTopics, relatedWords)
+    return this.toDetailPage(
+      word,
+      publishedTopics,
+      relatedWords,
+      grammarTopics,
+    )
   }
 
   async getBrowsePage(
