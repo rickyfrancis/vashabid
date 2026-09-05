@@ -12,3 +12,11 @@ export {
   type CefrLevel,
   type ReviewTarget,
 } from './content'
+export {
+  createLearnerRichTextEditor,
+  isRichTextEmpty,
+  richTextParagraphs,
+  richTextToPlainText,
+  type RichTextNode,
+  type RichTextValue,
+} from './rich-text'

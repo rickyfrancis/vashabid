@@ -71,6 +71,7 @@ export interface Config {
     media: Media;
     'topic-tags': TopicTag;
     words: Word;
+    'grammar-topics': GrammarTopic;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +83,7 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     'topic-tags': TopicTagsSelect<false> | TopicTagsSelect<true>;
     words: WordsSelect<false> | WordsSelect<true>;
+    'grammar-topics': GrammarTopicsSelect<false> | GrammarTopicsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -343,6 +345,121 @@ export interface Word {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Explain German grammar patterns with independent English and Bangla learner support.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "grammar-topics".
+ */
+export interface GrammarTopic {
+  id: number;
+  /**
+   * Use the conventional German grammar term, for example "Perfekt mit haben und sein".
+   */
+  name: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  /**
+   * Choose the earliest CEFR level at which this pattern should be taught.
+   */
+  cefrLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  /**
+   * State the rule in one German sentence. Learners see this before the full explanation.
+   */
+  shortRule: string;
+  english: {
+    /**
+     * Explain when and how the pattern is used. Use short headings and lists rather than long paragraphs.
+     */
+    explanation: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    commonMistakes?:
+      | {
+          mistake: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  bangla?: {
+    explanation?: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    commonMistakes?:
+      | {
+          mistake: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * English is required for each example. Bangla is optional and follows the topic-level Bangla review gate.
+   */
+  examples?:
+    | {
+        germanSentence: string;
+        englishExplanation: string;
+        banglaExplanation?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Choose every topic under which learners should be able to discover this pattern.
+   */
+  topicTags?: (number | TopicTag)[] | null;
+  /**
+   * Choose published vocabulary that demonstrates this pattern. These words link back to this topic.
+   */
+  relatedWords?: (number | Word)[] | null;
+  /**
+   * Record attribution, URLs, licensing, and any restrictions before reusing sourced material.
+   */
+  source?: {
+    attribution?: string | null;
+    sourceUrl?: string | null;
+    licenseName?: string | null;
+    licenseUrl?: string | null;
+    usageNotes?: string | null;
+  };
+  /**
+   * Review flags are independent. Bangla remains hidden publicly until Bangla reviewed is enabled.
+   */
+  review?: {
+    germanReviewed?: boolean | null;
+    englishReviewed?: boolean | null;
+    banglaReviewed?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -381,6 +498,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'words';
         value: number | Word;
+      } | null)
+    | ({
+        relationTo: 'grammar-topics';
+        value: number | GrammarTopic;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -593,6 +714,68 @@ export interface WordsSelect<T extends boolean = true> {
         banglaReviewed?: T;
         audioReviewed?: T;
         quizReviewed?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "grammar-topics_select".
+ */
+export interface GrammarTopicsSelect<T extends boolean = true> {
+  name?: T;
+  generateSlug?: T;
+  slug?: T;
+  cefrLevel?: T;
+  shortRule?: T;
+  english?:
+    | T
+    | {
+        explanation?: T;
+        commonMistakes?:
+          | T
+          | {
+              mistake?: T;
+              id?: T;
+            };
+      };
+  bangla?:
+    | T
+    | {
+        explanation?: T;
+        commonMistakes?:
+          | T
+          | {
+              mistake?: T;
+              id?: T;
+            };
+      };
+  examples?:
+    | T
+    | {
+        germanSentence?: T;
+        englishExplanation?: T;
+        banglaExplanation?: T;
+        id?: T;
+      };
+  topicTags?: T;
+  relatedWords?: T;
+  source?:
+    | T
+    | {
+        attribution?: T;
+        sourceUrl?: T;
+        licenseName?: T;
+        licenseUrl?: T;
+        usageNotes?: T;
+      };
+  review?:
+    | T
+    | {
+        germanReviewed?: T;
+        englishReviewed?: T;
+        banglaReviewed?: T;
       };
   updatedAt?: T;
   createdAt?: T;
