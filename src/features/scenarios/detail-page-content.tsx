@@ -2,28 +2,29 @@
 
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import {
-  AlertTriangle,
   ArrowLeft,
-  BookOpenText,
+  ArrowRight,
+  BookmarkPlus,
+  Globe2,
   Languages,
+  MessagesSquare,
   NotebookPen,
-  Quote,
   Tags,
+  Target,
 } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import type { ReactNode } from 'react'
 
 import { PageContainer } from '@/components/layout'
-import { Badge, Card, buttonStyles } from '@/components/ui'
+import { Badge, Button, Card } from '@/components/ui'
 import { Link } from '@/features/i18n/navigation'
 import { useSupportMode } from '@/features/i18n/support-mode-provider'
-import { ScenarioSummaryCard } from '@/features/scenarios/scenario-summary-card'
 import { SupportSnippet } from '@/features/words/support-snippet'
 import { WordSummaryCard } from '@/features/words/word-summary-card'
 import { cn } from '@/lib/cn'
 import type {
-  GrammarDetailLanguageViewModel,
-  GrammarDetailPageViewModel,
+  ScenarioDetailLanguageViewModel,
+  ScenarioDetailPageViewModel,
 } from './types'
 
 function LanguagePanel({
@@ -56,7 +57,7 @@ function LanguagePanel({
 }
 
 function FallbackNotice() {
-  const t = useTranslations('GrammarDetail')
+  const t = useTranslations('ScenarioDetail')
 
   return (
     <p
@@ -75,38 +76,31 @@ const richTextStyles =
 function Explanation({
   support,
 }: {
-  support: GrammarDetailPageViewModel['support']
+  support: ScenarioDetailPageViewModel['support']
 }) {
-  const t = useTranslations('GrammarDetail')
+  const t = useTranslations('ScenarioDetail')
   const learnerSupport = useTranslations('LearnerSupport')
   const { supportMode } = useSupportMode()
-  const banglaAvailable = Boolean(
-    support.bangla &&
-      (support.bangla.explanation ||
-        support.bangla.commonMistakes.length > 0),
-  )
+  const banglaAvailable = Boolean(support.bangla?.explanation)
   const showEnglish = supportMode !== 'bn' || !banglaAvailable
   const showBangla = supportMode !== 'en' && banglaAvailable
 
-  const content = (language: GrammarDetailLanguageViewModel) => (
-    <>
-      {language.explanation ? (
-        <div className={richTextStyles}>
-          <RichText data={language.explanation} disableContainer />
-        </div>
-      ) : null}
-    </>
-  )
+  const content = (language: ScenarioDetailLanguageViewModel) =>
+    language.explanation ? (
+      <div className={richTextStyles}>
+        <RichText data={language.explanation} disableContainer />
+      </div>
+    ) : null
 
   return (
-    <section aria-labelledby="grammar-explanation">
+    <section aria-labelledby="scenario-explanation">
       <p className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-brand-800 dark:text-brand-200">
         <span className="h-px w-8 bg-accent-500" />
         {t('supportEyebrow')}
       </p>
       <h2
         className="mt-4 font-display text-3xl font-semibold tracking-tight text-foreground"
-        id="grammar-explanation"
+        id="scenario-explanation"
       >
         {t('explanationTitle')}
       </h2>
@@ -134,45 +128,45 @@ function Explanation({
   )
 }
 
-function Mistakes({
+function CulturalNotes({
   support,
 }: {
-  support: GrammarDetailPageViewModel['support']
+  support: ScenarioDetailPageViewModel['support']
 }) {
-  const t = useTranslations('GrammarDetail')
+  const t = useTranslations('ScenarioDetail')
   const learnerSupport = useTranslations('LearnerSupport')
   const { supportMode } = useSupportMode()
-  const banglaMistakes = support.bangla?.commonMistakes ?? []
-  const banglaAvailable = banglaMistakes.length > 0
+  const banglaNotes = support.bangla?.culturalNotes ?? []
+  const banglaAvailable = banglaNotes.length > 0
   const showEnglish = supportMode !== 'bn' || !banglaAvailable
   const showBangla = supportMode !== 'en' && banglaAvailable
 
-  if (support.english.commonMistakes.length === 0 && !banglaAvailable) {
+  if (support.english.culturalNotes.length === 0 && !banglaAvailable) {
     return null
   }
 
-  const list = (mistakes: string[]) => (
+  const list = (notes: string[]) => (
     <ul className="space-y-3">
-      {mistakes.map((mistake) => (
-        <li className="flex items-start gap-3" key={mistake}>
-          <AlertTriangle
+      {notes.map((note) => (
+        <li className="flex items-start gap-3" key={note}>
+          <Globe2
             aria-hidden="true"
-            className="mt-1 shrink-0 text-warning"
+            className="mt-1 shrink-0 text-accent-600 dark:text-accent-300"
             size={16}
           />
-          <span>{mistake}</span>
+          <span>{note}</span>
         </li>
       ))}
     </ul>
   )
 
   return (
-    <section aria-labelledby="grammar-mistakes">
+    <section aria-labelledby="scenario-cultural-notes">
       <h2
         className="font-display text-3xl font-semibold tracking-tight text-foreground"
-        id="grammar-mistakes"
+        id="scenario-cultural-notes"
       >
-        {t('mistakesTitle')}
+        {t('culturalNotesTitle')}
       </h2>
       <div
         className={cn(
@@ -180,14 +174,14 @@ function Mistakes({
           showEnglish && showBangla ? 'lg:grid-cols-2' : null,
         )}
       >
-        {showEnglish && support.english.commonMistakes.length > 0 ? (
+        {showEnglish && support.english.culturalNotes.length > 0 ? (
           <LanguagePanel label={learnerSupport('englishLabel')} language="en">
-            {list(support.english.commonMistakes)}
+            {list(support.english.culturalNotes)}
           </LanguagePanel>
         ) : null}
         {showBangla ? (
           <LanguagePanel label={learnerSupport('banglaLabel')} language="bn">
-            {list(banglaMistakes)}
+            {list(banglaNotes)}
           </LanguagePanel>
         ) : null}
       </div>
@@ -195,47 +189,45 @@ function Mistakes({
   )
 }
 
-function Examples({ topic }: { topic: GrammarDetailPageViewModel }) {
-  const t = useTranslations('GrammarDetail')
+function Dialogue({ scenario }: { scenario: ScenarioDetailPageViewModel }) {
+  const t = useTranslations('ScenarioDetail')
 
-  if (topic.examples.length === 0) return null
+  if (scenario.dialogue.length === 0) return null
 
   return (
-    <section aria-labelledby="grammar-examples">
+    <section aria-labelledby="scenario-dialogue">
       <p className="flex items-center gap-3 text-xs font-bold uppercase tracking-[0.2em] text-brand-800 dark:text-brand-200">
         <span className="h-px w-8 bg-accent-500" />
-        {t('practiceEyebrow')}
+        {t('dialogueEyebrow')}
       </p>
       <h2
         className="mt-4 font-display text-3xl font-semibold tracking-tight text-foreground"
-        id="grammar-examples"
+        id="scenario-dialogue"
       >
-        {t('examplesTitle')}
+        {t('dialogueTitle')}
       </h2>
-      <ol className="mt-6 space-y-5">
-        {topic.examples.map((example, index) => (
+      <ol className="mt-6 space-y-4" data-testid="scenario-dialogue-lines">
+        {scenario.dialogue.map((line, index) => (
           <li
-            className="relative rounded-2xl border border-border bg-surface p-5 pl-14 sm:p-6 sm:pl-16"
-            key={example.germanSentence}
+            className="rounded-2xl border border-border bg-surface p-5 sm:p-6"
+            key={`${index}-${line.germanLine}`}
           >
-            <span
-              aria-hidden="true"
-              className="absolute left-5 top-5 grid size-7 place-items-center rounded-full bg-brand-800 font-mono text-xs font-bold text-white dark:bg-brand-300 dark:text-brand-950 sm:left-6 sm:top-6"
-            >
-              {index + 1}
-            </span>
-            <Quote
-              aria-hidden="true"
-              className="mb-2 text-accent-500"
-              size={16}
-            />
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-700 dark:text-accent-300">
+              <span
+                aria-hidden="true"
+                className="grid size-6 place-items-center rounded-full bg-brand-800 font-mono text-[0.65rem] text-white dark:bg-brand-300 dark:text-brand-950"
+              >
+                {index + 1}
+              </span>
+              <span lang="de">{line.speaker}</span>
+            </p>
             <p
-              className="font-display text-xl font-medium leading-8 text-foreground"
+              className="mt-3 font-display text-xl font-medium leading-8 text-foreground"
               lang="de"
             >
-              {example.germanSentence}
+              {line.germanLine}
             </p>
-            <SupportSnippet className="mt-3" support={example.support} />
+            <SupportSnippet className="mt-3" support={line.support} />
           </li>
         ))}
       </ol>
@@ -243,24 +235,58 @@ function Examples({ topic }: { topic: GrammarDetailPageViewModel }) {
   )
 }
 
-export function GrammarDetailPageContent({
-  topic,
+function SaveVocabularyPlaceholder() {
+  const t = useTranslations('ScenarioDetail')
+
+  return (
+    <Card className="p-5 sm:p-6">
+      <div className="flex items-start justify-between gap-3">
+        <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-foreground">
+          <BookmarkPlus aria-hidden="true" size={18} />
+          {t('saveVocabularyTitle')}
+        </h2>
+        <Badge tone="accent">{t('comingSoon')}</Badge>
+      </div>
+      <p
+        className="mt-3 text-sm leading-6 text-muted"
+        id="scenario-save-vocabulary-description"
+      >
+        {t('saveVocabularyDescription')}
+      </p>
+      <Button
+        aria-describedby="scenario-save-vocabulary-description"
+        className="mt-5 w-full"
+        data-testid="scenario-save-vocabulary"
+        disabled
+        type="button"
+        variant="secondary"
+      >
+        <BookmarkPlus aria-hidden="true" size={16} />
+        {t('saveVocabularyAction')}
+      </Button>
+    </Card>
+  )
+}
+
+export function ScenarioDetailPageContent({
+  scenario,
 }: {
-  topic: GrammarDetailPageViewModel
+  scenario: ScenarioDetailPageViewModel
 }) {
-  const t = useTranslations('GrammarDetail')
+  const t = useTranslations('ScenarioDetail')
+  const situation = useTranslations('SituationTypes')
 
   return (
     <PageContainer
       className="flex-1 py-12 sm:py-16 lg:py-20"
-      data-testid={`grammar-detail-${topic.slug}`}
+      data-testid={`scenario-detail-${scenario.slug}`}
     >
       <Link
         className="inline-flex items-center gap-2 text-sm font-semibold text-muted underline-offset-4 hover:text-foreground hover:underline"
-        href="/grammar"
+        href="/scenarios"
       >
         <ArrowLeft aria-hidden="true" size={16} />
-        {t('backToGrammar')}
+        {t('backToScenarios')}
       </Link>
 
       <header className="mt-8 border-b border-border pb-8">
@@ -272,36 +298,45 @@ export function GrammarDetailPageContent({
           className="mt-5 text-balance font-display text-5xl font-semibold leading-[1] tracking-[-0.035em] text-foreground sm:text-6xl"
           lang="de"
         >
-          {topic.name}
+          {scenario.title}
         </h1>
-        <p
-          className="mt-6 max-w-3xl border-l-4 border-accent-500 pl-4 font-display text-xl italic leading-8 text-foreground"
-          lang="de"
-        >
-          {topic.shortRule}
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <Badge tone="brand">{scenario.cefrLevel}</Badge>
+          <Badge>{situation(scenario.situationType)}</Badge>
+        </div>
+        <p className="mt-6 max-w-3xl border-l-4 border-accent-500 pl-4">
+          <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-muted">
+            <Target aria-hidden="true" size={13} />
+            {t('goalTitle')}
+          </span>
+          <span
+            className="mt-2 block font-display text-xl italic leading-8 text-foreground"
+            lang="de"
+          >
+            {scenario.learnerGoal}
+          </span>
         </p>
       </header>
 
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-12">
         <div className="min-w-0 space-y-12">
-          <Explanation support={topic.support} />
-          <Examples topic={topic} />
-          <Mistakes support={topic.support} />
+          <Explanation support={scenario.support} />
+          <Dialogue scenario={scenario} />
+          <CulturalNotes support={scenario.support} />
 
-          {topic.relatedWords.length > 0 ? (
-            <section aria-labelledby="grammar-related-words">
+          {scenario.keyVocabulary.length > 0 ? (
+            <section aria-labelledby="scenario-key-vocabulary">
               <h2
                 className="font-display text-3xl font-semibold tracking-tight text-foreground"
-                id="grammar-related-words"
+                id="scenario-key-vocabulary"
               >
-                {t('relatedWordsTitle')}
+                {t('keyVocabularyTitle')}
               </h2>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {topic.relatedWords.map((word) => (
+                {scenario.keyVocabulary.map((word) => (
                   <WordSummaryCard
                     key={word.slug}
-                    showWordType={false}
-                    testId={`grammar-related-word-${word.slug}`}
+                    testId={`scenario-word-${word.slug}`}
                     word={word}
                   />
                 ))}
@@ -309,28 +344,46 @@ export function GrammarDetailPageContent({
             </section>
           ) : null}
 
-          {topic.scenarios.length > 0 ? (
-            <section aria-labelledby="grammar-related-scenarios">
+          {scenario.grammarTopics.length > 0 ? (
+            <section aria-labelledby="scenario-related-grammar">
               <h2
                 className="font-display text-3xl font-semibold tracking-tight text-foreground"
-                id="grammar-related-scenarios"
+                id="scenario-related-grammar"
               >
-                {t('relatedScenariosTitle')}
+                {t('relatedGrammarTitle')}
               </h2>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                {topic.scenarios.map((scenario) => (
-                  <ScenarioSummaryCard
-                    key={scenario.slug}
-                    scenario={scenario}
-                    testId={`grammar-scenario-${scenario.slug}`}
-                  />
+                {scenario.grammarTopics.map((topic) => (
+                  <Card
+                    className="group relative flex flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-md"
+                    data-testid={`scenario-grammar-${topic.slug}`}
+                    key={topic.slug}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <Badge tone="brand">{topic.cefrLevel}</Badge>
+                      <ArrowRight
+                        aria-hidden="true"
+                        className="text-accent-600 transition group-hover:translate-x-1 dark:text-accent-300"
+                        size={18}
+                      />
+                    </div>
+                    <h3 className="mt-4 font-display text-2xl font-semibold text-foreground">
+                      <Link
+                        className="rounded-md underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+                        href={`/grammar/${topic.slug}`}
+                        lang="de"
+                      >
+                        {topic.name}
+                      </Link>
+                    </h3>
+                  </Card>
                 ))}
               </div>
             </section>
           ) : null}
         </div>
 
-        <aside className="lg:sticky lg:top-8 lg:self-start">
+        <aside className="space-y-5 lg:sticky lg:top-8 lg:self-start">
           <Card className="p-5 sm:p-6">
             <h2 className="flex items-center gap-2 font-display text-xl font-semibold text-foreground">
               <NotebookPen aria-hidden="true" size={18} />
@@ -340,16 +393,27 @@ export function GrammarDetailPageContent({
               <div>
                 <dt className="font-semibold text-muted">{t('levelLabel')}</dt>
                 <dd className="mt-1">
-                  <Badge tone="brand">{topic.cefrLevel}</Badge>
+                  <Badge tone="brand">{scenario.cefrLevel}</Badge>
                 </dd>
               </div>
-              {topic.topics.length > 0 ? (
+              <div>
+                <dt className="font-semibold text-muted">
+                  {t('situationLabel')}
+                </dt>
+                <dd className="mt-1">
+                  <Badge className="gap-1.5">
+                    <MessagesSquare aria-hidden="true" size={12} />
+                    {situation(scenario.situationType)}
+                  </Badge>
+                </dd>
+              </div>
+              {scenario.topics.length > 0 ? (
                 <div>
                   <dt className="font-semibold text-muted">
                     {t('topicsLabel')}
                   </dt>
                   <dd className="mt-2 flex flex-wrap gap-2">
-                    {topic.topics.map((tag) => (
+                    {scenario.topics.map((tag) => (
                       <Badge className="gap-1.5" key={tag.slug}>
                         <Tags aria-hidden="true" size={12} />
                         {tag.name}
@@ -359,17 +423,9 @@ export function GrammarDetailPageContent({
                 </div>
               ) : null}
             </dl>
-            <Link
-              className={buttonStyles({
-                className: 'mt-6 w-full',
-                variant: 'secondary',
-              })}
-              href="/words"
-            >
-              <BookOpenText aria-hidden="true" size={16} />
-              {t('relatedWordsTitle')}
-            </Link>
           </Card>
+
+          <SaveVocabularyPlaceholder />
         </aside>
       </div>
     </PageContainer>

@@ -1,4 +1,4 @@
-import type { GrammarTopic, Word } from '@payload-types'
+import type { GrammarTopic, Scenario, Word } from '@payload-types'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const { findPublished } = vi.hoisted(() => ({ findPublished: vi.fn() }))
@@ -8,6 +8,7 @@ vi.mock('@/lib/payload', () => ({ findPublished }))
 import { richTextParagraphs } from '@/lib/payload/fields'
 import {
   matchesGrammarSearchToken,
+  matchesScenarioSearchToken,
   matchesSearchToken,
   SearchRepository,
 } from './repository'
@@ -225,5 +226,121 @@ describe('SearchRepository.findGrammarMatches', () => {
     )
 
     expect(matches.map((match) => match.id)).toEqual([11])
+  })
+})
+
+const PENDING_BANGLA = 'অপ্রকাশিত বাংলা ব্যাখ্যা।'
+
+const scenario = (overrides: Record<string, unknown> = {}) =>
+  ({
+    _status: 'published',
+    bangla: { explanation: richTextParagraphs('ক্যাফেতে অর্ডার করুন।') },
+    cefrLevel: 'A1',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    dialogue: [
+      {
+        englishExplanation: 'A polite order.',
+        germanLine: 'Ich hätte gern einen Kaffee.',
+        speaker: 'Kundin',
+      },
+    ],
+    english: { explanation: richTextParagraphs('Greet, then order politely.') },
+    id: 21,
+    learnerGoal: 'Ich kann ein Getränk bestellen.',
+    review: { banglaReviewed: true },
+    situationType: 'everyday',
+    slug: 'im-cafe-bestellen',
+    title: 'Im Café bestellen',
+    topicTags: [7],
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    ...overrides,
+  }) as unknown as Scenario
+
+describe('matchesScenarioSearchToken', () => {
+  test.each([
+    ['the German title', ['café']],
+    ['the slug', ['im-cafe']],
+    ['the German learner goal', ['getränk']],
+    ['the English explanation', ['order politely']],
+    ['a German dialogue line', ['hätte gern']],
+    ['the approved Bangla explanation', ['অর্ডার']],
+  ])('matches through %s', (_label, variants) => {
+    expect(matchesScenarioSearchToken(scenario(), token({ variants }))).toBe(
+      true,
+    )
+  })
+
+  test('matches a CEFR level or a topic tag', () => {
+    expect(
+      matchesScenarioSearchToken(scenario(), token({ cefrLevel: 'A1' })),
+    ).toBe(true)
+    expect(
+      matchesScenarioSearchToken(scenario(), token({ topicIDs: [7] })),
+    ).toBe(true)
+  })
+
+  test('never searches Bangla content without the review gate', () => {
+    const pending = scenario({
+      bangla: { explanation: richTextParagraphs(PENDING_BANGLA) },
+      review: { banglaReviewed: false },
+    })
+
+    expect(
+      matchesScenarioSearchToken(pending, token({ variants: ['অপ্রকাশিত'] })),
+    ).toBe(false)
+    expect(
+      matchesScenarioSearchToken(pending, token({ variants: ['café'] })),
+    ).toBe(true)
+  })
+
+  test('rejects a scenario that matches nothing', () => {
+    expect(
+      matchesScenarioSearchToken(scenario(), token({ variants: ['zzz'] })),
+    ).toBe(false)
+  })
+})
+
+describe('SearchRepository.findScenarioMatches', () => {
+  beforeEach(() => {
+    findPublished.mockReset()
+    findPublished.mockResolvedValue({ docs: [] })
+  })
+
+  test('reads published scenarios in a stable order', async () => {
+    await new SearchRepository().findScenarioMatches([token()], 6)
+
+    expect(findPublished).toHaveBeenCalledWith('scenarios', {
+      depth: 0,
+      pagination: false,
+      sort: ['cefrLevel', 'title', 'slug'],
+    })
+  })
+
+  test('applies AND token semantics and caps the result', async () => {
+    findPublished.mockResolvedValue({
+      docs: Array.from({ length: 9 }, (_, index) =>
+        scenario({ id: index + 1, slug: `scenario-${index + 1}` }),
+      ),
+    })
+
+    const matches = await new SearchRepository().findScenarioMatches(
+      [token({ variants: ['café'] }), token({ cefrLevel: 'A1' })],
+      6,
+    )
+
+    expect(matches).toHaveLength(6)
+  })
+
+  test('excludes scenarios that fail any token', async () => {
+    findPublished.mockResolvedValue({
+      docs: [scenario(), scenario({ id: 2, cefrLevel: 'B2' })],
+    })
+
+    const matches = await new SearchRepository().findScenarioMatches(
+      [token({ variants: ['café'] }), token({ cefrLevel: 'A1' })],
+      6,
+    )
+
+    expect(matches.map((match) => match.id)).toEqual([21])
   })
 })

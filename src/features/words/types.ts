@@ -1,5 +1,6 @@
 import type { Word } from '@payload-types'
 import type { CefrLevel } from '@/lib/payload/fields'
+import type { SituationType } from '@/features/scenarios/constants'
 import type { WordType } from './constants'
 
 export interface LearnerSupportViewModel {
@@ -70,6 +71,17 @@ export interface WordDetailGrammarViewModel {
   slug: string
 }
 
+/**
+ * Reverse link into the scenarios feature: the published conversations that
+ * teach this word as key vocabulary.
+ */
+export interface WordDetailScenarioViewModel {
+  cefrLevel: CefrLevel
+  situationType: SituationType
+  slug: string
+  title: string
+}
+
 export interface WordDetailExampleViewModel {
   germanSentence: string
   support: LearnerSupportViewModel
@@ -99,6 +111,7 @@ export interface WordDetailPageViewModel {
   } | null
   register: Word['register']
   relatedWords: WordDetailRelatedWordViewModel[]
+  scenarios: WordDetailScenarioViewModel[]
   slug: string
   support: {
     bangla: WordDetailBanglaViewModel | null

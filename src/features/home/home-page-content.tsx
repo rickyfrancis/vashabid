@@ -322,18 +322,20 @@ export function HomePageContent({ home }: { home: HomePageViewModel }) {
           <div className="mt-8 grid gap-5 lg:grid-cols-2">
             {[
               {
+                action: t('grammarAction'),
                 description: t('grammarDescription'),
                 href: '/grammar',
                 icon: BookOpenCheck,
                 title: t('grammarTitle'),
               },
               {
+                action: t('scenariosAction'),
                 description: t('scenariosDescription'),
-                href: null,
+                href: '/scenarios',
                 icon: MessageCircleMore,
                 title: t('scenariosTitle'),
               },
-            ].map(({ description, href, icon: Icon, title }) => (
+            ].map(({ action, description, href, icon: Icon, title }) => (
               <Card
                 className="relative overflow-hidden bg-surface-muted/70 p-7 sm:p-8"
                 key={title}
@@ -359,7 +361,7 @@ export function HomePageContent({ home }: { home: HomePageViewModel }) {
                 <p className="mt-3 max-w-xl leading-7 text-muted">{description}</p>
                 {href ? (
                   <p className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-800 dark:text-brand-200">
-                    {t('grammarAction')}
+                    {action}
                     <ArrowRight aria-hidden="true" size={16} />
                   </p>
                 ) : null}

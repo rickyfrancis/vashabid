@@ -1,3 +1,4 @@
+import type { SituationType } from '@/features/scenarios/constants'
 import type { CefrLevel } from '@/lib/payload/fields'
 import type { RichTextValue } from '@/lib/payload/fields'
 import type {
@@ -47,6 +48,17 @@ export interface GrammarDetailLanguageViewModel {
   explanation: RichTextValue | null
 }
 
+/**
+ * Reverse link into the scenarios feature: the published conversations that
+ * put this pattern to work.
+ */
+export interface GrammarDetailScenarioViewModel {
+  cefrLevel: CefrLevel
+  situationType: SituationType
+  slug: string
+  title: string
+}
+
 export interface GrammarDetailExampleViewModel {
   germanSentence: string
   support: LearnerSupportViewModel
@@ -57,6 +69,7 @@ export interface GrammarDetailPageViewModel {
   examples: GrammarDetailExampleViewModel[]
   name: string
   relatedWords: WordDetailRelatedWordViewModel[]
+  scenarios: GrammarDetailScenarioViewModel[]
   shortRule: string
   slug: string
   support: {

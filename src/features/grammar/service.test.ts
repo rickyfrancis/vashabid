@@ -76,10 +76,12 @@ function createService({
     totalDocs: 1,
     totalPages: 1,
   },
+  scenarios = [] as unknown[],
   topics = [topicTag()],
   words = [] as Word[],
 }: {
   page?: unknown
+  scenarios?: unknown[]
   topics?: TopicTag[]
   words?: Word[]
 } = {}) {
@@ -102,13 +104,19 @@ function createService({
     })),
   }
 
+  const scenarioRepository = {
+    findPublishedByGrammarTopicID: vi.fn().mockResolvedValue(scenarios),
+  }
+
   return {
     grammarRepository,
+    scenarioRepository,
     service: new GrammarService(
       grammarRepository as never,
       topicRepository as never,
       wordRepository as never,
       wordService as never,
+      scenarioRepository as never,
     ),
     topicRepository,
     wordRepository,

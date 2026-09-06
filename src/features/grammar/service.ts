@@ -1,5 +1,6 @@
-import type { GrammarTopic, TopicTag, Word } from '@payload-types'
+import type { GrammarTopic, Scenario, TopicTag, Word } from '@payload-types'
 
+import { ScenarioRepository } from '@/features/scenarios/repository'
 import { TopicTagRepository } from '@/features/topics/repository'
 import { WordRepository } from '@/features/words/repository'
 import { WordService } from '@/features/words/service'
@@ -20,6 +21,7 @@ import type {
   GrammarBrowseSearchParams,
   GrammarDetailLanguageViewModel,
   GrammarDetailPageViewModel,
+  GrammarDetailScenarioViewModel,
   GrammarLinkViewModel,
 } from './types'
 import type { WordBrowseTopicViewModel } from '@/features/words/types'
@@ -190,7 +192,25 @@ export class GrammarService {
       WordService,
       'toRelatedWord'
     > = new WordService(),
+    private readonly scenarioRepository: Pick<
+      ScenarioRepository,
+      'findPublishedByGrammarTopicID'
+    > = new ScenarioRepository(),
   ) {}
+
+  toScenarioLink(scenario: Scenario): GrammarDetailScenarioViewModel | null {
+    const title = cleanText(scenario.title)
+    const slug = cleanText(scenario.slug)
+
+    if (!title || !slug) return null
+
+    return {
+      cefrLevel: scenario.cefrLevel,
+      situationType: scenario.situationType,
+      slug,
+      title,
+    }
+  }
 
   toGrammarLink(topic: GrammarTopic): GrammarLinkViewModel | null {
     const name = cleanText(topic.name)
@@ -233,6 +253,7 @@ export class GrammarService {
     topic: GrammarTopic,
     publishedTopics: TopicTag[],
     relatedWords: Word[],
+    scenarios: Scenario[] = [],
   ): GrammarDetailPageViewModel | null {
     const english = toEnglishSupport(topic)
     const name = cleanText(topic.name)
@@ -277,6 +298,9 @@ export class GrammarService {
       examples,
       name,
       relatedWords: safeRelated,
+      scenarios: scenarios
+        .map((scenario) => this.toScenarioLink(scenario))
+        .filter((scenario) => scenario !== null),
       shortRule,
       slug,
       support: {
@@ -296,12 +320,18 @@ export class GrammarService {
     const relatedIDs = [
       ...new Set((topic.relatedWords ?? []).map(relationshipID)),
     ]
-    const [publishedTopics, relatedWords] = await Promise.all([
+    const [publishedTopics, relatedWords, scenarios] = await Promise.all([
       this.topicRepository.findForBrowse(),
       this.wordRepository.findPublishedByIDs(relatedIDs),
+      this.scenarioRepository.findPublishedByGrammarTopicID(topic.id),
     ])
 
-    return this.toDetailPage(topic, publishedTopics, relatedWords)
+    return this.toDetailPage(
+      topic,
+      publishedTopics,
+      relatedWords,
+      scenarios,
+    )
   }
 
   async getBrowsePage(

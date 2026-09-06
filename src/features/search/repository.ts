@@ -1,4 +1,4 @@
-import type { GrammarTopic, TopicTag, Word } from '@payload-types'
+import type { GrammarTopic, Scenario, TopicTag, Word } from '@payload-types'
 import type { PaginatedDocs } from 'payload'
 
 import { findPublished } from '@/lib/payload'
@@ -49,6 +49,28 @@ function grammarSearchableText(topic: GrammarTopic): string[] {
   return normalized(values)
 }
 
+/**
+ * Scenarios are searchable through their German title, their learner goal, the
+ * flattened English explanation, and every German dialogue line. Bangla is only
+ * searchable once the independent Bangla review flag is set, so pending
+ * translations cannot be discovered indirectly.
+ */
+function scenarioSearchableText(scenario: Scenario): string[] {
+  const values = [
+    scenario.title,
+    scenario.slug,
+    scenario.learnerGoal,
+    richTextToPlainText(scenario.english?.explanation),
+    ...(scenario.dialogue ?? []).map((line) => line.germanLine),
+  ]
+
+  if (scenario.review?.banglaReviewed === true && scenario.bangla) {
+    values.push(richTextToPlainText(scenario.bangla.explanation))
+  }
+
+  return normalized(values)
+}
+
 function relationshipID(value: number | TopicTag): number {
   return typeof value === 'number' ? value : value.id
 }
@@ -77,6 +99,22 @@ export function matchesGrammarSearchToken(
   const cefrMatches = token.cefrLevel === topic.cefrLevel
   const expectedTopics = new Set(token.topicIDs)
   const topicMatches = (topic.topicTags ?? []).some((tag) =>
+    expectedTopics.has(relationshipID(tag)),
+  )
+
+  return textMatches || cefrMatches || topicMatches
+}
+
+export function matchesScenarioSearchToken(
+  scenario: Scenario,
+  token: SearchToken,
+): boolean {
+  const textMatches = token.variants.some((variant) =>
+    scenarioSearchableText(scenario).some((value) => value.includes(variant)),
+  )
+  const cefrMatches = token.cefrLevel === scenario.cefrLevel
+  const expectedTopics = new Set(token.topicIDs)
+  const topicMatches = (scenario.topicTags ?? []).some((tag) =>
     expectedTopics.has(relationshipID(tag)),
   )
 
@@ -138,6 +176,23 @@ export class SearchRepository {
     return (docs as GrammarTopic[])
       .filter((topic) =>
         tokens.every((token) => matchesGrammarSearchToken(topic, token)),
+      )
+      .slice(0, limit)
+  }
+
+  async findScenarioMatches(
+    tokens: SearchToken[],
+    limit: number,
+  ): Promise<Scenario[]> {
+    const { docs } = await this.find('scenarios', {
+      depth: 0,
+      pagination: false,
+      sort: ['cefrLevel', 'title', 'slug'],
+    })
+
+    return (docs as Scenario[])
+      .filter((scenario) =>
+        tokens.every((token) => matchesScenarioSearchToken(scenario, token)),
       )
       .slice(0, limit)
   }

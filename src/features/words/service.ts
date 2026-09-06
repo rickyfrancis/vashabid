@@ -1,13 +1,14 @@
 import type { TopicTag, Word } from '@payload-types'
 
 import { GrammarRepository } from '@/features/grammar/repository'
+import { ScenarioRepository } from '@/features/scenarios/repository'
 import { TopicTagRepository } from '@/features/topics/repository'
 import { cleanRows, cleanText, firstRow } from '@/lib/content'
 import { cefrLevels, type CefrLevel } from '@/lib/payload/fields'
 import { wordTypes, type WordType } from './constants'
 import { WordRepository } from './repository'
 import type { HomeWordViewModel } from './types'
-import type { GrammarTopic } from '@payload-types'
+import type { GrammarTopic, Scenario } from '@payload-types'
 import type {
   WordBrowseCanonicalQuery,
   WordBrowseCardViewModel,
@@ -18,6 +19,7 @@ import type {
   WordDetailBanglaViewModel,
   WordDetailLanguageViewModel,
   WordDetailGrammarViewModel,
+  WordDetailScenarioViewModel,
   WordDetailPageViewModel,
   WordDetailRelatedWordViewModel,
 } from './types'
@@ -183,6 +185,10 @@ export class WordService {
       GrammarRepository,
       'findPublishedByRelatedWordID'
     > = new GrammarRepository(),
+    private readonly scenarioRepository: Pick<
+      ScenarioRepository,
+      'findPublishedByKeyWordID'
+    > = new ScenarioRepository(),
   ) {}
 
   toGrammarLink(topic: GrammarTopic): WordDetailGrammarViewModel | null {
@@ -192,6 +198,20 @@ export class WordService {
     if (!name || !slug) return null
 
     return { cefrLevel: topic.cefrLevel, name, slug }
+  }
+
+  toScenarioLink(scenario: Scenario): WordDetailScenarioViewModel | null {
+    const title = cleanText(scenario.title)
+    const slug = cleanText(scenario.slug)
+
+    if (!title || !slug) return null
+
+    return {
+      cefrLevel: scenario.cefrLevel,
+      situationType: scenario.situationType,
+      slug,
+      title,
+    }
   }
 
   toHomeCard(word: Word): HomeWordViewModel | null {
@@ -280,6 +300,7 @@ export class WordService {
     publishedTopics: TopicTag[],
     relatedWords: Word[],
     grammarTopics: GrammarTopic[] = [],
+    scenarios: Scenario[] = [],
   ): WordDetailPageViewModel | null {
     const english = toEnglishDetail(word)
     const lemma = word.lemma.trim()
@@ -331,6 +352,9 @@ export class WordService {
       audioAvailable: false,
       cefrLevel: word.cefrLevel,
       examples,
+      scenarios: scenarios
+        .map((scenario) => this.toScenarioLink(scenario))
+        .filter((scenario) => scenario !== null),
       grammar: grammarTopics
         .map((topic) => this.toGrammarLink(topic))
         .filter((topic) => topic !== null),
@@ -362,17 +386,20 @@ export class WordService {
     if (!word) return null
 
     const relatedIDs = [...new Set((word.relatedWords ?? []).map(relationshipID))]
-    const [publishedTopics, relatedWords, grammarTopics] = await Promise.all([
-      this.topicRepository.findForBrowse(),
-      this.wordRepository.findPublishedByIDs(relatedIDs),
-      this.grammarRepository.findPublishedByRelatedWordID(word.id),
-    ])
+    const [publishedTopics, relatedWords, grammarTopics, scenarios] =
+      await Promise.all([
+        this.topicRepository.findForBrowse(),
+        this.wordRepository.findPublishedByIDs(relatedIDs),
+        this.grammarRepository.findPublishedByRelatedWordID(word.id),
+        this.scenarioRepository.findPublishedByKeyWordID(word.id),
+      ])
 
     return this.toDetailPage(
       word,
       publishedTopics,
       relatedWords,
       grammarTopics,
+      scenarios,
     )
   }
 

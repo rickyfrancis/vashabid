@@ -93,4 +93,18 @@ describe('HomePageContent', () => {
     expect(screen.getByText('Grammar bites')).toBeInTheDocument()
     expect(screen.getByText('Scenario practice')).toBeInTheDocument()
   })
+
+  test('links both workbook cards to their real routes', () => {
+    renderHome(populatedHome)
+
+    expect(
+      screen.getByRole('link', { name: 'Grammar bites' }),
+    ).toHaveAttribute('href', '/grammar')
+    expect(
+      screen.getByRole('link', { name: 'Scenario practice' }),
+    ).toHaveAttribute('href', '/scenarios')
+    expect(screen.getByText('Browse grammar topics')).toBeInTheDocument()
+    expect(screen.getByText('Browse scenarios')).toBeInTheDocument()
+    expect(screen.queryByText('Coming soon')).not.toBeInTheDocument()
+  })
 })
