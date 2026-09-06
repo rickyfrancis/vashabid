@@ -53,7 +53,9 @@ export function createLearnerRichTextEditor() {
       BoldFeature(),
       ItalicFeature(),
       InlineCodeFeature(),
-      LinkFeature({ enabledCollections: ['words', 'grammar-topics'] }),
+      LinkFeature({
+        enabledCollections: ['words', 'grammar-topics', 'scenarios'],
+      }),
     ],
   })
 }

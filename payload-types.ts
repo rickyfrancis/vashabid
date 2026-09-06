@@ -72,6 +72,7 @@ export interface Config {
     'topic-tags': TopicTag;
     words: Word;
     'grammar-topics': GrammarTopic;
+    scenarios: Scenario;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -84,6 +85,7 @@ export interface Config {
     'topic-tags': TopicTagsSelect<false> | TopicTagsSelect<true>;
     words: WordsSelect<false> | WordsSelect<true>;
     'grammar-topics': GrammarTopicsSelect<false> | GrammarTopicsSelect<true>;
+    scenarios: ScenariosSelect<false> | ScenariosSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -460,6 +462,136 @@ export interface GrammarTopic {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Build real-world German dialogues with independent English and Bangla learner support.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "scenarios".
+ */
+export interface Scenario {
+  id: number;
+  /**
+   * Name the situation in German, for example "Im Café bestellen".
+   */
+  title: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  /**
+   * Choose the earliest CEFR level at which a learner could hold this conversation.
+   */
+  cefrLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  /**
+   * Pick the everyday domain this conversation belongs to. Learners filter the scenario index by this value.
+   */
+  situationType: 'everyday' | 'travel' | 'work' | 'study' | 'health' | 'services' | 'social';
+  /**
+   * State the goal in one German sentence, for example "Ich kann ein Getränk höflich bestellen." Learners see this before the dialogue.
+   */
+  learnerGoal: string;
+  english: {
+    /**
+     * Explain how the conversation works and which phrases carry it. Use short headings and lists rather than long paragraphs.
+     */
+    explanation: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    /**
+     * Note the expectations a learner would not guess, such as greetings, formality, or tipping.
+     */
+    culturalNotes?:
+      | {
+          note: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  bangla?: {
+    explanation?: {
+      root: {
+        type: string;
+        children: {
+          type: any;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    } | null;
+    culturalNotes?:
+      | {
+          note: string;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  /**
+   * English is required for each line. Bangla is optional and follows the scenario-level Bangla review gate.
+   */
+  dialogue?:
+    | {
+        /**
+         * Name the speaker in German, for example "Kundin" or "Kellner".
+         */
+        speaker: string;
+        germanLine: string;
+        englishExplanation: string;
+        banglaExplanation?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Choose every topic under which learners should be able to discover this scenario.
+   */
+  topicTags?: (number | TopicTag)[] | null;
+  /**
+   * Choose published vocabulary a learner needs for this conversation. These words link back to this scenario.
+   */
+  keyVocabulary?: (number | Word)[] | null;
+  /**
+   * Choose published grammar patterns this dialogue practises. These topics link back to this scenario.
+   */
+  relatedGrammarTopics?: (number | GrammarTopic)[] | null;
+  /**
+   * Record attribution, URLs, licensing, and any restrictions before reusing sourced material.
+   */
+  source?: {
+    attribution?: string | null;
+    sourceUrl?: string | null;
+    licenseName?: string | null;
+    licenseUrl?: string | null;
+    usageNotes?: string | null;
+  };
+  /**
+   * Review flags are independent. Bangla remains hidden publicly until Bangla reviewed is enabled.
+   */
+  review?: {
+    germanReviewed?: boolean | null;
+    englishReviewed?: boolean | null;
+    banglaReviewed?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -502,6 +634,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'grammar-topics';
         value: number | GrammarTopic;
+      } | null)
+    | ({
+        relationTo: 'scenarios';
+        value: number | Scenario;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -761,6 +897,71 @@ export interface GrammarTopicsSelect<T extends boolean = true> {
       };
   topicTags?: T;
   relatedWords?: T;
+  source?:
+    | T
+    | {
+        attribution?: T;
+        sourceUrl?: T;
+        licenseName?: T;
+        licenseUrl?: T;
+        usageNotes?: T;
+      };
+  review?:
+    | T
+    | {
+        germanReviewed?: T;
+        englishReviewed?: T;
+        banglaReviewed?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "scenarios_select".
+ */
+export interface ScenariosSelect<T extends boolean = true> {
+  title?: T;
+  generateSlug?: T;
+  slug?: T;
+  cefrLevel?: T;
+  situationType?: T;
+  learnerGoal?: T;
+  english?:
+    | T
+    | {
+        explanation?: T;
+        culturalNotes?:
+          | T
+          | {
+              note?: T;
+              id?: T;
+            };
+      };
+  bangla?:
+    | T
+    | {
+        explanation?: T;
+        culturalNotes?:
+          | T
+          | {
+              note?: T;
+              id?: T;
+            };
+      };
+  dialogue?:
+    | T
+    | {
+        speaker?: T;
+        germanLine?: T;
+        englishExplanation?: T;
+        banglaExplanation?: T;
+        id?: T;
+      };
+  topicTags?: T;
+  keyVocabulary?: T;
+  relatedGrammarTopics?: T;
   source?:
     | T
     | {
