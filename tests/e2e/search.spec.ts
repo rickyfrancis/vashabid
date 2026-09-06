@@ -21,10 +21,14 @@ test('search supports German articles, Bangla, and romanized Bangla', async ({
   await expect(page.getByRole('link', { name: 'der Termin' })).toBeVisible()
 
   await page.goto(`/en/search?q=${encodeURIComponent('খাওয়া')}`)
-  await expect(page.getByRole('link', { name: 'essen' })).toBeVisible()
+  await expect(
+    page.getByRole('link', { exact: true, name: 'essen' }),
+  ).toBeVisible()
 
   await page.goto('/en/search?q=khaoa')
-  await expect(page.getByRole('link', { name: 'essen' })).toBeVisible()
+  await expect(
+    page.getByRole('link', { exact: true, name: 'essen' }),
+  ).toBeVisible()
 })
 
 test('CEFR, word type, and published topic terms compose useful results', async ({
@@ -131,4 +135,50 @@ test('unapproved Bangla grammar content is not discoverable through search', asy
 
   await expect(page.getByTestId('search-grammar-grid')).toHaveCount(0)
   await expect(page.locator('body')).not.toContainText('বিচ্ছেদ্য উপসর্গ')
+})
+
+test('scenarios are searchable in German, English, and approved Bangla', async ({
+  page,
+}) => {
+  await page.goto('/en/search?q=Kaffee')
+  await expect(page.getByTestId('search-scenarios-grid')).toBeVisible()
+  await expect(
+    page.getByTestId('search-scenario-im-cafe-bestellen'),
+  ).toBeVisible()
+
+  await page.goto('/en/search?q=ordering')
+  await expect(
+    page.getByTestId('search-scenario-im-cafe-bestellen'),
+  ).toBeVisible()
+
+  await page.goto('/en/search?q=%E0%A6%85%E0%A6%B0%E0%A7%8D%E0%A6%A1%E0%A6%BE%E0%A6%B0')
+  await expect(
+    page.getByTestId('search-scenario-im-cafe-bestellen'),
+  ).toBeVisible()
+})
+
+test('unapproved Bangla scenario content is not discoverable through search', async ({
+  page,
+}) => {
+  await page.goto('/en/search?q=%E0%A6%9F%E0%A7%8D%E0%A6%B0%E0%A7%87%E0%A6%A8%E0%A7%87%E0%A6%B0')
+
+  await expect(page.getByTestId('search-scenarios-grid')).toHaveCount(0)
+  await expect(page.locator('body')).not.toContainText('ট্রেনের টিকিট কিনতে')
+})
+
+test('scenario results are capped to the first page of word results', async ({
+  page,
+}) => {
+  await page.goto('/en/search?q=der')
+  const firstPageScenarios = await page
+    .locator('[data-testid^="search-scenario-"]')
+    .count()
+
+  expect(firstPageScenarios).toBeLessThanOrEqual(6)
+
+  const next = page.getByRole('link', { name: 'Next' })
+  if ((await next.count()) > 0) {
+    await next.click()
+    await expect(page.getByTestId('search-scenarios-grid')).toHaveCount(0)
+  }
 })
