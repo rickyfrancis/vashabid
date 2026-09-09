@@ -14,4 +14,5 @@ export {
   type SegmentedControlProps,
 } from './segmented-control'
 export { Skeleton, type SkeletonProps } from './skeleton'
+export { Textarea, type TextareaProps } from './textarea'
 export { EmptyState, ErrorState } from './state'
