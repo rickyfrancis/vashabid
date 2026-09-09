@@ -39,6 +39,20 @@ describe('WordRepository', () => {
     })
   })
 
+  test('queries every active published word unpaginated for the lemma index', async () => {
+    findPublished.mockResolvedValueOnce({ docs: [{ id: 1, slug: 'essen' }] })
+
+    await expect(
+      new WordRepository().findAllPublishedActive(),
+    ).resolves.toEqual([{ id: 1, slug: 'essen' }])
+    expect(findPublished).toHaveBeenCalledWith('words', {
+      depth: 0,
+      pagination: false,
+      sort: ['lemma', 'slug'],
+      where: { lifecycleStatus: { equals: 'active' } },
+    })
+  })
+
   test('queries one active published word by exact slug at depth zero', async () => {
     findPublished.mockResolvedValueOnce({ docs: [{ id: 7, slug: 'machen' }] })
 

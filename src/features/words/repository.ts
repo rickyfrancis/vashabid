@@ -69,6 +69,26 @@ export class WordRepository {
     return docs as Word[]
   }
 
+  /**
+   * Every published, active word, unpaginated.
+   *
+   * The translator builds an in-memory lemma index from this so one sentence
+   * can be matched against the whole vocabulary without a query per token.
+   * Sorted so the index and any resulting ties stay deterministic.
+   */
+  async findAllPublishedActive(): Promise<Word[]> {
+    const { docs } = await this.find('words', {
+      depth: 0,
+      pagination: false,
+      sort: ['lemma', 'slug'],
+      where: {
+        lifecycleStatus: { equals: 'active' },
+      },
+    })
+
+    return docs as Word[]
+  }
+
   async findPublishedPage(
     filters: WordBrowseRepositoryFilters,
   ): Promise<PaginatedDocs<Word>> {

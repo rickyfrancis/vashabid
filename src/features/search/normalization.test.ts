@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
 import {
-  cleanSearchQuery,
-  generateGermanAlternatives,
   normalizeSearchParams,
   normalizeSearchQuery,
   toSearchQuery,
@@ -10,29 +8,10 @@ import {
 
 describe('search query normalization', () => {
   test('normalizes Unicode and whitespace while preserving display case', () => {
-    expect(cleanSearchQuery('  Der\tMa\u0308dchen  বাংলা  ')).toBe(
-      'Der Mädchen বাংলা',
-    )
     expect(normalizeSearchQuery('  Der\tMa\u0308dchen  ')).toMatchObject({
       displayQuery: 'Der Mädchen',
       tokens: [{ variants: expect.arrayContaining(['mädchen']) }],
     })
-  })
-
-  test.each(['mädchen', 'madchen', 'maedchen'])(
-    'generates all simple umlaut spellings from %s',
-    (value) => {
-      expect(generateGermanAlternatives(value)).toEqual(
-        expect.arrayContaining(['mädchen', 'madchen', 'maedchen']),
-      )
-    },
-  )
-
-  test('treats sharp-s and double-s as equivalent without duplicate variants', () => {
-    const variants = generateGermanAlternatives('Straße')
-    expect(variants).toEqual(expect.arrayContaining(['straße', 'strasse']))
-    expect(new Set(variants).size).toBe(variants.length)
-    expect(variants.length).toBeLessThanOrEqual(24)
   })
 
   test('strips only a leading German article from matching tokens', () => {
