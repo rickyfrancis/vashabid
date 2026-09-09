@@ -21,10 +21,11 @@ vashabid/
 │   │   ├── grammar/         # Grammar topic browsing and detail
 │   │   ├── scenarios/       # Dialogue scenario browsing and detail
 │   │   ├── search/          # Search UI and query logic
-│   │   ├── translator/      # Translator UI and service wrapper
+│   │   ├── translator/      # Translator UI, service, and provider layer
 │   │   └── i18n/            # Locale config, navigation, message loading, support preferences
 │   ├── lib/
 │   │   ├── content/         # Shared text normalization for view-model mappers
+│   │   ├── german/          # German-aware input normalization shared by features
 │   │   └── payload/         # Payload Local API helpers
 │   └── styles/
 │       └── theme.css        # Design tokens reference
@@ -326,9 +327,47 @@ the existing pagination contract unchanged.
 
 Helpers needed by two or more feature services move to `src/lib`. `cleanText`,
 `cleanRows`, and `firstRow` live in `src/lib/content/text.ts` now that the word,
-grammar, and scenario mappers all normalize stored strings the same way. The same
-rule applies to components: `WordSummaryCard` and `SupportSnippet` are shared once
-a third surface renders them.
+grammar, and scenario mappers all normalize stored strings the same way.
+`cleanUserText` and `generateGermanAlternatives` live in `src/lib/german/text.ts`
+for the same reason: search and the translator both normalize learner input and
+both need the umlaut and sharp-s spellings a learner might type. The same rule
+applies to components: `WordSummaryCard` and `SupportSnippet` are shared once a
+third surface renders them.
+
+## Provider interfaces
+
+`TranslatorProvider` (`src/features/translator/provider.ts`) is the first
+provider boundary in the project and sets the pattern for the AI, media, and
+scheduler providers still to come.
+
+- A provider is injected as a constructor default, like every repository and
+  service collaborator. There is no registry and no container.
+- The result type carries its own provenance. `TranslationOutcome.kind` is
+  `dictionary` or `machine`, and `translation` is `null` for dictionary output.
+  The UI reads that flag to label the result, so no code path can present a
+  word-by-word lookup as a finished translation.
+- Providers return slugs, not documents. Hydration back into view models is the
+  service's job, which keeps editorial metadata and unapproved Bangla out of
+  provider results by construction.
+- `describeTranslatorProviderContract()` is a shared Vitest suite that every
+  provider must pass. It fixes the guarantees the service depends on — ordered,
+  non-overlapping match spans that index the request text, a stable id, and no
+  database identifiers — so Phase 24's real API provider can be swapped in
+  without retesting the UI.
+
+The Phase 14 translator at `/[locale]/translate` is the first learner tool
+rather than a content surface, but it reuses the same spine: a GET form carries
+`text`, `from`, and `to`; `TranslatorService` normalizes those untrusted params
+and redirects to a canonical URL before doing any work; `DictionaryTranslatorProvider`
+builds an in-memory lemma index from `WordRepository.findAllPublishedActive()`;
+and matches are hydrated through `WordService.toRelatedWord` so the chips are the
+same UI-safe view model the rest of the app renders. Support mode stays
+cookie-backed and outside the URL contract. German matching folds articles,
+umlaut spellings, and a small conservative inflection table, but a folded form is
+only accepted when it lands on a known lemma, so folding can never invent a word.
+Bangla meanings and the romanized helper are indexed only once
+`review.banglaReviewed` is set, so the reverse Bangla direction cannot surface a
+pending translation.
 
 Phase 6 continues to use schema push for disposable development and CI databases,
 matching the Phase 5 convention. Persistent staging and production databases
