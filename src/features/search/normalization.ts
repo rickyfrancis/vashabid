@@ -1,3 +1,4 @@
+import { cleanUserText, generateGermanAlternatives } from '@/lib/german'
 import { cefrLevels, type CefrLevel } from '@/lib/payload/fields'
 import { wordTypes, type WordType } from '@/features/words/constants'
 import type {
@@ -6,8 +7,6 @@ import type {
   SearchCanonicalQuery,
   SearchParams,
 } from './types'
-
-const MAX_ALTERNATIVES = 24
 
 const wordTypeAliases: Record<string, WordType> = {
   adjective: 'adjective',
@@ -39,53 +38,6 @@ const wordTypeAliases: Record<string, WordType> = {
   'বাগধারা': 'idiom',
 }
 
-const germanEquivalences = [
-  ['ae', 'ä', 'a'],
-  ['oe', 'ö', 'o'],
-  ['ue', 'ü', 'u'],
-  ['ss', 'ß'],
-] as const
-
-function equivalenceAt(value: string, index: number): {
-  choices: readonly string[]
-  length: number
-} | null {
-  for (const choices of germanEquivalences) {
-    const match = choices.find((choice) => value.startsWith(choice, index))
-    if (match) return { choices, length: match.length }
-  }
-
-  return null
-}
-
-export function generateGermanAlternatives(value: string): string[] {
-  const normalized = value.normalize('NFC').toLocaleLowerCase('de-DE')
-  let alternatives = ['']
-
-  for (let index = 0; index < normalized.length; ) {
-    const equivalence = equivalenceAt(normalized, index)
-    const choices = equivalence?.choices ?? [normalized[index]]
-    const next: string[] = []
-
-    for (const prefix of alternatives) {
-      for (const choice of choices) {
-        next.push(prefix + choice)
-        if (next.length >= MAX_ALTERNATIVES) break
-      }
-      if (next.length >= MAX_ALTERNATIVES) break
-    }
-
-    alternatives = next
-    index += equivalence?.length ?? 1
-  }
-
-  return [...new Set([normalized, ...alternatives])].slice(0, MAX_ALTERNATIVES)
-}
-
-export function cleanSearchQuery(value: string): string {
-  return value.normalize('NFC').replace(/\s+/gu, ' ').trim()
-}
-
 function cefrFromToken(token: string): CefrLevel | undefined {
   const upper = token.toLocaleUpperCase('de-DE')
   return cefrLevels.find((level) => level === upper)
@@ -98,7 +50,7 @@ function wordTypeFromToken(token: string): WordType | undefined {
 }
 
 export function normalizeSearchQuery(value: string): NormalizedSearchQuery {
-  const displayQuery = cleanSearchQuery(value)
+  const displayQuery = cleanUserText(value)
   const lowered = displayQuery.toLocaleLowerCase('de-DE')
   const withoutArticle = lowered.replace(/^(?:der|die|das)\s+/u, '')
   const matchingQuery = withoutArticle || lowered
@@ -153,7 +105,7 @@ export function normalizeSearchParams(
   isCanonical &&= queryValue.isCanonical && pageValue.isCanonical
 
   const rawQuery = queryValue.value ?? ''
-  const query = cleanSearchQuery(rawQuery)
+  const query = cleanUserText(rawQuery)
   if (query !== rawQuery) isCanonical = false
 
   let page = 1
