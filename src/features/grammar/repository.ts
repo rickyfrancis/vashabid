@@ -20,6 +20,20 @@ export class GrammarRepository {
     return (docs[0] as GrammarTopic | undefined) ?? null
   }
 
+  async findPublishedByIDs(ids: number[]): Promise<GrammarTopic[]> {
+    if (ids.length === 0) return []
+
+    const { docs } = await this.find('grammar-topics', {
+      depth: 0,
+      limit: ids.length,
+      where: {
+        id: { in: ids },
+      },
+    })
+
+    return docs as GrammarTopic[]
+  }
+
   async findForBrowse(): Promise<GrammarTopic[]> {
     const { docs } = await this.find('grammar-topics', {
       depth: 0,

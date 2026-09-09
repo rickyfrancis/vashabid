@@ -19,6 +19,7 @@ vashabid/
 │   ├── features/
 │   │   ├── words/           # Word browsing, word detail
 │   │   ├── grammar/         # Grammar topic browsing and detail
+│   │   ├── scenarios/       # Dialogue scenario browsing and detail
 │   │   ├── search/          # Search UI and query logic
 │   │   ├── translator/      # Translator UI and service wrapper
 │   │   └── i18n/            # Locale config, navigation, message loading, support preferences
@@ -205,7 +206,9 @@ Phase 5 supplies the five topic tags. Phase 6 extends the same orchestrator with
 the minimum word data rather than resetting existing collections. Phase 12 adds
 eight grammar topics, seeded after words because they reference both topic tags
 and words by slug. Exactly one grammar topic keeps Bangla unapproved so public
-fallback and search gating stay exercised.
+fallback and search gating stay exercised. Phase 13 adds eight scenarios last,
+because they reference topic tags, words, and grammar topics by slug; one
+scenario likewise keeps Bangla unapproved.
 
 Rich text is stored as `jsonb`, which does not preserve key order. Seed
 comparisons must therefore serialize rich-text values with sorted keys;
@@ -297,19 +300,35 @@ explanations are required to publish; Bangla explanations, Bangla mistakes, and
 each example's Bangla line are withheld until `review.banglaReviewed` is set, so
 pending translations never reach client props or search.
 
-**Import direction between words and grammar:** the two features link to each
-other, so the dependency must stay one-way at the service layer. `WordService`
-imports `GrammarRepository` only — never `GrammarService`. `GrammarService`
-imports `WordRepository` and `WordService`. Because repositories never import
-services, the graph stays acyclic.
+The Phase 13 scenario workbook applies the same boundary at `/[locale]/scenarios`
+and `/[locale]/scenarios/[slug]`, with a third filter (`situation`) alongside
+`level` and `topic`. `ScenarioRepository` owns the published queries, including
+two reverse lookups: the scenarios that teach a given word, and the scenarios
+that practise a given grammar topic. Bangla explanations, Bangla cultural notes,
+and each dialogue line's Bangla explanation are withheld until
+`review.banglaReviewed` is set.
 
-Search treats words as the paginated primary list. Grammar results are a capped
-secondary section rendered only alongside the first page, which keeps the
-existing pagination contract unchanged.
+**Import direction between linked features:** features that link to each other
+must depend on the other's *repository*, never its service. Concretely:
+
+- `WordService` imports `GrammarRepository` and `ScenarioRepository`.
+- `GrammarService` imports `WordRepository`, `WordService`, and `ScenarioRepository`.
+- `ScenarioService` imports `WordRepository`, `WordService`, `GrammarRepository`,
+  and `GrammarService`.
+
+Because repositories never import services, the graph stays acyclic even though
+all three features cross-link. A new feature that links back into an existing one
+adopts the same rule rather than reaching for the sibling service.
+
+Search treats words as the paginated primary list. Grammar and scenario results
+are capped secondary sections rendered only alongside the first page, which keeps
+the existing pagination contract unchanged.
 
 Helpers needed by two or more feature services move to `src/lib`. `cleanText`,
-`cleanRows`, and `firstRow` live in `src/lib/content/text.ts` now that both the
-word and grammar mappers normalize stored strings the same way.
+`cleanRows`, and `firstRow` live in `src/lib/content/text.ts` now that the word,
+grammar, and scenario mappers all normalize stored strings the same way. The same
+rule applies to components: `WordSummaryCard` and `SupportSnippet` are shared once
+a third surface renders them.
 
 Phase 6 continues to use schema push for disposable development and CI databases,
 matching the Phase 5 convention. Persistent staging and production databases

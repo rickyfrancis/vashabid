@@ -8,6 +8,7 @@ import {
   BookOpenText,
   Gauge,
   Languages,
+  MessagesSquare,
   NotebookPen,
   NotebookTabs,
   Quote,
@@ -22,8 +23,9 @@ import { PageContainer } from '@/components/layout'
 import { Badge, Card, buttonStyles } from '@/components/ui'
 import { Link } from '@/features/i18n/navigation'
 import { useSupportMode } from '@/features/i18n/support-mode-provider'
+import { ScenarioSummaryCard } from '@/features/scenarios/scenario-summary-card'
 import { cn } from '@/lib/cn'
-import { SupportSnippet } from './support-snippet'
+import { WordSummaryCard } from './word-summary-card'
 import type {
   WordDetailLanguageViewModel,
   WordDetailPageViewModel,
@@ -468,6 +470,35 @@ export function WordDetailPageContent({
               </section>
             ) : null}
 
+            {word.scenarios.length > 0 ? (
+              <section aria-labelledby="related-scenarios-title">
+                <div className="flex items-center gap-3">
+                  <span className="grid size-10 place-items-center rounded-xl bg-accent-100 text-accent-800 dark:bg-accent-950 dark:text-accent-200">
+                    <MessagesSquare
+                      aria-hidden="true"
+                      size={18}
+                      strokeWidth={1.8}
+                    />
+                  </span>
+                  <h2
+                    className="font-display text-3xl font-semibold tracking-tight text-foreground"
+                    id="related-scenarios-title"
+                  >
+                    {t('relatedScenariosTitle')}
+                  </h2>
+                </div>
+                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  {word.scenarios.map((scenario) => (
+                    <ScenarioSummaryCard
+                      key={scenario.slug}
+                      scenario={scenario}
+                      testId={`word-scenario-${scenario.slug}`}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
             {word.relatedWords.length > 0 ? (
               <section aria-labelledby="related-words-title">
                 <div className="flex items-center gap-3">
@@ -483,42 +514,11 @@ export function WordDetailPageContent({
                 </div>
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   {word.relatedWords.map((related) => (
-                    <Card
-                      className="group relative overflow-hidden p-5 transition hover:-translate-y-0.5 hover:shadow-md"
+                    <WordSummaryCard
                       key={related.slug}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge tone="brand">{related.cefrLevel}</Badge>
-                          <Badge>{wordType(related.wordType)}</Badge>
-                        </div>
-                        <ArrowRight
-                          aria-hidden="true"
-                          className="text-accent-600 transition group-hover:translate-x-1 dark:text-accent-300"
-                          size={18}
-                        />
-                      </div>
-                      <h3
-                        className="mt-5 font-display text-2xl font-semibold text-foreground"
-                        lang="de"
-                      >
-                        <Link
-                          className="rounded-md underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                          href={`/words/${related.slug}`}
-                        >
-                          {related.article ? (
-                            <span className="mr-2 text-base italic text-accent-700 dark:text-accent-300">
-                              {related.article}
-                            </span>
-                          ) : null}
-                          {related.headword}
-                        </Link>
-                      </h3>
-                      <SupportSnippet
-                        className="mt-2"
-                        support={related.support}
-                      />
-                    </Card>
+                      testId={`word-related-${related.slug}`}
+                      word={related}
+                    />
                   ))}
                 </div>
               </section>

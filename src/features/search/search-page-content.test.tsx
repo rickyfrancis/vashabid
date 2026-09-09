@@ -29,6 +29,7 @@ const populatedSearch: SearchPageViewModel = {
   },
   query: 'bread',
   grammar: [],
+  scenarios: [],
   state: 'results',
   words: [
     {
@@ -96,6 +97,7 @@ describe('SearchPageContent', () => {
       },
       query: '',
       grammar: [],
+      scenarios: [],
       state: 'idle',
       words: [],
     })
@@ -195,5 +197,38 @@ describe('SearchPageContent', () => {
     renderSearch({ ...populatedSearch, grammar: [] })
 
     expect(screen.queryByTestId('search-grammar-grid')).not.toBeInTheDocument()
+  })
+})
+
+describe('SearchPageContent scenario results', () => {
+  test('renders a capped scenario section alongside word results', () => {
+    renderSearch({
+      ...populatedSearch,
+      scenarios: [
+        {
+          cefrLevel: 'A1',
+          learnerGoal: 'Ich kann ein Getränk höflich bestellen.',
+          situationType: 'everyday',
+          slug: 'im-cafe-bestellen',
+          support: { bangla: null, english: 'Greet, then order politely.' },
+          title: 'Im Café bestellen',
+          topics: [],
+        },
+      ],
+    })
+
+    expect(screen.getByTestId('search-scenarios-grid')).toBeInTheDocument()
+    expect(
+      screen.getByTestId('search-scenario-im-cafe-bestellen'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('1 matching scenario')).toBeInTheDocument()
+  })
+
+  test('omits the scenario section when nothing matched', () => {
+    renderSearch({ ...populatedSearch, scenarios: [] })
+
+    expect(
+      screen.queryByTestId('search-scenarios-grid'),
+    ).not.toBeInTheDocument()
   })
 })

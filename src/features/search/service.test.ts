@@ -52,15 +52,18 @@ function repositoryResult(overrides: Record<string, unknown> = {}) {
 
 function createService({
   grammar = [],
+  scenarios = [],
   topics = [topic()],
   result = repositoryResult(),
 }: {
   grammar?: unknown[]
+  scenarios?: unknown[]
   topics?: TopicTag[]
   result?: ReturnType<typeof repositoryResult>
 } = {}) {
   const searchRepository = {
     findGrammarMatches: vi.fn().mockResolvedValue(grammar),
+    findScenarioMatches: vi.fn().mockResolvedValue(scenarios),
     findWordPage: vi.fn().mockResolvedValue(result),
   }
   const topicRepository = { findForBrowse: vi.fn().mockResolvedValue(topics) }
@@ -87,14 +90,28 @@ function createService({
     })),
   }
 
+  const scenarioService = {
+    toBrowseCard: vi.fn((value: { slug: string }) => ({
+      cefrLevel: 'A1',
+      learnerGoal: 'Ich kann ein Getränk bestellen.',
+      situationType: 'everyday',
+      slug: value.slug,
+      support: { bangla: null, english: 'Ordering a drink.' },
+      title: 'Im Café bestellen',
+      topics: [],
+    })),
+  }
+
   return {
     grammarService,
+    scenarioService,
     searchRepository,
     service: new SearchService(
       searchRepository,
       topicRepository,
       wordService,
       grammarService as never,
+      scenarioService as never,
     ),
     topicRepository,
     wordService,
@@ -246,5 +263,42 @@ describe('SearchService grammar results', () => {
 
     expect(result.page.grammar).toEqual([])
     expect(fixture.searchRepository.findGrammarMatches).not.toHaveBeenCalled()
+  })
+})
+
+describe('SearchService secondary scenario results', () => {
+  test('maps scenario matches through the scenario service', async () => {
+    const harness = createService({ scenarios: [{ slug: 'im-cafe-bestellen' }] })
+
+    const result = await harness.service.getPage({ q: 'Kaffee' })
+
+    if (result.kind !== 'page') throw new Error('expected a page result')
+    expect(result.page.scenarios).toEqual([
+      expect.objectContaining({ slug: 'im-cafe-bestellen' }),
+    ])
+    expect(harness.searchRepository.findScenarioMatches).toHaveBeenCalledWith(
+      expect.any(Array),
+      6,
+    )
+  })
+
+  test('omits scenarios beyond the first page of word results', async () => {
+    const harness = createService({
+      result: repositoryResult({ page: 2, totalPages: 3 }),
+      scenarios: [{ slug: 'im-cafe-bestellen' }],
+    })
+
+    const result = await harness.service.getPage({ page: '2', q: 'Kaffee' })
+
+    if (result.kind !== 'page') throw new Error('expected a page result')
+    expect(result.page.scenarios).toEqual([])
+    expect(harness.searchRepository.findScenarioMatches).not.toHaveBeenCalled()
+  })
+
+  test('returns an empty scenario list while idle', async () => {
+    const result = await createService().service.getPage({})
+
+    if (result.kind !== 'page') throw new Error('expected a page result')
+    expect(result.page.scenarios).toEqual([])
   })
 })

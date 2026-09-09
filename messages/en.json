@@ -8,7 +8,8 @@
     "primary": "Primary navigation",
     "search": "Search",
     "words": "Browse words",
-    "grammar": "Grammar"
+    "grammar": "Grammar",
+    "scenarios": "Scenarios"
   },
   "Shell": {
     "skipToContent": "Skip to content",
@@ -51,7 +52,8 @@
     "emptyWordsDescription": "Published German words will appear here as soon as the editorial team releases them.",
     "emptyTopicsTitle": "Topics are being organized",
     "emptyTopicsDescription": "Published vocabulary topics will appear here when they are ready.",
-    "grammarAction": "Browse grammar topics"
+    "grammarAction": "Browse grammar topics",
+    "scenariosAction": "Browse scenarios"
   },
   "WordTypes": {
     "noun": "Noun",
@@ -62,6 +64,15 @@
     "conjunction": "Conjunction",
     "phrase": "Phrase",
     "idiom": "Idiom"
+  },
+  "SituationTypes": {
+    "everyday": "Everyday life",
+    "travel": "Travel",
+    "work": "Work",
+    "study": "Study",
+    "health": "Health",
+    "services": "Offices and services",
+    "social": "Social life"
   },
   "Words": {
     "eyebrow": "The vocabulary index",
@@ -113,7 +124,9 @@
     "nextPage": "Next",
     "pagePosition": "Page {page} of {totalPages}",
     "sectionGrammar": "Grammar patterns",
-    "grammarResultCount": "{count, plural, =0 {No matching topics} one {# matching topic} other {# matching topics}}"
+    "grammarResultCount": "{count, plural, =0 {No matching topics} one {# matching topic} other {# matching topics}}",
+    "sectionScenarios": "Conversation scenarios",
+    "scenarioResultCount": "{count, plural, =0 {No matching scenarios} one {# matching scenario} other {# matching scenarios}}"
   },
   "LearnerSupport": {
     "englishLabel": "English",
@@ -157,7 +170,8 @@
       "poetic": "Poetic",
       "archaic": "Archaic"
     },
-    "relatedGrammarTitle": "Grammar behind this word"
+    "relatedGrammarTitle": "Grammar behind this word",
+    "relatedScenariosTitle": "Practise this word in context"
   },
   "Grammar": {
     "eyebrow": "The pattern workbook",
@@ -198,7 +212,57 @@
     "practiceEyebrow": "See it in motion",
     "examplesTitle": "German examples",
     "mistakesTitle": "Common mistakes",
-    "relatedWordsTitle": "Vocabulary that shows this pattern"
+    "relatedWordsTitle": "Vocabulary that shows this pattern",
+    "relatedScenariosTitle": "Conversations that use this pattern"
+  },
+  "Scenarios": {
+    "eyebrow": "The conversation workbook",
+    "title": "Practise German where it actually happens.",
+    "description": "Work through published German dialogues by level, everyday situation, or learning theme, with support in English, Bangla, or both.",
+    "filtersTitle": "Refine the situations",
+    "filtersEyebrow": "Three ways to narrow",
+    "levelLabel": "CEFR level",
+    "allLevels": "All levels",
+    "situationLabel": "Situation",
+    "allSituations": "All situations",
+    "topicLabel": "Learning topic",
+    "allTopics": "All topics",
+    "applyFilters": "Apply filters",
+    "clearFilters": "Clear filters",
+    "resultCount": "{count, plural, =0 {No published scenarios} one {# published scenario} other {# published scenarios}}",
+    "supportHint": "Explanations follow the learning support setting above.",
+    "goalLabel": "Learner goal",
+    "cardTopics": "Learning topics",
+    "noTopics": "No topic assigned",
+    "emptyTitle": "No scenarios match this workbook",
+    "emptyDescription": "Try clearing one or more filters to return to the full published scenario list.",
+    "paginationLabel": "Scenario pages",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "pagePosition": "Page {page} of {totalPages}"
+  },
+  "ScenarioDetail": {
+    "metadataTitle": "{scenario} — German scenario | Vashabid",
+    "metadataDescription": "Practise the German conversation {scenario}: {summary}",
+    "backToScenarios": "Back to scenario index",
+    "eyebrow": "From the conversation workbook",
+    "goalTitle": "What you will be able to do",
+    "quickFactsTitle": "At a glance",
+    "levelLabel": "CEFR level",
+    "situationLabel": "Situation",
+    "topicsLabel": "Learning topics",
+    "supportEyebrow": "How the conversation works",
+    "explanationTitle": "Explanation",
+    "culturalNotesTitle": "Cultural notes",
+    "dialogueEyebrow": "Hear it play out",
+    "dialogueTitle": "The dialogue",
+    "keyVocabularyTitle": "Vocabulary you need here",
+    "relatedGrammarTitle": "Grammar this conversation practises",
+    "fallbackNotice": "Bangla guidance is not available for this section, so English is shown instead.",
+    "comingSoon": "Coming soon",
+    "saveVocabularyTitle": "Save this vocabulary",
+    "saveVocabularyDescription": "Learner accounts are not ready yet. Once they are, you will be able to send every word in this scenario to your learning queue.",
+    "saveVocabularyAction": "Add vocabulary to learning queue"
   },
   "Languages": {
     "label": "Interface language",

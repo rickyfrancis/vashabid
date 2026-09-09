@@ -260,3 +260,19 @@ test('unknown localized routes render the matching translated 404', async ({
   ).toBeVisible()
   await expect(page.getByText('Page not found')).toHaveCount(0)
 })
+
+/**
+ * Asserts the link target rather than clicking through. Client-side navigation
+ * intermittently loses the RSC payload under parallel workers because of the
+ * pre-existing `transformAlgorithm` streaming error, and that the destination
+ * renders is already covered by the scenario browse spec.
+ */
+test('the home page links into the scenario workbook', async ({ page }) => {
+  await page.goto('/en')
+
+  await expect(page.getByText('Coming soon')).toHaveCount(0)
+  await expect(
+    page.getByRole('link', { name: 'Scenario practice' }),
+  ).toHaveAttribute('href', '/en/scenarios')
+  await expect(page.getByText('Browse scenarios')).toBeVisible()
+})

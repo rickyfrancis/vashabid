@@ -4,7 +4,6 @@ import { RichText } from '@payloadcms/richtext-lexical/react'
 import {
   AlertTriangle,
   ArrowLeft,
-  ArrowRight,
   BookOpenText,
   Languages,
   NotebookPen,
@@ -18,7 +17,9 @@ import { PageContainer } from '@/components/layout'
 import { Badge, Card, buttonStyles } from '@/components/ui'
 import { Link } from '@/features/i18n/navigation'
 import { useSupportMode } from '@/features/i18n/support-mode-provider'
+import { ScenarioSummaryCard } from '@/features/scenarios/scenario-summary-card'
 import { SupportSnippet } from '@/features/words/support-snippet'
+import { WordSummaryCard } from '@/features/words/word-summary-card'
 import { cn } from '@/lib/cn'
 import type {
   GrammarDetailLanguageViewModel,
@@ -297,35 +298,32 @@ export function GrammarDetailPageContent({
               </h2>
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
                 {topic.relatedWords.map((word) => (
-                  <Card
-                    className="group relative flex flex-col p-5 transition hover:-translate-y-0.5 hover:shadow-md"
-                    data-testid={`grammar-related-word-${word.slug}`}
+                  <WordSummaryCard
                     key={word.slug}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <Badge tone="brand">{word.cefrLevel}</Badge>
-                      <ArrowRight
-                        aria-hidden="true"
-                        className="text-accent-600 transition group-hover:translate-x-1 dark:text-accent-300"
-                        size={18}
-                      />
-                    </div>
-                    <h3 className="mt-4 font-display text-2xl font-semibold text-foreground">
-                      <Link
-                        className="rounded-md underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
-                        href={`/words/${word.slug}`}
-                        lang="de"
-                      >
-                        {word.article ? (
-                          <span className="mr-2 text-base font-medium italic text-accent-700 dark:text-accent-300">
-                            {word.article}
-                          </span>
-                        ) : null}
-                        {word.headword}
-                      </Link>
-                    </h3>
-                    <SupportSnippet className="mt-2" support={word.support} />
-                  </Card>
+                    showWordType={false}
+                    testId={`grammar-related-word-${word.slug}`}
+                    word={word}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {topic.scenarios.length > 0 ? (
+            <section aria-labelledby="grammar-related-scenarios">
+              <h2
+                className="font-display text-3xl font-semibold tracking-tight text-foreground"
+                id="grammar-related-scenarios"
+              >
+                {t('relatedScenariosTitle')}
+              </h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {topic.scenarios.map((scenario) => (
+                  <ScenarioSummaryCard
+                    key={scenario.slug}
+                    scenario={scenario}
+                    testId={`grammar-scenario-${scenario.slug}`}
+                  />
                 ))}
               </div>
             </section>

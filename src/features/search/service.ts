@@ -2,6 +2,8 @@ import type { TopicTag } from '@payload-types'
 
 import { GRAMMAR_SEARCH_LIMIT } from '@/features/grammar/constants'
 import { GrammarService } from '@/features/grammar/service'
+import { SCENARIO_SEARCH_LIMIT } from '@/features/scenarios/constants'
+import { ScenarioService } from '@/features/scenarios/service'
 import { TopicTagRepository } from '@/features/topics/repository'
 import { WordService } from '@/features/words/service'
 import { normalizeSearchParams, normalizeSearchQuery, toSearchQuery } from './normalization'
@@ -47,6 +49,7 @@ function idlePage(): SearchPageViewModel {
     },
     grammar: [],
     query: '',
+    scenarios: [],
     state: 'idle',
     words: [],
   }
@@ -56,7 +59,7 @@ export class SearchService {
   constructor(
     private readonly searchRepository: Pick<
       SearchRepository,
-      'findGrammarMatches' | 'findWordPage'
+      'findGrammarMatches' | 'findScenarioMatches' | 'findWordPage'
     > = new SearchRepository(),
     private readonly topicRepository: Pick<
       TopicTagRepository,
@@ -66,6 +69,8 @@ export class SearchService {
       new WordService(),
     private readonly grammarService: Pick<GrammarService, 'toBrowseCard'> =
       new GrammarService(),
+    private readonly scenarioService: Pick<ScenarioService, 'toBrowseCard'> =
+      new ScenarioService(),
   ) {}
 
   async getPage(params: SearchParams): Promise<SearchResult> {
@@ -101,15 +106,21 @@ export class SearchService {
       }
     }
 
-    // Words are the paginated primary list, so grammar is a capped secondary
-    // section shown only alongside the first page of word results.
-    const grammarTopics =
+    // Words are the paginated primary list, so grammar and scenarios are capped
+    // secondary sections shown only alongside the first page of word results.
+    const [grammarTopics, scenarios] =
       normalizedParams.page === 1
-        ? await this.searchRepository.findGrammarMatches(
-            tokens,
-            GRAMMAR_SEARCH_LIMIT,
-          )
-        : []
+        ? await Promise.all([
+            this.searchRepository.findGrammarMatches(
+              tokens,
+              GRAMMAR_SEARCH_LIMIT,
+            ),
+            this.searchRepository.findScenarioMatches(
+              tokens,
+              SCENARIO_SEARCH_LIMIT,
+            ),
+          ])
+        : [[], []]
 
     return {
       kind: 'page',
@@ -125,6 +136,11 @@ export class SearchService {
           totalPages: result.totalPages,
         },
         query: normalizedQuery.displayQuery,
+        scenarios: scenarios
+          .map((scenario) =>
+            this.scenarioService.toBrowseCard(scenario, publishedTopics),
+          )
+          .filter((scenario) => scenario !== null),
         state: 'results',
         words: result.docs
           .map((word) => this.wordService.toBrowseCard(word, publishedTopics))

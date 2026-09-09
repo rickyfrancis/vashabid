@@ -408,6 +408,10 @@ function grammarRepository(topics: unknown[] = []) {
   return { findPublishedByRelatedWordID: vi.fn().mockResolvedValue(topics) }
 }
 
+function scenarioRepository(scenarios: unknown[] = []) {
+  return { findPublishedByKeyWordID: vi.fn().mockResolvedValue(scenarios) }
+}
+
 describe('word detail orchestration', () => {
   test('loads one word and resolves only its related IDs', async () => {
     const detail = word({ relatedWords: [4, 2, 4] })
@@ -427,10 +431,19 @@ describe('word detail orchestration', () => {
         slug: 'bestimmter-artikel',
       },
     ])
+    const scenarios = scenarioRepository([
+      {
+        cefrLevel: 'A1',
+        situationType: 'everyday',
+        slug: 'im-cafe-bestellen',
+        title: 'Im Café bestellen',
+      },
+    ])
     const service = new WordService(
       wordRepository,
       topicRepository,
       grammar as never,
+      scenarios as never,
     )
 
     await expect(service.getDetailPage('das-brot')).resolves.toMatchObject({
@@ -441,9 +454,18 @@ describe('word detail orchestration', () => {
           slug: 'bestimmter-artikel',
         },
       ],
+      scenarios: [
+        {
+          cefrLevel: 'A1',
+          situationType: 'everyday',
+          slug: 'im-cafe-bestellen',
+          title: 'Im Café bestellen',
+        },
+      ],
       slug: 'das-brot',
     })
     expect(grammar.findPublishedByRelatedWordID).toHaveBeenCalledWith(1)
+    expect(scenarios.findPublishedByKeyWordID).toHaveBeenCalledWith(1)
     expect(wordRepository.findPublishedBySlug).toHaveBeenCalledWith('das-brot')
     expect(wordRepository.findPublishedByIDs).toHaveBeenCalledWith([4, 2])
     expect(topicRepository.findForBrowse).toHaveBeenCalledOnce()

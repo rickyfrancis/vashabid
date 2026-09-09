@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BookOpenText,
   Languages,
+  MessagesSquare,
   NotebookPen,
   Search,
   Sparkles,
@@ -18,8 +19,9 @@ import {
   Input,
   buttonStyles,
 } from '@/components/ui'
-import { Link } from '@/features/i18n/navigation'
 import { GrammarCard } from '@/features/grammar/grammar-card'
+import { Link } from '@/features/i18n/navigation'
+import { ScenarioCard } from '@/features/scenarios/scenario-card'
 import { WordCard } from '@/features/words/word-card'
 import { cn } from '@/lib/cn'
 import { toSearchQuery } from './normalization'
@@ -318,6 +320,45 @@ export function SearchPageContent({
                       key={topic.slug}
                       testIdPrefix="search-grammar"
                       topic={topic}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {search.scenarios.length > 0 ? (
+              <section
+                aria-labelledby="search-scenarios-heading"
+                className="mt-14 border-t border-border pt-10"
+              >
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-muted">
+                      {t('sectionScenarios')}
+                    </p>
+                    <h2
+                      className="mt-2 font-display text-3xl font-semibold text-foreground"
+                      id="search-scenarios-heading"
+                    >
+                      {t('sectionScenarios')}
+                    </h2>
+                  </div>
+                  <Badge className="gap-2" tone="accent">
+                    <MessagesSquare aria-hidden="true" size={14} />
+                    {t('scenarioResultCount', {
+                      count: search.scenarios.length,
+                    })}
+                  </Badge>
+                </div>
+                <div
+                  className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+                  data-testid="search-scenarios-grid"
+                >
+                  {search.scenarios.map((scenario) => (
+                    <ScenarioCard
+                      key={scenario.slug}
+                      scenario={scenario}
+                      testIdPrefix="search-scenario"
                     />
                   ))}
                 </div>

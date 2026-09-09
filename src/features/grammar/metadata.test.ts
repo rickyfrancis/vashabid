@@ -11,6 +11,7 @@ const topic = (
   examples: [],
   name: 'Perfekt mit haben und sein',
   relatedWords: [],
+  scenarios: [],
   shortRule: 'Perfekt mit haben oder sein.',
   slug: 'perfekt-mit-haben-und-sein',
   support: {

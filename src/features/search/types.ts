@@ -1,6 +1,7 @@
 import type { GrammarBrowseCardViewModel } from '@/features/grammar/types'
 import type { CefrLevel } from '@/lib/payload/fields'
 import type { WordType } from '@/features/words/constants'
+import type { ScenarioBrowseCardViewModel } from '@/features/scenarios/types'
 import type { WordBrowseCardViewModel } from '@/features/words/types'
 
 export const SEARCH_PAGE_SIZE = 12
@@ -34,6 +35,10 @@ export interface SearchPageViewModel {
    */
   grammar: GrammarBrowseCardViewModel[]
   pagination: SearchPaginationViewModel
+  /**
+   * Secondary results, capped and first-page only like grammar.
+   */
+  scenarios: ScenarioBrowseCardViewModel[]
   query: string
   state: 'idle' | 'results'
   words: WordBrowseCardViewModel[]

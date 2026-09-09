@@ -8,7 +8,8 @@
     "primary": "প্রধান ন্যাভিগেশন",
     "search": "খুঁজুন",
     "words": "শব্দ দেখুন",
-    "grammar": "ব্যাকরণ"
+    "grammar": "ব্যাকরণ",
+    "scenarios": "পরিস্থিতি"
   },
   "Shell": {
     "skipToContent": "মূল কনটেন্টে যান",
@@ -51,7 +52,8 @@
     "emptyWordsDescription": "সম্পাদকীয় দল প্রকাশ করলেই জার্মান শব্দগুলো এখানে দেখা যাবে।",
     "emptyTopicsTitle": "বিষয়গুলো সাজানো হচ্ছে",
     "emptyTopicsDescription": "প্রকাশিত শব্দভাণ্ডারের বিষয়গুলো প্রস্তুত হলে এখানে দেখা যাবে।",
-    "grammarAction": "ব্যাকরণ বিষয় দেখুন"
+    "grammarAction": "ব্যাকরণ বিষয় দেখুন",
+    "scenariosAction": "পরিস্থিতি দেখুন"
   },
   "WordTypes": {
     "noun": "বিশেষ্য",
@@ -62,6 +64,15 @@
     "conjunction": "সংযোজক অব্যয়",
     "phrase": "বাক্যাংশ",
     "idiom": "বাগধারা"
+  },
+  "SituationTypes": {
+    "everyday": "দৈনন্দিন জীবন",
+    "travel": "ভ্রমণ",
+    "work": "কাজ",
+    "study": "পড়াশোনা",
+    "health": "স্বাস্থ্য",
+    "services": "দপ্তর ও সেবা",
+    "social": "সামাজিক জীবন"
   },
   "Words": {
     "eyebrow": "শব্দভাণ্ডারের সূচি",
@@ -113,7 +124,9 @@
     "nextPage": "পরের",
     "pagePosition": "{totalPages}টি পাতার মধ্যে {page}",
     "sectionGrammar": "ব্যাকরণের নিয়ম",
-    "grammarResultCount": "{count, plural, =0 {কোনো বিষয় মেলেনি} one {# টি বিষয় মিলেছে} other {# টি বিষয় মিলেছে}}"
+    "grammarResultCount": "{count, plural, =0 {কোনো বিষয় মেলেনি} one {# টি বিষয় মিলেছে} other {# টি বিষয় মিলেছে}}",
+    "sectionScenarios": "কথোপকথনের পরিস্থিতি",
+    "scenarioResultCount": "{count, plural, =0 {কোনো পরিস্থিতি মেলেনি} one {# টি পরিস্থিতি মিলেছে} other {# টি পরিস্থিতি মিলেছে}}"
   },
   "LearnerSupport": {
     "englishLabel": "ইংরেজি",
@@ -157,7 +170,8 @@
       "poetic": "কাব্যিক",
       "archaic": "প্রাচীন"
     },
-    "relatedGrammarTitle": "এই শব্দের পেছনের ব্যাকরণ"
+    "relatedGrammarTitle": "এই শব্দের পেছনের ব্যাকরণ",
+    "relatedScenariosTitle": "প্রসঙ্গে এই শব্দটি চর্চা করুন"
   },
   "Grammar": {
     "eyebrow": "প্যাটার্ন ওয়ার্কবুক",
@@ -198,7 +212,57 @@
     "practiceEyebrow": "ব্যবহারে দেখুন",
     "examplesTitle": "জার্মান উদাহরণ",
     "mistakesTitle": "সাধারণ ভুল",
-    "relatedWordsTitle": "যে শব্দগুলোতে এই নিয়ম দেখা যায়"
+    "relatedWordsTitle": "যে শব্দগুলোতে এই নিয়ম দেখা যায়",
+    "relatedScenariosTitle": "যে কথোপকথনগুলোতে এই প্যাটার্ন ব্যবহৃত হয়"
+  },
+  "Scenarios": {
+    "eyebrow": "কথোপকথন ওয়ার্কবুক",
+    "title": "বাস্তব পরিস্থিতিতে জার্মান চর্চা করুন।",
+    "description": "স্তর, দৈনন্দিন পরিস্থিতি বা শেখার বিষয় ধরে প্রকাশিত জার্মান কথোপকথন অনুশীলন করুন — ইংরেজি, বাংলা বা দুটোতেই সহায়তা সহ।",
+    "filtersTitle": "পরিস্থিতি বেছে নিন",
+    "filtersEyebrow": "তিনভাবে সংকুচিত করুন",
+    "levelLabel": "CEFR স্তর",
+    "allLevels": "সব স্তর",
+    "situationLabel": "পরিস্থিতি",
+    "allSituations": "সব পরিস্থিতি",
+    "topicLabel": "শেখার বিষয়",
+    "allTopics": "সব বিষয়",
+    "applyFilters": "ফিল্টার প্রয়োগ করুন",
+    "clearFilters": "ফিল্টার মুছুন",
+    "resultCount": "{count, plural, =0 {কোনো প্রকাশিত পরিস্থিতি নেই} one {# টি প্রকাশিত পরিস্থিতি} other {# টি প্রকাশিত পরিস্থিতি}}",
+    "supportHint": "ব্যাখ্যা উপরের শেখার সহায়তা সেটিং অনুসরণ করে।",
+    "goalLabel": "শেখার লক্ষ্য",
+    "cardTopics": "শেখার বিষয়",
+    "noTopics": "কোনো বিষয় নির্ধারিত নেই",
+    "emptyTitle": "এই ওয়ার্কবুকে কোনো পরিস্থিতি মেলেনি",
+    "emptyDescription": "সম্পূর্ণ প্রকাশিত পরিস্থিতির তালিকায় ফিরতে এক বা একাধিক ফিল্টার মুছে দেখুন।",
+    "paginationLabel": "পরিস্থিতির পাতা",
+    "previousPage": "আগের",
+    "nextPage": "পরের",
+    "pagePosition": "{totalPages} পাতার মধ্যে {page} নম্বর"
+  },
+  "ScenarioDetail": {
+    "metadataTitle": "{scenario} — জার্মান পরিস্থিতি | Vashabid",
+    "metadataDescription": "জার্মান কথোপকথন {scenario} অনুশীলন করুন: {summary}",
+    "backToScenarios": "পরিস্থিতির সূচিতে ফিরুন",
+    "eyebrow": "কথোপকথন ওয়ার্কবুক থেকে",
+    "goalTitle": "আপনি যা করতে পারবেন",
+    "quickFactsTitle": "এক নজরে",
+    "levelLabel": "CEFR স্তর",
+    "situationLabel": "পরিস্থিতি",
+    "topicsLabel": "শেখার বিষয়",
+    "supportEyebrow": "কথোপকথনটি যেভাবে চলে",
+    "explanationTitle": "ব্যাখ্যা",
+    "culturalNotesTitle": "সাংস্কৃতিক নোট",
+    "dialogueEyebrow": "চলতে দেখুন",
+    "dialogueTitle": "কথোপকথন",
+    "keyVocabularyTitle": "এখানে যে শব্দগুলো দরকার",
+    "relatedGrammarTitle": "এই কথোপকথন যে ব্যাকরণ চর্চা করায়",
+    "fallbackNotice": "এই অংশের জন্য বাংলা নির্দেশনা এখনও নেই, তাই ইংরেজি দেখানো হচ্ছে।",
+    "comingSoon": "শীঘ্রই আসছে",
+    "saveVocabularyTitle": "এই শব্দগুলো সংরক্ষণ করুন",
+    "saveVocabularyDescription": "শিক্ষার্থী অ্যাকাউন্ট এখনও প্রস্তুত নয়। প্রস্তুত হলে এই পরিস্থিতির প্রতিটি শব্দ আপনার শেখার তালিকায় পাঠাতে পারবেন।",
+    "saveVocabularyAction": "শব্দ শেখার তালিকায় যোগ করুন"
   },
   "Languages": {
     "label": "ইন্টারফেসের ভাষা",

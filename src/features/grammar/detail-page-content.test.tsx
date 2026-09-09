@@ -41,6 +41,14 @@ const topic = (
       wordType: 'verb',
     },
   ],
+  scenarios: [
+    {
+      cefrLevel: 'A2',
+      situationType: 'travel',
+      slug: 'am-bahnhof-fragen',
+      title: 'Am Bahnhof fragen',
+    },
+  ],
   shortRule: 'Das Perfekt bildet man mit haben oder sein.',
   slug: 'perfekt-mit-haben-und-sein',
   support: {
@@ -208,5 +216,34 @@ describe('GrammarDetailPageContent', () => {
     expect(
       screen.getByRole('link', { name: 'Back to grammar index' }),
     ).toHaveAttribute('href', '/grammar')
+  })
+})
+
+describe('GrammarDetailPageContent scenario links', () => {
+  test('links each scenario that practises this pattern', () => {
+    renderDetail(topic())
+
+    const card = screen.getByTestId('grammar-scenario-am-bahnhof-fragen')
+
+    expect(within(card).getByRole('link')).toHaveAttribute(
+      'href',
+      '/scenarios/am-bahnhof-fragen',
+    )
+    expect(within(card).getByText('Travel')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', {
+        name: 'Conversations that use this pattern',
+      }),
+    ).toBeInTheDocument()
+  })
+
+  test('omits the section when no scenario uses this pattern', () => {
+    renderDetail(topic({ scenarios: [] }))
+
+    expect(
+      screen.queryByRole('heading', {
+        name: 'Conversations that use this pattern',
+      }),
+    ).not.toBeInTheDocument()
   })
 })

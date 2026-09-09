@@ -40,6 +40,14 @@ const detail: WordDetailPageViewModel = {
   lemma: 'der Termin',
   noun: { gender: 'der', pluralForm: 'die Termine' },
   register: 'neutral',
+  scenarios: [
+    {
+      cefrLevel: 'A1',
+      situationType: 'everyday',
+      slug: 'im-cafe-bestellen',
+      title: 'Im Café bestellen',
+    },
+  ],
   relatedWords: [
     {
       article: null,
@@ -197,6 +205,31 @@ describe('WordDetailPageContent', () => {
     expect(screen.queryByText('Keep following the thread')).not.toBeInTheDocument()
     expect(
       screen.queryByText('Grammar behind this word'),
+    ).not.toBeInTheDocument()
+  })
+})
+
+describe('WordDetailPageContent scenario links', () => {
+  test('links each scenario that teaches this word', () => {
+    renderDetail()
+
+    const card = screen.getByTestId('word-scenario-im-cafe-bestellen')
+
+    expect(within(card).getByRole('link')).toHaveAttribute(
+      'href',
+      '/scenarios/im-cafe-bestellen',
+    )
+    expect(within(card).getByText('Everyday life')).toBeInTheDocument()
+    expect(
+      screen.getByRole('heading', { name: 'Practise this word in context' }),
+    ).toBeInTheDocument()
+  })
+
+  test('omits the section when no scenario uses this word', () => {
+    renderDetail({ ...detail, scenarios: [] })
+
+    expect(
+      screen.queryByRole('heading', { name: 'Practise this word in context' }),
     ).not.toBeInTheDocument()
   })
 })
