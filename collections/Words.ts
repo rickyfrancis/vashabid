@@ -7,10 +7,10 @@ import type {
 import {
   canAccessAdminPanel,
   isAdmin,
+  isAdminField,
   isAdminOrEditor,
   publishedActiveOrEditorial,
 } from '../src/lib/payload/access'
-import { getActivePayloadUser } from '../src/lib/payload/access/values'
 import {
   canReadBanglaLearnerContent,
   contentVersions,
@@ -46,8 +46,7 @@ export type WordRegister = (typeof wordRegisters)[number]
 export const wordLifecycleStatuses = ['active', 'archived'] as const
 export type WordLifecycleStatus = (typeof wordLifecycleStatuses)[number]
 
-export const canManageWordLifecycle: FieldAccess = ({ req }) =>
-  getActivePayloadUser(req.user)?.role === 'admin'
+export const canManageWordLifecycle: FieldAccess = isAdminField
 
 export const validateUsefulnessScore: NumberFieldSingleValidation = (value) =>
   typeof value === 'number' &&
