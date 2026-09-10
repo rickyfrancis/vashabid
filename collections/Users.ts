@@ -19,6 +19,7 @@ import {
   enforceSignupSubmission,
   forceLearnerDefaults,
   rejectSuspendedLogin,
+  removeLearnerProfile,
 } from './hooks/users'
 
 /**
@@ -65,6 +66,7 @@ export const Users: CollectionConfig = {
     verify: false,
   },
   hooks: {
+    afterDelete: [removeLearnerProfile],
     beforeLogin: [rejectSuspendedLogin],
     beforeOperation: [enforceSignupRateLimit],
     // Order matters: validate the payload, then force the trusted role and

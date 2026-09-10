@@ -1,5 +1,6 @@
 import {
   AuthenticationError,
+  type CollectionAfterDeleteHook,
   type CollectionBeforeLoginHook,
   type CollectionBeforeOperationHook,
   type CollectionBeforeValidateHook,
@@ -21,6 +22,12 @@ import {
   SlidingWindowRateLimiter,
   resolveClientKey,
 } from '../../src/lib/rate-limit'
+
+/**
+ * Marks a write as coming from the seed script rather than from a request.
+ * See `forceLearnerDefaults` for why this cannot be forged over HTTP.
+ */
+export const SEED_CONTEXT_FLAG = 'vashabidSeed'
 
 interface UserHookData {
   id: number | string
@@ -166,10 +173,16 @@ export const enforceSignupSubmission: CollectionBeforeValidateHook = ({
  */
 export const forceLearnerDefaults: CollectionBeforeValidateHook = ({
   data,
+  context,
   operation,
   req,
 }) => {
   if (operation !== 'create') return data
+  // Trusted local tooling — the seeder — declares itself through `req.context`,
+  // which `createPayloadRequest` hardcodes to `{}` for every REST request. A
+  // network client therefore cannot set this flag, which is what makes it a safe
+  // way to let the seeder mint the admin that nothing else may.
+  if (context?.[SEED_CONTEXT_FLAG] === true) return data
 
   const actor = getActivePayloadUser(req.user)
 
@@ -180,6 +193,30 @@ export const forceLearnerDefaults: CollectionBeforeValidateHook = ({
     accountStatus: 'active',
     role: 'learner',
   }
+}
+
+/**
+ * Removes a learner's profile when their account is deleted.
+ *
+ * The generated foreign key is `ON DELETE set null` against a `NOT NULL`
+ * column, so without this a delete would fail on the constraint rather than
+ * cascade. Doing it in a hook rather than by hand-editing the migration means
+ * the behaviour is identical on the schema-push path used in development and
+ * the migration path used in production.
+ *
+ * The nested delete is passed `req` so it shares the outer transaction: if the
+ * user delete is rolled back, the profile comes back with it.
+ */
+export const removeLearnerProfile: CollectionAfterDeleteHook = async ({
+  id,
+  req,
+}) => {
+  await req.payload.delete({
+    collection: 'learner-profiles',
+    overrideAccess: true,
+    req,
+    where: { user: { equals: id } },
+  })
 }
 
 export const rejectSuspendedLogin: CollectionBeforeLoginHook<

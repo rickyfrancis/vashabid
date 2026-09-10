@@ -12,6 +12,7 @@ import {
   enforceSignupSubmission,
   forceLearnerDefaults,
   rejectSuspendedLogin,
+  SEED_CONTEXT_FLAG,
 } from '../../../collections/hooks/users'
 import { PASSWORD_MIN_LENGTH } from '../../features/auth/constants'
 
@@ -272,6 +273,36 @@ describe('forceLearnerDefaults', () => {
       id: 1,
       role,
     })
+
+    expect(data.role).toBe('learner')
+  })
+
+  test('lets the seeder mint an admin through an unforgeable context flag', () => {
+    // Found the hard way: without this the seeder created its admin and the
+    // hook immediately demoted it to a learner. `createPayloadRequest`
+    // hardcodes `context: {}`, so no REST client can set this.
+    const data = forceLearnerDefaults({
+      context: { [SEED_CONTEXT_FLAG]: true },
+      data: { role: 'admin' },
+      operation: 'create',
+      req: { user: null } as unknown as PayloadRequest,
+    } as never) as Record<string, unknown>
+
+    expect(data.role).toBe('admin')
+  })
+
+  test.each([
+    ['an absent context', undefined],
+    ['an empty context, as REST always supplies', {}],
+    ['a falsy flag', { [SEED_CONTEXT_FLAG]: false }],
+    ['a string that merely looks right', { [SEED_CONTEXT_FLAG]: 'true' }],
+  ])('still forces a learner for %s', (_label, context) => {
+    const data = forceLearnerDefaults({
+      context,
+      data: { role: 'admin' },
+      operation: 'create',
+      req: { user: null } as unknown as PayloadRequest,
+    } as never) as Record<string, unknown>
 
     expect(data.role).toBe('learner')
   })

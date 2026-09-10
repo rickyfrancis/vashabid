@@ -41,6 +41,14 @@ const feedbackMigration = readFileSync(
   'utf8',
 )
 
+const learnerProfilesMigration = readFileSync(
+  path.resolve(
+    process.cwd(),
+    'migrations/20260910_210452_phase_16_learner_accounts.ts',
+  ),
+  'utf8',
+)
+
 const scenarioTables = [
   'scenarios',
   'scenarios_rels',
@@ -271,5 +279,63 @@ describe('Phase 15 feedback migration', () => {
     expect(feedbackMigration).toContain(
       'DROP INDEX IF EXISTS "payload_locked_documents_rels_feedback_id_idx"',
     )
+  })
+})
+
+describe('phase 16 learner accounts migration', () => {
+  test('creates the learner profiles table', () => {
+    expect(learnerProfilesMigration).toContain(
+      'CREATE TABLE "learner_profiles"',
+    )
+    expect(learnerProfilesMigration).toContain(
+      'DROP TABLE IF EXISTS "learner_profiles" CASCADE',
+    )
+  })
+
+  test('enforces one profile per learner in the database, not just in a hook', () => {
+    expect(learnerProfilesMigration).toContain(
+      'CREATE UNIQUE INDEX "learner_profiles_user_idx"',
+    )
+  })
+
+  test.each([
+    'primary_support_language',
+    'secondary_support_language',
+    'learning_goal',
+    'practice_style',
+    'daily_study_target',
+    'german_level',
+  ])('creates and drops the %s enum', (name) => {
+    expect(learnerProfilesMigration).toContain(
+      `CREATE TYPE "public"."enum_learner_profiles_${name}"`,
+    )
+    expect(learnerProfilesMigration).toContain(
+      `DROP TYPE IF EXISTS "public"."enum_learner_profiles_${name}"`,
+    )
+  })
+
+  test('keeps the profile owner required', () => {
+    expect(learnerProfilesMigration).toContain('"user_id" integer NOT NULL')
+  })
+
+  test('leaves the completion stamp nullable, since it is set only once', () => {
+    expect(learnerProfilesMigration).toMatch(
+      /"onboarding_completed_at" timestamp\(3\) with time zone,/,
+    )
+  })
+
+  test('tolerates constraints already removed by the cascading table drop', () => {
+    expect(learnerProfilesMigration).toContain(
+      'DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_learner_profiles_fk"',
+    )
+    expect(learnerProfilesMigration).toContain(
+      'DROP INDEX IF EXISTS "payload_locked_documents_rels_learner_profiles_id_idx"',
+    )
+  })
+
+  test('adds no column to users, because identity did not change shape', () => {
+    // The onboarding answers went to their own collection; `users` kept only
+    // the preferences every role already had.
+    expect(learnerProfilesMigration).not.toContain('ALTER TABLE "users" ADD')
   })
 })
