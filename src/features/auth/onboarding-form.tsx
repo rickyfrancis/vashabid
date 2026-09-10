@@ -5,7 +5,7 @@ import { useActionState, useId, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 
 import { Button, SegmentedControl, Select } from '@/components/ui'
-import { cefrLevels } from '@/lib/payload/fields'
+import { cefrLevels } from '@/lib/content'
 import { submitOnboarding } from './actions'
 import { FieldError, FormAlert } from './auth-form-parts'
 import {

@@ -94,9 +94,16 @@ export default async function LocaleLayout({
     >
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider locale={typedLocale} messages={messages}>
+          {/*
+            Keyed by the resolved mode as well as the locale. The provider seeds
+            `useState` from `initialMode`, which React then ignores on
+            re-render, so without the mode in the key a preference changed on
+            the server — by finishing onboarding — would not reach the switcher
+            until a full page load.
+          */}
           <SupportModeProvider
             initialMode={initialSupportMode}
-            key={typedLocale}
+            key={`${typedLocale}:${initialSupportMode}`}
             persist={session ? persistSupportMode : undefined}
           >
             <AppShell session={session}>{children}</AppShell>

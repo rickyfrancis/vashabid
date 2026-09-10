@@ -17,6 +17,12 @@ import type {
  * by being handed the whole user by accident.
  */
 export interface SessionUser {
+  /**
+   * Always `active`: `getSession` resolves to null for anything else. It is
+   * carried explicitly because the access policies read it, so a session user
+   * handed to a repository satisfies `getActivePayloadUser` as-is.
+   */
+  accountStatus: 'active'
   displayName: string
   email: string
   id: number | string

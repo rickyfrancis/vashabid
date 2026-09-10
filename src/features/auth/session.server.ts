@@ -23,6 +23,7 @@ function toSessionUser(user: Record<string, unknown>): SessionUser | null {
     typeof user.supportMode === 'string' ? user.supportMode : undefined
 
   return {
+    accountStatus: 'active',
     displayName:
       typeof user.displayName === 'string' && user.displayName.trim() !== ''
         ? user.displayName

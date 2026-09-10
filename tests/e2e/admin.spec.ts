@@ -14,17 +14,48 @@ test('Payload API is not intercepted and protects user reads', async ({ request 
   expect(response.url()).not.toMatch(/\/(?:en|bn)\/api/)
 })
 
-test('anonymous visitors cannot create users through the collection API', async ({
+test('anonymous visitors can create an account, but only ever a learner', async ({
   request,
 }) => {
+  // Phase 16 opened this deliberately: signup must not require an account, and
+  // Payload cannot disable its REST endpoint per collection, so the rules live
+  // in the collection hooks and apply here exactly as they do to the form.
   const response = await request.post('/api/users', {
     data: {
-      email: 'anonymous@example.com',
-      password: 'not-used-because-access-is-denied',
+      accountStatus: 'suspended',
+      displayName: 'REST Signup',
+      email: `rest-signup-${Date.now()}@example.com`,
+      password: 'a-long-enough-password',
+      role: 'admin',
+      uiLocale: 'en',
     },
   })
 
-  expect(response.status()).toBe(403)
+  expect(response.ok()).toBe(true)
+
+  const body = await response.json()
+
+  // Field access strips the injected values and `forceLearnerDefaults` sets the
+  // trusted ones, so the privilege never lands.
+  expect(body.doc.role).toBe('learner')
+  expect(body.doc.accountStatus).toBe('active')
+})
+
+test('a signup that breaks the rules is refused over REST too', async ({
+  request,
+}) => {
+  // Payload enforces no password minimum of its own; this proves the shared
+  // schema in the hook is what closes that gap on the endpoint as well.
+  const response = await request.post('/api/users', {
+    data: {
+      displayName: 'Too Short',
+      email: `rest-short-${Date.now()}@example.com`,
+      password: 'short',
+      uiLocale: 'en',
+    },
+  })
+
+  expect(response.ok()).toBe(false)
 })
 
 test('topic tags API remains public and outside locale routing', async ({

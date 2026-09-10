@@ -1,5 +1,6 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 
@@ -166,6 +167,10 @@ export async function submitOnboarding(
   }
 
   if (result.kind === 'unauthenticated') return { status: 'unauthenticated' }
+
+  // The support mode lives on the account and is read by the root layout, so
+  // the cached layout output is stale the moment onboarding changes it.
+  revalidatePath('/', 'layout')
 
   redirect(`/${locale}`)
 }
