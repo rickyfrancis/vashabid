@@ -6,7 +6,9 @@ export {
 } from './values'
 export {
   isAdmin,
+  isAdminField,
   isAdminOrEditor,
+  isAdminOrEditorField,
   isEditor,
   isLearner,
   isSelf,

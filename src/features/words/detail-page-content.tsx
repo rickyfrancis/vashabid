@@ -21,6 +21,7 @@ import type { ReactNode } from 'react'
 
 import { PageContainer } from '@/components/layout'
 import { Badge, Card, buttonStyles } from '@/components/ui'
+import { FeedbackForm } from '@/features/feedback/feedback-form'
 import { Link } from '@/features/i18n/navigation'
 import { useSupportMode } from '@/features/i18n/support-mode-provider'
 import { ScenarioSummaryCard } from '@/features/scenarios/scenario-summary-card'
@@ -582,6 +583,8 @@ export function WordDetailPageContent({
           </aside>
         </div>
       </article>
+
+      <FeedbackForm contentType="word" slug={word.slug} />
     </PageContainer>
   )
 }

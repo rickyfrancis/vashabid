@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { useId, useTransition } from 'react'
+import { Select } from '@/components/ui'
 import { usePathname, useRouter } from './navigation'
 import { locales, type Locale } from './types'
 
@@ -32,9 +33,8 @@ export function LanguageSwitcher() {
       <label className="text-sm font-semibold text-foreground" htmlFor={selectId}>
         {t('label')}
       </label>
-      <select
+      <Select
         aria-busy={isPending}
-        className="h-11 w-full rounded-xl border border-border-strong bg-surface px-3 text-base text-foreground shadow-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/20 disabled:cursor-wait disabled:opacity-60"
         disabled={isPending}
         id={selectId}
         onChange={(event) => changeLocale(event.target.value as Locale)}
@@ -45,7 +45,7 @@ export function LanguageSwitcher() {
             {t(locale)}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   )
 }

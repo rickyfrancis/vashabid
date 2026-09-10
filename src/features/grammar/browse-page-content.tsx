@@ -13,6 +13,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Select,
   buttonStyles,
 } from '@/components/ui'
 import { Link } from '@/features/i18n/navigation'
@@ -23,9 +24,6 @@ import type {
   GrammarBrowseFilters,
   GrammarBrowsePageViewModel,
 } from './types'
-
-const selectStyles =
-  'h-12 w-full rounded-xl border border-border-strong bg-surface px-3 text-base text-foreground shadow-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/20'
 
 function browseHref(filters: GrammarBrowseFilters, page: number) {
   const query = toGrammarBrowseQuery({ ...filters, page })
@@ -157,11 +155,11 @@ export function GrammarBrowsePageContent({
                   >
                     {t('levelLabel')}
                   </label>
-                  <select
-                    className={selectStyles}
+                  <Select
                     defaultValue={browse.filters.level ?? ''}
                     id="grammar-filter-level"
                     name="level"
+                    size="lg"
                   >
                     <option value="">{t('allLevels')}</option>
                     {browse.options.levels.map((level) => (
@@ -169,7 +167,7 @@ export function GrammarBrowsePageContent({
                         {level}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -179,11 +177,11 @@ export function GrammarBrowsePageContent({
                   >
                     {t('topicLabel')}
                   </label>
-                  <select
-                    className={selectStyles}
+                  <Select
                     defaultValue={browse.filters.topic ?? ''}
                     id="grammar-filter-topic"
                     name="topic"
+                    size="lg"
                   >
                     <option value="">{t('allTopics')}</option>
                     {browse.options.topics.map((topic) => (
@@ -191,7 +189,7 @@ export function GrammarBrowsePageContent({
                         {topic.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 

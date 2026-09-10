@@ -2,6 +2,11 @@ import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import { describe, expect, test } from 'vitest'
 
+import {
+  feedbackContentTypes,
+  feedbackStatuses,
+  feedbackTypes,
+} from '../../features/feedback/constants'
 import { situationTypes } from '../../features/scenarios/constants'
 
 const migration = readFileSync(
@@ -24,6 +29,14 @@ const scenarioMigration = readFileSync(
   path.resolve(
     process.cwd(),
     'migrations/20260905_223054_phase_13_scenarios.ts',
+  ),
+  'utf8',
+)
+
+const feedbackMigration = readFileSync(
+  path.resolve(
+    process.cwd(),
+    'migrations/20260910_001218_phase_15_feedback.ts',
   ),
   'utf8',
 )
@@ -176,6 +189,87 @@ describe('Phase 13 scenarios migration', () => {
     )
     expect(scenarioMigration).toContain(
       'DROP INDEX IF EXISTS "payload_locked_documents_rels_scenarios_id_idx"',
+    )
+  })
+})
+
+describe('Phase 15 feedback migration', () => {
+  test.each(['feedback', 'feedback_rels'])('creates and drops %s', (table) => {
+    expect(feedbackMigration).toContain(`CREATE TABLE "${table}"`)
+    expect(feedbackMigration).toContain(`DROP TABLE "${table}" CASCADE`)
+  })
+
+  test('creates an unversioned collection, with no drafts table or status enum', () => {
+    expect(feedbackMigration).not.toContain('CREATE TABLE "_feedback_v"')
+    expect(feedbackMigration).not.toContain('enum_feedback__status')
+  })
+
+  test.each([
+    'enum_feedback_content_type',
+    'enum_feedback_feedback_type',
+    'enum_feedback_status',
+    'enum_feedback_submitter_locale',
+  ])('creates and drops the %s enum', (enumName) => {
+    expect(feedbackMigration).toContain(`CREATE TYPE "public"."${enumName}"`)
+    expect(feedbackMigration).toContain(`DROP TYPE "public"."${enumName}"`)
+  })
+
+  test('stores every content type, problem type, and status the app offers', () => {
+    for (const value of [
+      ...feedbackContentTypes,
+      ...feedbackTypes,
+      ...feedbackStatuses,
+    ]) {
+      expect(feedbackMigration).toContain(`'${value}'`)
+    }
+  })
+
+  test('defaults new submissions to the new status in the database too', () => {
+    expect(feedbackMigration).toContain(
+      `"status" "enum_feedback_status" DEFAULT 'new' NOT NULL`,
+    )
+  })
+
+  test('relates a report to each collection a reader can report on', () => {
+    expect(feedbackMigration).toContain('"words_id" integer')
+    expect(feedbackMigration).toContain('"grammar_topics_id" integer')
+    expect(feedbackMigration).toContain('"scenarios_id" integer')
+  })
+
+  test('keeps the slug snapshot required so a deleted target still reads', () => {
+    expect(feedbackMigration).toContain('"related_slug" varchar NOT NULL')
+  })
+
+  test('clears the moderator reference instead of deleting the report', () => {
+    expect(feedbackMigration).toContain(
+      'FOREIGN KEY ("handled_by_id") REFERENCES "public"."users"("id") ON DELETE set null',
+    )
+  })
+
+  test.each([
+    'feedback_content_type_idx',
+    'feedback_feedback_type_idx',
+    'feedback_related_slug_idx',
+    'feedback_status_idx',
+  ])('indexes %s for the moderation queue', (index) => {
+    expect(feedbackMigration).toContain(`CREATE INDEX "${index}"`)
+  })
+
+  test('links locked documents to the new collection in both directions', () => {
+    expect(feedbackMigration).toContain(
+      'ALTER TABLE "payload_locked_documents_rels" ADD COLUMN "feedback_id" integer',
+    )
+    expect(feedbackMigration).toContain(
+      'ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "feedback_id"',
+    )
+  })
+
+  test('tolerates constraints already removed by the cascading table drops', () => {
+    expect(feedbackMigration).toContain(
+      'DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_feedback_fk"',
+    )
+    expect(feedbackMigration).toContain(
+      'DROP INDEX IF EXISTS "payload_locked_documents_rels_feedback_id_idx"',
     )
   })
 })

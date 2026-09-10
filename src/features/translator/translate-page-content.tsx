@@ -14,6 +14,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Select,
   Textarea,
   buttonStyles,
 } from '@/components/ui'
@@ -23,9 +24,6 @@ import { MAX_TRANSLATE_INPUT } from './constants'
 import { splitDirection, toTranslateQuery } from './normalization'
 import { TranslatedText } from './translated-text'
 import type { TranslatePageViewModel } from './types'
-
-const selectStyles =
-  'h-12 w-full rounded-xl border border-border-strong bg-surface px-3 text-base text-foreground shadow-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/20'
 
 function translateHref(
   text: string,
@@ -76,18 +74,18 @@ function TranslateForm({ page }: { page: TranslatePageViewModel }) {
           >
             {t('sourceLabel')}
           </label>
-          <select
-            className={selectStyles}
+          <Select
             defaultValue={from}
             id="translate-from"
             name="from"
+            size="lg"
           >
             {page.options.sources.map((value) => (
               <option key={value} value={value}>
                 {languageLabel[value]}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <label
@@ -96,18 +94,18 @@ function TranslateForm({ page }: { page: TranslatePageViewModel }) {
           >
             {t('targetLabel')}
           </label>
-          <select
-            className={selectStyles}
+          <Select
             defaultValue={to}
             id="translate-to"
             name="to"
+            size="lg"
           >
             {page.options.targets.map((value) => (
               <option key={value} value={value}>
                 {languageLabel[value]}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 

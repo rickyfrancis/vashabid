@@ -73,6 +73,7 @@ export interface Config {
     words: Word;
     'grammar-topics': GrammarTopic;
     scenarios: Scenario;
+    feedback: Feedback;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -86,6 +87,7 @@ export interface Config {
     words: WordsSelect<false> | WordsSelect<true>;
     'grammar-topics': GrammarTopicsSelect<false> | GrammarTopicsSelect<true>;
     scenarios: ScenariosSelect<false> | ScenariosSelect<true>;
+    feedback: FeedbackSelect<false> | FeedbackSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -592,6 +594,82 @@ export interface Scenario {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Learner-reported problems with published content. Submissions arrive as New; triage them and record what happened in the moderation notes.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feedback".
+ */
+export interface Feedback {
+  id: number;
+  /**
+   * Which kind of page the report came from.
+   */
+  contentType: 'word' | 'grammar-topic' | 'scenario';
+  /**
+   * What the reporter said was wrong.
+   */
+  feedbackType:
+    | 'incorrect-german'
+    | 'incorrect-english'
+    | 'incorrect-bangla'
+    | 'missing-audio'
+    | 'bad-example'
+    | 'wrong-cefr'
+    | 'unclear-explanation'
+    | 'usage-suggestion'
+    | 'other';
+  /**
+   * The reported document, for one-click navigation.
+   */
+  related:
+    | {
+        relationTo: 'words';
+        value: number | Word;
+      }
+    | {
+        relationTo: 'grammar-topics';
+        value: number | GrammarTopic;
+      }
+    | {
+        relationTo: 'scenarios';
+        value: number | Scenario;
+      };
+  /**
+   * Snapshot of the slug at submission time, so the queue stays readable if the content is later renamed or removed.
+   */
+  relatedSlug: string;
+  /**
+   * What the reporter wrote, stored verbatim.
+   */
+  message: string;
+  /**
+   * Optional reply address. Personal data — visible to admins only.
+   */
+  email?: string | null;
+  /**
+   * Interface language the report was written in.
+   */
+  submitterLocale?: ('en' | 'bn') | null;
+  /**
+   * Every submission starts as New.
+   */
+  status: 'new' | 'triaged' | 'resolved' | 'rejected';
+  /**
+   * Internal only. Never shown to the reporter.
+   */
+  adminNotes?: string | null;
+  /**
+   * Set automatically when the status changes.
+   */
+  handledBy?: (number | null) | User;
+  /**
+   * Set automatically when the status changes.
+   */
+  handledAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -638,6 +716,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'scenarios';
         value: number | Scenario;
+      } | null)
+    | ({
+        relationTo: 'feedback';
+        value: number | Feedback;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -981,6 +1063,25 @@ export interface ScenariosSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feedback_select".
+ */
+export interface FeedbackSelect<T extends boolean = true> {
+  contentType?: T;
+  feedbackType?: T;
+  related?: T;
+  relatedSlug?: T;
+  message?: T;
+  email?: T;
+  submitterLocale?: T;
+  status?: T;
+  adminNotes?: T;
+  handledBy?: T;
+  handledAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

@@ -1,4 +1,4 @@
-import type { Access, Where } from 'payload'
+import type { Access, FieldAccess, Where } from 'payload'
 
 import { getActivePayloadUser } from './values'
 import type { UserRole } from './values'
@@ -79,3 +79,16 @@ export const publishedActiveOrEditorial: Access = ({ req }) => {
 
   return publicConstraint
 }
+
+/**
+ * Field-level siblings of `isAdmin` and `isAdminOrEditor`.
+ *
+ * Payload deletes a field the caller may not write rather than raising, so
+ * these are how a collection keeps editorial-only fields out of a public
+ * submission without rejecting the whole request.
+ */
+export const isAdminField: FieldAccess = ({ req }) =>
+  hasRole(req.user, ['admin'])
+
+export const isAdminOrEditorField: FieldAccess = ({ req }) =>
+  hasRole(req.user, ['admin', 'editor'])

@@ -1,9 +1,11 @@
-import type { AccessArgs, PayloadRequest } from 'payload'
+import type { AccessArgs, FieldAccessArgs, PayloadRequest } from 'payload'
 import { describe, expect, test } from 'vitest'
 
 import {
   isAdmin,
+  isAdminField,
   isAdminOrEditor,
+  isAdminOrEditorField,
   isEditor,
   isLearner,
   isSelf,
@@ -27,6 +29,10 @@ function createUser(overrides: Partial<TestUser> = {}): TestUser {
     accountStatus: 'active',
     ...overrides,
   }
+}
+
+function createFieldArgs(user: unknown): FieldAccessArgs {
+  return { req: { user } as PayloadRequest } as FieldAccessArgs
 }
 
 function createAccessArgs(user: unknown): AccessArgs {
@@ -148,5 +154,50 @@ describe('row-level access policies', () => {
     expect(await publishedOrEditorial(createAccessArgs(null))).toEqual(
       publishedConstraint,
     )
+  })
+})
+
+describe('field-level role policies', () => {
+  test.each([
+    ['admin', true],
+    ['editor', false],
+    ['learner', false],
+  ] as const)('isAdminField matches only an active admin (%s)', async (role, expected) => {
+    expect(await isAdminField(createFieldArgs(createUser({ role })))).toBe(expected)
+  })
+
+  test.each([
+    ['admin', true],
+    ['editor', true],
+    ['learner', false],
+  ] as const)(
+    'isAdminOrEditorField matches active editorial roles (%s)',
+    async (role, expected) => {
+      expect(
+        await isAdminOrEditorField(createFieldArgs(createUser({ role }))),
+      ).toBe(expected)
+    },
+  )
+
+  test.each(['admin', 'editor'] as const)(
+    'a suspended %s is treated as anonymous',
+    async (role) => {
+      const suspended = createUser({ accountStatus: 'suspended', role })
+
+      expect(await isAdminField(createFieldArgs(suspended))).toBe(false)
+      expect(await isAdminOrEditorField(createFieldArgs(suspended))).toBe(false)
+    },
+  )
+
+  test.each([
+    ['no user', null],
+    ['undefined', undefined],
+    ['an empty object', {}],
+    ['an unknown role', { collection: 'users', id: 1, role: 'unknown' }],
+    ['a foreign collection', { collection: 'other', id: 1, role: 'admin' }],
+    ['a missing id', { accountStatus: 'active', collection: 'users', role: 'admin' }],
+  ])('both field policies fail closed for %s', async (_label, user) => {
+    expect(await isAdminField(createFieldArgs(user))).toBe(false)
+    expect(await isAdminOrEditorField(createFieldArgs(user))).toBe(false)
   })
 })
