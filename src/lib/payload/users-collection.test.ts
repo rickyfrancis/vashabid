@@ -1,6 +1,5 @@
 import type {
   CollectionBeforeLoginHook,
-  CollectionBeforeValidateHook,
   PayloadRequest,
   SelectField,
 } from 'payload'
@@ -9,9 +8,12 @@ import { describe, expect, test, vi } from 'vitest'
 
 import { Users } from '../../../collections/Users'
 import {
-  promoteFirstUser,
+  createSignupRateLimitHook,
+  enforceSignupSubmission,
+  forceLearnerDefaults,
   rejectSuspendedLogin,
 } from '../../../collections/hooks/users'
+import { PASSWORD_MIN_LENGTH } from '../../features/auth/constants'
 
 function findSelectField(name: string): SelectField {
   const field = Users.fields.find(
@@ -65,42 +67,229 @@ describe('users collection schema', () => {
   })
 })
 
-describe('users collection hooks', () => {
-  test('forces the first registered user to active admin', async () => {
-    const count = vi.fn().mockResolvedValue({ totalDocs: 0 })
-    const data = { role: 'learner' as const, accountStatus: 'suspended' as const }
+describe('users collection auth config', () => {
+  test('states the login defences the signup rules lean on', () => {
+    const auth = Users.auth
 
-    const result = await promoteFirstUser({
-      data,
+    if (typeof auth !== 'object') throw new Error('auth must be configured')
+    expect(auth.maxLoginAttempts).toBe(5)
+    expect(auth.lockTime).toBe(10 * 60 * 1000)
+    // No email adapter is configured, so switching verification on would lock
+    // every new learner out behind a mail that only reaches the console.
+    expect(auth.verify).toBe(false)
+  })
+
+  test('no longer promotes anybody on an empty database', () => {
+    // The old `promoteFirstUser` made the first created account an admin. That
+    // was harmless while `create` was admin-only, and a privilege-escalation
+    // hazard the moment signup went public: the first stranger to sign up on a
+    // fresh deploy would have been promoted by our own hook.
+    const names = (Users.hooks?.beforeValidate ?? []).map((hook) => hook.name)
+
+    expect(names).not.toContain('promoteFirstUser')
+    expect(names).toEqual(['enforceSignupSubmission', 'forceLearnerDefaults'])
+  })
+})
+
+describe('signup rate limiting', () => {
+  function request(user: unknown = null): PayloadRequest {
+    return { headers: new Headers(), user } as unknown as PayloadRequest
+  }
+
+  test('refuses an anonymous create once the window is exhausted', () => {
+    const hook = createSignupRateLimitHook({
+      consume: vi.fn().mockReturnValue({ allowed: false, retryAfterMs: 4000 }),
+    })
+
+    expect(() =>
+      hook({ args: {}, operation: 'create', req: request() } as never),
+    ).toThrow(expect.objectContaining({ status: 429 }))
+  })
+
+  test('lets an allowed request through untouched', () => {
+    const hook = createSignupRateLimitHook({
+      consume: vi.fn().mockReturnValue({ allowed: true, retryAfterMs: 0 }),
+    })
+    const args = { data: {} }
+
+    expect(
+      hook({ args, operation: 'create', req: request() } as never),
+    ).toBe(args)
+  })
+
+  test('exempts editorial users, who create accounts from the admin panel', () => {
+    const consume = vi.fn()
+    const hook = createSignupRateLimitHook({ consume })
+
+    hook({
+      args: {},
       operation: 'create',
-      req: { payload: { count } } as unknown as PayloadRequest,
-    } as Parameters<CollectionBeforeValidateHook>[0])
-
-    expect(count).toHaveBeenCalledWith(
-      expect.objectContaining({
+      req: request({
+        accountStatus: 'active',
         collection: 'users',
-        overrideAccess: true,
+        id: 1,
+        role: 'admin',
       }),
-    )
-    expect(result).toEqual({ role: 'admin', accountStatus: 'active' })
+    } as never)
+
+    expect(consume).not.toHaveBeenCalled()
   })
 
-  test('leaves later users on their requested/default role and status', async () => {
-    const data = { role: 'editor' as const, accountStatus: 'active' as const }
+  test('does not exempt a suspended admin', () => {
+    const consume = vi
+      .fn()
+      .mockReturnValue({ allowed: true, retryAfterMs: 0 })
+    const hook = createSignupRateLimitHook({ consume })
 
-    const result = await promoteFirstUser({
+    hook({
+      args: {},
+      operation: 'create',
+      req: request({
+        accountStatus: 'suspended',
+        collection: 'users',
+        id: 1,
+        role: 'admin',
+      }),
+    } as never)
+
+    expect(consume).toHaveBeenCalled()
+  })
+
+  test('ignores operations other than create', () => {
+    const consume = vi.fn()
+    const hook = createSignupRateLimitHook({ consume })
+
+    hook({ args: {}, operation: 'update', req: request() } as never)
+
+    expect(consume).not.toHaveBeenCalled()
+  })
+})
+
+describe('signup validation', () => {
+  const valid = {
+    displayName: 'Rifat',
+    email: 'rifat@example.com',
+    password: 'a-long-enough-password',
+    uiLocale: 'en',
+  }
+
+  function anonymous(data: Record<string, unknown>) {
+    return {
+      data,
+      operation: 'create' as const,
+      req: { user: null } as unknown as PayloadRequest,
+    }
+  }
+
+  test('accepts a well-formed anonymous signup', () => {
+    expect(
+      enforceSignupSubmission(anonymous(valid) as never),
+    ).toBeDefined()
+  })
+
+  test('enforces the password minimum Payload does not', () => {
+    // Payload ships no minimum password length, so a direct REST post would
+    // otherwise be free to set a one-character password.
+    expect(() =>
+      enforceSignupSubmission(
+        anonymous({ ...valid, password: 'x'.repeat(PASSWORD_MIN_LENGTH - 1) }) as never,
+      ),
+    ).toThrow()
+  })
+
+  test.each([
+    ['a malformed email', { email: 'learner@localhost@x' }],
+    ['a blank display name', { displayName: '  ' }],
+  ])('refuses %s on the REST path too', (_label, override) => {
+    expect(() =>
+      enforceSignupSubmission(anonymous({ ...valid, ...override }) as never),
+    ).toThrow()
+  })
+
+  test('leaves an editorial create to the admin form rules', () => {
+    const data = { email: 'x' }
+
+    expect(
+      enforceSignupSubmission({
+        data,
+        operation: 'create',
+        req: {
+          user: {
+            accountStatus: 'active',
+            collection: 'users',
+            id: 1,
+            role: 'admin',
+          },
+        } as unknown as PayloadRequest,
+      } as never),
+    ).toBe(data)
+  })
+})
+
+describe('forceLearnerDefaults', () => {
+  function result(data: Record<string, unknown>, user: unknown = null) {
+    return forceLearnerDefaults({
       data,
       operation: 'create',
-      req: {
-        payload: {
-          count: vi.fn().mockResolvedValue({ totalDocs: 1 }),
-        },
-      } as unknown as PayloadRequest,
-    } as Parameters<CollectionBeforeValidateHook>[0])
+      req: { user } as unknown as PayloadRequest,
+    } as never) as Record<string, unknown>
+  }
 
-    expect(result).toEqual(data)
+  test('stores an injected admin role as an ordinary learner', () => {
+    // Field access has already stripped this by the time the hook runs; the
+    // hook sets the trusted value rather than racing the attacker's.
+    const data = result({ role: 'admin', accountStatus: 'suspended' })
+
+    expect(data.role).toBe('learner')
+    expect(data.accountStatus).toBe('active')
   })
 
+  test('keeps the rest of the submission intact', () => {
+    const data = result({ displayName: 'Rifat', email: 'r@example.com' })
+
+    expect(data.displayName).toBe('Rifat')
+    expect(data.email).toBe('r@example.com')
+  })
+
+  test('lets an admin assign an editorial role deliberately', () => {
+    const data = result({ role: 'editor' }, {
+      accountStatus: 'active',
+      collection: 'users',
+      id: 1,
+      role: 'admin',
+    })
+
+    expect(data.role).toBe('editor')
+  })
+
+  test.each([
+    ['an editor', 'editor'],
+    ['a learner', 'learner'],
+  ])('does not let %s mint an admin', (_label, role) => {
+    const data = result({ role: 'admin' }, {
+      accountStatus: 'active',
+      collection: 'users',
+      id: 1,
+      role,
+    })
+
+    expect(data.role).toBe('learner')
+  })
+
+  test('leaves updates alone', () => {
+    const data = { role: 'admin' }
+
+    expect(
+      forceLearnerDefaults({
+        data,
+        operation: 'update',
+        req: { user: null } as unknown as PayloadRequest,
+      } as never),
+    ).toBe(data)
+  })
+})
+
+describe('users collection hooks', () => {
   test('allows active accounts to log in', () => {
     const user = { id: 7, accountStatus: 'active' as const }
 
