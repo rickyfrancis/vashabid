@@ -17,6 +17,7 @@ import type { ReactNode } from 'react'
 
 import { PageContainer } from '@/components/layout'
 import { Badge, Button, Card } from '@/components/ui'
+import { FeedbackForm } from '@/features/feedback/feedback-form'
 import { Link } from '@/features/i18n/navigation'
 import { useSupportMode } from '@/features/i18n/support-mode-provider'
 import { SupportSnippet } from '@/features/words/support-snippet'
@@ -428,6 +429,8 @@ export function ScenarioDetailPageContent({
           <SaveVocabularyPlaceholder />
         </aside>
       </div>
+
+      <FeedbackForm contentType="scenario" slug={scenario.slug} />
     </PageContainer>
   )
 }
