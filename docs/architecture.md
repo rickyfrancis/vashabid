@@ -57,6 +57,10 @@ import { getPayloadClient, findPublished, findBySlug } from '@/lib/payload'
 - `getPayloadClient()` — Returns a cached Payload instance. Safe to call multiple times per request.
 - `findPublished(collection, options?)` — Calls `payload.find()` with `_status: 'published'` pre-filtered. Accepts `depth`, `limit`, `page`, `sort`, `where`.
 - `findBySlug(collection, slug, options?)` — Fetches a single published document by slug. Returns the document or `null`.
+- `createDocument(collection, data, options?)` — The one write path. Pins
+  `overrideAccess: false`, which matters more here than on reads because the Local
+  API defaults it to `true`. Accepts `headers` and forwards them as `req.headers`
+  so collection hooks can identify the client.
 
 ### Publishing filter
 
@@ -102,7 +106,11 @@ and content widths.
 Small accessible primitives live in `src/components/ui`. They use native HTML
 semantics first: buttons stay buttons, the language selector stays a select,
 and learning-support mode is a native radio group presented as a segmented
-control. `lucide-react` is the shared icon source. Do not add shadcn, Radix, or
+control. `Input`, `Textarea`, and `Select` share one border, focus ring, and
+`aria-[invalid=true]` treatment so a form can mix them without visual drift.
+`Select` takes a `size` prop rather than accepting a height through `className`,
+because `cn` is a plain join with no conflict resolution: two competing height
+utilities would resolve by stylesheet order instead of by intent. `lucide-react` is the shared icon source. Do not add shadcn, Radix, or
 a second component framework without a feature-specific need.
 
 Layout and presentational components remain server-compatible. Only components
@@ -309,6 +317,21 @@ that practise a given grammar topic. Bangla explanations, Bangla cultural notes,
 and each dialogue line's Bangla explanation are withheld until
 `review.banglaReviewed` is set.
 
+`feedback` is the first collection that is not editorial content, and it breaks two
+conventions on purpose. It has **no drafts or versions**, because a submission
+records what someone said rather than content moving toward publication, so there
+is no `_status` and the publish-gate hooks do not apply. And its `create` access is
+open to anonymous visitors, because reporting a problem must not require an
+account — which is why every submission rule lives in its hooks. See **Write path**
+below. Reads, updates, and deletes stay editorial: admins and editors triage,
+only admins delete, and the public cannot read the queue at all. The optional
+reply email is personal data and is readable by admins only, not editors.
+A report stores both a polymorphic relationship, for one-click navigation from the
+queue, and a `relatedSlug` snapshot, so a renamed or deleted target still leaves a
+readable row. Project convention is that every collection gets a seeder;
+`feedback` deliberately has none, because seeding user submissions would plant
+fake moderation work in every environment.
+
 **Import direction between linked features:** features that link to each other
 must depend on the other's *repository*, never its service. Concretely:
 
@@ -333,6 +356,92 @@ for the same reason: search and the translator both normalize learner input and
 both need the umlaut and sharp-s spellings a learner might type. The same rule
 applies to components: `WordSummaryCard` and `SupportSnippet` are shared once a
 third surface renders them.
+
+## Write path
+
+Phase 15 introduced the first mutation in the project. Everything before it was a
+GET form carrying URL state, so this section is the pattern later user-input
+phases should follow.
+
+**The public form POSTs to a server action.** `src/features/feedback/actions.ts`
+is the first `'use server'` module. It stays a thin adapter: it reads `FormData`,
+checks the honeypot, and hands everything else to a service that owns validation,
+target resolution, and the result union. There is no `revalidatePath`, because no
+public page renders submitted data.
+
+The form is written for progressive enhancement — uncontrolled fields, a native
+`<details>` disclosure, and `useActionState`, which React marks up with the hidden
+`$ACTION_*` fields a scripting-free submit needs. A POST made with no JavaScript
+does reach the action and store the report. **But no public route currently renders
+without JavaScript**: every page pairs streaming with a `loading.tsx` fallback, so
+an unscripted browser is left looking at the skeleton and never reaches any content.
+That is app-wide and predates this phase — verified in both `pnpm dev` and
+`pnpm start` on `/en`, `/en/words`, `/en/search`, and `/en/translate`. Treat
+no-JavaScript support as unfinished at the routing layer, not at the form.
+
+**Rules live in collection hooks, not in the action.** Payload mounts its REST API
+at `app/(payload)/api/[...slug]/route.ts` and offers no way to disable it for a
+single collection, so any collection that accepts anonymous `create` is publicly
+writable over HTTP whether or not the app has a form. Putting validation, spam
+constraints, and forced defaults in `beforeOperation`/`beforeValidate` is what
+makes `POST /api/feedback` and the form obey one rule set. The alternative —
+closing `create` and writing with `overrideAccess: true` from trusted code — would
+have created a privileged path on which field-level access no longer applies.
+
+Two behaviours of Payload make this safe, and both are worth knowing before
+relying on them:
+
+- `createPayloadRequest` hardcodes `context: {}`, so a REST client cannot inject
+  `req.context` to influence a hook.
+- `createLocalReq` only substitutes an empty `Headers` when none was supplied, so
+  passing `req: { headers }` through `createDocument` gives hooks the real client
+  headers on the Local API path too.
+
+**Hook order matters.** `create` runs collection `beforeOperation` → *field*
+`beforeValidate` → collection `beforeValidate` → collection `beforeChange` → field
+`beforeChange`. Field access runs in the field pass and **deletes** a field the
+caller may not write rather than raising, so:
+
+- Rate limiting belongs in `beforeOperation`, where it refuses an abusive request
+  before any field work happens.
+- Forcing trusted defaults belongs in the collection `beforeValidate`, which runs
+  *after* an injected value has already been stripped. The hook is therefore
+  setting the trusted value, not racing the caller's.
+
+**Untrusted input is parsed once, by a shared schema.** `feedbackSubmissionSchema`
+is used by the action, the hook, and the tests. It returns message *keys* rather
+than English prose, so a bilingual form chooses the wording with next-intl instead
+of being locked to whatever the server wrote. Unknown keys are dropped, so an
+injected `status` cannot ride along even before access control sees it.
+
+**The public submits slugs, never database ids.** `FeedbackService` resolves a
+`contentType` plus slug to a published document through the word, grammar, and
+scenario *repositories* — never their services, per the import-direction rule.
+That keeps raw identifiers out of client props and means a report can only ever
+attach to content that is actually published.
+
+### Rate limiting
+
+`src/lib/rate-limit/` holds a `SlidingWindowRateLimiter` with an injected clock and
+store, so it is testable without timers, and `resolveClientKey`, which hashes a
+client address into a bucket key. Three limitations are deliberate and documented
+rather than hidden:
+
+- `x-forwarded-for` is a list each proxy appends to, so the **last** hop is read
+  rather than the trivially spoofable first one. With no proxy the header is absent
+  and everything shares one `unknown` bucket. `RATE_LIMIT_FORWARDED_HEADER`
+  overrides the header name for a deployment whose proxy sets a different one.
+- The window lives in one Node process, so it resets on deploy and is not shared
+  between instances. Phase 24 introduces real rate limiting for the translation
+  provider and should absorb this.
+- Addresses are hashed immediately and **never persisted**. No network identifier
+  reaches the database.
+
+`FEEDBACK_RATE_LIMIT` and `FEEDBACK_RATE_LIMIT_WINDOW_MS` override the defaults.
+The Playwright config raises the limit for the browser suite, because on localhost
+every request shares the `unknown` bucket and the suite would otherwise exhaust
+the window part-way through; the limit itself is covered by hook unit tests driving
+an injected clock.
 
 ## Provider interfaces
 
@@ -387,4 +496,5 @@ migration reverses cleanly.
 | Feature colocation | Components live with their feature, not in a global `components/` dump |
 | Route-based i18n | `/en` and `/bn` improve accessibility, shareability, and future SEO |
 | `next-intl` routing and messages | Provides typed locale navigation, request-scoped messages, browser negotiation, and locale cookies while preserving the App Router architecture |
-| Zod + react-hook-form (not installed yet) | Add when validation-heavy public or learner forms are introduced |
+| Zod (added in Phase 15) | The public feedback form was the trigger. One schema is shared by the server action, the collection hook, and the tests, so a rule cannot apply to one write path and not the other |
+| Still no react-hook-form | A `useActionState` server action keeps the form working without JavaScript, matching every other form in the project. Revisit only if a form needs live client-side validation |

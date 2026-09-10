@@ -145,6 +145,14 @@ To test an app that is already running, set its origin explicitly:
 PLAYWRIGHT_TEST_BASE_URL=http://localhost:3000 pnpm test:e2e
 ```
 
+When Playwright starts the server itself it raises the feedback rate limit, because
+on localhost every request shares one bucket and the suite would otherwise exhaust
+the window part-way through. A server you started yourself needs the same:
+
+```bash
+FEEDBACK_RATE_LIMIT=1000 pnpm dev
+```
+
 Use `pnpm run ci` because `pnpm ci` is pnpm's built-in frozen-install command.
 The package script is the verification pipeline used by GitHub Actions. Coolify
 builds the application with `pnpm build`; its production start command applies
