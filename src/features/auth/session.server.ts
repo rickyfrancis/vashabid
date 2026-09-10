@@ -3,7 +3,8 @@ import 'server-only'
 import { headers } from 'next/headers'
 import { cache } from 'react'
 
-import { locales, type Locale } from '@/features/i18n/types'
+import type { LearnerProfile } from '@payload-types'
+import { isLocale } from '@/features/i18n/types'
 import { isSupportMode } from '@/features/i18n/support-mode'
 import { findOneAs, getPayloadClient } from '@/lib/payload'
 import { getActivePayloadUser } from '@/lib/payload/access/values'
@@ -17,8 +18,9 @@ function toSessionUser(user: Record<string, unknown>): SessionUser | null {
   // to a user the access policies would then refuse.
   if (!active) return null
 
-  const uiLocale = user.uiLocale
-  const supportMode = user.supportMode
+  const uiLocale = typeof user.uiLocale === 'string' ? user.uiLocale : undefined
+  const supportMode =
+    typeof user.supportMode === 'string' ? user.supportMode : undefined
 
   return {
     displayName:
@@ -28,36 +30,24 @@ function toSessionUser(user: Record<string, unknown>): SessionUser | null {
     email: String(user.email ?? ''),
     id: active.id,
     role: active.role,
-    supportMode: isSupportMode(
-      typeof supportMode === 'string' ? supportMode : undefined,
-    )
-      ? supportMode
-      : 'en',
-    uiLocale: locales.includes(uiLocale as Locale)
-      ? (uiLocale as Locale)
-      : 'en',
+    supportMode: isSupportMode(supportMode) ? supportMode : 'en',
+    uiLocale: isLocale(uiLocale) ? uiLocale : 'en',
   }
 }
 
 function toSessionProfile(
-  document: Record<string, unknown> | null,
+  document: LearnerProfile | null,
 ): SessionProfile | null {
   if (!document) return null
 
   return {
-    dailyStudyTarget: document.dailyStudyTarget as SessionProfile['dailyStudyTarget'],
-    germanLevel: String(document.germanLevel ?? ''),
-    learningGoal: document.learningGoal as SessionProfile['learningGoal'],
-    onboardingCompletedAt:
-      typeof document.onboardingCompletedAt === 'string'
-        ? document.onboardingCompletedAt
-        : null,
-    practiceStyle: document.practiceStyle as SessionProfile['practiceStyle'],
-    primarySupportLanguage:
-      document.primarySupportLanguage as SessionProfile['primarySupportLanguage'],
-    secondarySupportLanguage:
-      (document.secondarySupportLanguage as SessionProfile['secondarySupportLanguage']) ??
-      null,
+    dailyStudyTarget: document.dailyStudyTarget,
+    germanLevel: document.germanLevel,
+    learningGoal: document.learningGoal,
+    onboardingCompletedAt: document.onboardingCompletedAt ?? null,
+    practiceStyle: document.practiceStyle,
+    primarySupportLanguage: document.primarySupportLanguage,
+    secondarySupportLanguage: document.secondarySupportLanguage ?? null,
   }
 }
 
@@ -84,7 +74,7 @@ export const getSession = cache(async (): Promise<Session | null> => {
     'learner-profiles',
     { user: { equals: sessionUser.id } },
     { user: user as never },
-  )) as Record<string, unknown> | null
+  )) as LearnerProfile | null
 
   return { profile: toSessionProfile(profile), user: sessionUser }
 })

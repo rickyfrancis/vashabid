@@ -68,6 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
+    'learner-profiles': LearnerProfile;
     media: Media;
     'topic-tags': TopicTag;
     words: Word;
@@ -82,6 +83,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
+    'learner-profiles': LearnerProfilesSelect<false> | LearnerProfilesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     'topic-tags': TopicTagsSelect<false> | TopicTagsSelect<true>;
     words: WordsSelect<false> | WordsSelect<true>;
@@ -156,6 +158,46 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * What each learner told us during onboarding. Learners own their own profile; editors may adjust learner preferences.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "learner-profiles".
+ */
+export interface LearnerProfile {
+  id: number;
+  /**
+   * The account this profile belongs to. Set automatically at signup.
+   */
+  user: number | User;
+  /**
+   * The language this learner wants explanations in first.
+   */
+  primarySupportLanguage: 'en' | 'bn';
+  /**
+   * Optional. Choosing a second language sets the account support mode to show both side by side.
+   */
+  secondarySupportLanguage?: ('en' | 'bn') | null;
+  /**
+   * Why the learner is studying German.
+   */
+  learningGoal: 'travel' | 'work' | 'study' | 'exam' | 'family' | 'culture';
+  /**
+   * The kind of practice they want most of.
+   */
+  practiceStyle: 'vocabulary' | 'grammar' | 'conversation' | 'listening' | 'mixed';
+  /**
+   * Minutes per day. A select rather than a number so the stored value is always one of the offered choices.
+   */
+  dailyStudyTarget: '5' | '10' | '20' | '30' | '60';
+  germanLevel: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2';
+  /**
+   * Set once, when onboarding is first completed. Later preference edits do not move it.
+   */
+  onboardingCompletedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -698,6 +740,10 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
+        relationTo: 'learner-profiles';
+        value: number | LearnerProfile;
+      } | null)
+    | ({
         relationTo: 'media';
         value: number | Media;
       } | null)
@@ -789,6 +835,22 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "learner-profiles_select".
+ */
+export interface LearnerProfilesSelect<T extends boolean = true> {
+  user?: T;
+  primarySupportLanguage?: T;
+  secondarySupportLanguage?: T;
+  learningGoal?: T;
+  practiceStyle?: T;
+  dailyStudyTarget?: T;
+  germanLevel?: T;
+  onboardingCompletedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

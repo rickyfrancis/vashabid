@@ -106,6 +106,22 @@ interface ActingOptions {
 }
 
 /**
+ * A partial document for an update.
+ *
+ * Payload types its own update payload as `DeepPartial<...>` from
+ * `ts-essentials`, a transitive dependency this project does not declare. The
+ * shape is reproduced here so callers get a real, checked type, and the single
+ * unavoidable cast is confined to the boundary call below.
+ */
+type DeepPartial<T> = T extends object
+  ? { [K in keyof T]?: DeepPartial<T[K]> }
+  : T
+
+type UpdateData<TSlug extends CollectionSlug> = DeepPartial<
+  RequiredDataFromCollectionSlug<TSlug>
+>
+
+/**
  * Writes as a signed-in user, with that user's own permissions.
  *
  * The Local API defaults `overrideAccess` to `true`, which would ignore the
@@ -133,14 +149,16 @@ export async function createDocumentAs<TSlug extends CollectionSlug>(
 export async function updateDocumentAs<TSlug extends CollectionSlug>(
   collection: TSlug,
   id: number | string,
-  data: Partial<RequiredDataFromCollectionSlug<TSlug>>,
+  data: UpdateData<TSlug>,
   options: ActingOptions,
 ) {
   const payload = await getPayloadClient()
 
   return payload.update({
     collection,
-    data,
+    // Structurally identical to Payload's own `DeepPartial`, but TypeScript
+    // cannot prove that while `TSlug` is still generic.
+    data: data as never,
     id,
     overrideAccess: false,
     user: options.user,
