@@ -1,5 +1,11 @@
 import { getPayloadClient } from './getPayload'
-import type { CollectionSlug, RequiredDataFromCollectionSlug, Sort, Where } from 'payload'
+import type {
+  CollectionSlug,
+  Payload,
+  RequiredDataFromCollectionSlug,
+  Sort,
+  Where,
+} from 'payload'
 
 interface FindOptions {
   depth?: number
@@ -84,6 +90,88 @@ export async function createDocument<TSlug extends CollectionSlug>(
     overrideAccess: false,
     ...(options.headers ? { req: { headers: options.headers } } : {}),
   })
+}
+
+/**
+ * A signed-in user on whose behalf a write is made.
+ *
+ * Typed loosely on purpose: this is whatever `payload.auth()` returned, and the
+ * helpers below hand it straight back to Payload rather than interpreting it.
+ */
+type ActingUser = NonNullable<Parameters<Payload['create']>[0]['user']>
+
+interface ActingOptions {
+  headers?: Headers
+  user: ActingUser
+}
+
+/**
+ * Writes as a signed-in user, with that user's own permissions.
+ *
+ * The Local API defaults `overrideAccess` to `true`, which would ignore the
+ * caller's permissions entirely, so both `user` and `overrideAccess: false` are
+ * pinned here. A learner writing their own profile therefore passes exactly the
+ * same access policies a REST request from that learner would.
+ */
+export async function createDocumentAs<TSlug extends CollectionSlug>(
+  collection: TSlug,
+  data: RequiredDataFromCollectionSlug<TSlug>,
+  options: ActingOptions,
+) {
+  const payload = await getPayloadClient()
+
+  return payload.create({
+    collection,
+    data,
+    overrideAccess: false,
+    user: options.user,
+    ...(options.headers ? { req: { headers: options.headers } } : {}),
+  })
+}
+
+/** The update sibling of `createDocumentAs`, under the same access rules. */
+export async function updateDocumentAs<TSlug extends CollectionSlug>(
+  collection: TSlug,
+  id: number | string,
+  data: Partial<RequiredDataFromCollectionSlug<TSlug>>,
+  options: ActingOptions,
+) {
+  const payload = await getPayloadClient()
+
+  return payload.update({
+    collection,
+    data,
+    id,
+    overrideAccess: false,
+    user: options.user,
+    ...(options.headers ? { req: { headers: options.headers } } : {}),
+  })
+}
+
+/**
+ * Reads a single document as a signed-in user.
+ *
+ * Access control turns "not yours" into an empty result rather than an error,
+ * which is what lets a caller ask for "my profile" without first knowing
+ * whether one exists.
+ */
+export async function findOneAs<TSlug extends CollectionSlug>(
+  collection: TSlug,
+  where: Where,
+  options: ActingOptions & { depth?: number },
+) {
+  const payload = await getPayloadClient()
+
+  const result = await payload.find({
+    collection,
+    depth: options.depth ?? 0,
+    limit: 1,
+    overrideAccess: false,
+    user: options.user,
+    where,
+  })
+
+  return result.docs[0] ?? null
 }
 
 export { getPayloadClient } from './getPayload'
