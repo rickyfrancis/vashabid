@@ -8,6 +8,7 @@ export {
 } from './button'
 export { Card, type CardProps } from './card'
 export { Input, type InputProps } from './input'
+export { Select, type SelectProps, type SelectSize } from './select'
 export {
   SegmentedControl,
   type SegmentedControlOption,

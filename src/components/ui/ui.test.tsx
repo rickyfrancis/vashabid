@@ -7,6 +7,7 @@ import {
   ErrorState,
   Input,
   SegmentedControl,
+  Select,
   Skeleton,
 } from '.'
 
@@ -36,6 +37,78 @@ describe('UI primitives', () => {
 
     expect(screen.getByRole('textbox', { name: 'Email' })).toBeInvalid()
     expect(screen.getByRole('textbox', { name: 'Unavailable' })).toBeDisabled()
+  })
+
+  test('select is a labeled native combobox carrying its options', () => {
+    render(
+      <>
+        <label htmlFor="feedback-type">Problem</label>
+        <Select defaultValue="wrong-cefr" id="feedback-type">
+          <option value="bad-example">Bad example</option>
+          <option value="wrong-cefr">Wrong CEFR level</option>
+        </Select>
+      </>,
+    )
+
+    const select = screen.getByRole('combobox', { name: 'Problem' })
+    expect(select).toHaveValue('wrong-cefr')
+    expect(screen.getAllByRole('option')).toHaveLength(2)
+  })
+
+  test('select exposes native invalid and disabled semantics', () => {
+    render(
+      <>
+        <Select aria-invalid="true" aria-label="Broken">
+          <option value="a">A</option>
+        </Select>
+        <Select aria-label="Unavailable" disabled>
+          <option value="a">A</option>
+        </Select>
+      </>,
+    )
+
+    expect(screen.getByRole('combobox', { name: 'Broken' })).toBeInvalid()
+    expect(screen.getByRole('combobox', { name: 'Unavailable' })).toBeDisabled()
+  })
+
+  test('select changes value through native interaction', () => {
+    const onChange = vi.fn()
+    render(
+      <Select aria-label="Problem" defaultValue="a" onChange={onChange}>
+        <option value="a">A</option>
+        <option value="b">B</option>
+      </Select>,
+    )
+
+    const select = screen.getByRole('combobox', { name: 'Problem' })
+    fireEvent.change(select, { target: { value: 'b' } })
+
+    expect(select).toHaveValue('b')
+    expect(onChange).toHaveBeenCalledOnce()
+  })
+
+  test('select picks one height per size and appends custom classes', () => {
+    render(
+      <>
+        <Select aria-label="Default">
+          <option value="a">A</option>
+        </Select>
+        <Select aria-label="Large" className="mt-2" size="lg">
+          <option value="a">A</option>
+        </Select>
+      </>,
+    )
+
+    const standard = screen.getByRole('combobox', { name: 'Default' })
+    const large = screen.getByRole('combobox', { name: 'Large' })
+
+    // Height is a prop, not a className override, so the two utilities must
+    // never appear together on one element.
+    expect(standard).toHaveClass('h-11')
+    expect(standard).not.toHaveClass('h-12')
+    expect(large).toHaveClass('h-12')
+    expect(large).not.toHaveClass('h-11')
+    expect(large).toHaveClass('mt-2')
   })
 
   test('segmented control is a labeled native radio group', () => {

@@ -13,6 +13,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Select,
   buttonStyles,
 } from '@/components/ui'
 import { Link } from '@/features/i18n/navigation'
@@ -23,9 +24,6 @@ import type {
   WordBrowsePageViewModel,
 } from './types'
 import { WordCard } from './word-card'
-
-const selectStyles =
-  'h-12 w-full rounded-xl border border-border-strong bg-surface px-3 text-base text-foreground shadow-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/20'
 
 function browseHref(filters: WordBrowseFilters, page: number) {
   const query = toWordBrowseQuery({ ...filters, page })
@@ -163,11 +161,11 @@ export function WordBrowsePageContent({
                   >
                     {t('levelLabel')}
                   </label>
-                  <select
-                    className={selectStyles}
+                  <Select
                     defaultValue={browse.filters.level ?? ''}
                     id="word-filter-level"
                     name="level"
+                    size="lg"
                   >
                     <option value="">{t('allLevels')}</option>
                     {browse.options.levels.map((level) => (
@@ -175,7 +173,7 @@ export function WordBrowsePageContent({
                         {level}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -185,11 +183,11 @@ export function WordBrowsePageContent({
                   >
                     {t('typeLabel')}
                   </label>
-                  <select
-                    className={selectStyles}
+                  <Select
                     defaultValue={browse.filters.type ?? ''}
                     id="word-filter-type"
                     name="type"
+                    size="lg"
                   >
                     <option value="">{t('allTypes')}</option>
                     {browse.options.wordTypes.map((type) => (
@@ -197,7 +195,7 @@ export function WordBrowsePageContent({
                         {wordType(type)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -207,11 +205,11 @@ export function WordBrowsePageContent({
                   >
                     {t('topicLabel')}
                   </label>
-                  <select
-                    className={selectStyles}
+                  <Select
                     defaultValue={browse.filters.topic ?? ''}
                     id="word-filter-topic"
                     name="topic"
+                    size="lg"
                   >
                     <option value="">{t('allTopics')}</option>
                     {browse.options.topics.map((topic) => (
@@ -219,7 +217,7 @@ export function WordBrowsePageContent({
                         {topic.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 

@@ -13,6 +13,7 @@ import {
   Button,
   Card,
   EmptyState,
+  Select,
   buttonStyles,
 } from '@/components/ui'
 import { Link } from '@/features/i18n/navigation'
@@ -23,9 +24,6 @@ import type {
   ScenarioBrowseFilters,
   ScenarioBrowsePageViewModel,
 } from './types'
-
-const selectStyles =
-  'h-12 w-full rounded-xl border border-border-strong bg-surface px-3 text-base text-foreground shadow-sm outline-none transition focus:border-focus focus:ring-2 focus:ring-focus/20'
 
 function browseHref(filters: ScenarioBrowseFilters, page: number) {
   const query = toScenarioBrowseQuery({ ...filters, page })
@@ -158,11 +156,11 @@ export function ScenarioBrowsePageContent({
                   >
                     {t('levelLabel')}
                   </label>
-                  <select
-                    className={selectStyles}
+                  <Select
                     defaultValue={browse.filters.level ?? ''}
                     id="scenario-filter-level"
                     name="level"
+                    size="lg"
                   >
                     <option value="">{t('allLevels')}</option>
                     {browse.options.levels.map((level) => (
@@ -170,7 +168,7 @@ export function ScenarioBrowsePageContent({
                         {level}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -180,11 +178,11 @@ export function ScenarioBrowsePageContent({
                   >
                     {t('situationLabel')}
                   </label>
-                  <select
-                    className={selectStyles}
+                  <Select
                     defaultValue={browse.filters.situation ?? ''}
                     id="scenario-filter-situation"
                     name="situation"
+                    size="lg"
                   >
                     <option value="">{t('allSituations')}</option>
                     {browse.options.situations.map((value) => (
@@ -192,7 +190,7 @@ export function ScenarioBrowsePageContent({
                         {situation(value)}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
 
                 <div>
@@ -202,11 +200,11 @@ export function ScenarioBrowsePageContent({
                   >
                     {t('topicLabel')}
                   </label>
-                  <select
-                    className={selectStyles}
+                  <Select
                     defaultValue={browse.filters.topic ?? ''}
                     id="scenario-filter-topic"
                     name="topic"
+                    size="lg"
                   >
                     <option value="">{t('allTopics')}</option>
                     {browse.options.topics.map((topic) => (
@@ -214,7 +212,7 @@ export function ScenarioBrowsePageContent({
                         {topic.name}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </div>
 
