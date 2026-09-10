@@ -29,6 +29,7 @@ vi.mock('@/features/i18n/navigation', () => ({
 const session: Session = {
   profile: null,
   user: {
+    accountStatus: 'active',
     displayName: 'Rifat',
     email: 'rifat@example.com',
     id: 7,

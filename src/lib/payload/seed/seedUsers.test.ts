@@ -58,6 +58,7 @@ function createPayloadFixture(
     }: {
       collection: string
       data: Record<string, unknown>
+      overrideAccess?: boolean
     }) => {
       const row = { ...data, id: (nextId += 1) }
 

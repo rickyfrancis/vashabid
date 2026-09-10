@@ -136,7 +136,9 @@ describe('learner profiles collection', () => {
     const stamp = namedField('onboardingCompletedAt')
 
     expect(stamp.type).toBe('date')
-    expect(stamp.admin?.readOnly).toBe(true)
+    expect((stamp.admin as { readOnly?: boolean } | undefined)?.readOnly).toBe(
+      true,
+    )
   })
 
   test('wires the ownership and completion hooks in a deliberate order', () => {
