@@ -56,6 +56,23 @@ describe('support mode', () => {
     expect(resolveSupportMode('both', 'bn')).toBe('both')
   })
 
+  test('lets a signed-in account outrank the cookie', () => {
+    // The cookie describes this browser; the account preference follows the
+    // learner to their next device, so it wins.
+    expect(resolveSupportMode('en', 'en', 'both')).toBe('both')
+    expect(resolveSupportMode('both', 'bn', 'bn')).toBe('bn')
+  })
+
+  test('falls back to the cookie when the account value is unusable', () => {
+    expect(resolveSupportMode('both', 'en', undefined)).toBe('both')
+    expect(resolveSupportMode('both', 'en', null)).toBe('both')
+    expect(resolveSupportMode('both', 'en', 'nonsense')).toBe('both')
+  })
+
+  test('still falls through to the locale when nothing is stored', () => {
+    expect(resolveSupportMode(undefined, 'bn', undefined)).toBe('bn')
+  })
+
   test('serializes a one-year, site-wide SameSite cookie', () => {
     expect(serializeSupportModeCookie('bn')).toBe(
       `${SUPPORT_MODE_COOKIE}=bn; Max-Age=${SUPPORT_MODE_COOKIE_MAX_AGE}; Path=/; SameSite=Lax`,

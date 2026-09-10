@@ -10,6 +10,8 @@ import { notFound } from 'next/navigation'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { getMessages, getTranslations } from 'next-intl/server'
 import { AppShell } from '@/components/layout'
+import { persistSupportMode } from '@/features/auth/actions'
+import { getSession } from '@/features/auth/session.server'
 import { SupportModeProvider } from '@/features/i18n/support-mode-provider'
 import { getInitialSupportMode } from '@/features/i18n/support-mode.server'
 import { routing } from '@/features/i18n/routing'
@@ -76,9 +78,12 @@ export default async function LocaleLayout({
   if (!hasLocale(routing.locales, locale)) notFound()
 
   const typedLocale = locale as Locale
+  // The session is resolved first because it decides the support mode: a
+  // signed-in learner's stored preference outranks the anonymous cookie.
+  const session = await getSession()
   const [messages, initialSupportMode] = await Promise.all([
     getMessages({ locale: typedLocale }),
-    getInitialSupportMode(typedLocale),
+    getInitialSupportMode(typedLocale, session?.user.supportMode),
   ])
 
   return (
@@ -92,8 +97,9 @@ export default async function LocaleLayout({
           <SupportModeProvider
             initialMode={initialSupportMode}
             key={typedLocale}
+            persist={session ? persistSupportMode : undefined}
           >
-            <AppShell>{children}</AppShell>
+            <AppShell session={session}>{children}</AppShell>
           </SupportModeProvider>
         </NextIntlClientProvider>
       </body>
