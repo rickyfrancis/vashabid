@@ -15,7 +15,12 @@ const BASE_URL =
  * An externally started server (`PLAYWRIGHT_TEST_BASE_URL`) has to set this
  * itself.
  */
-const E2E_ENV = { FEEDBACK_RATE_LIMIT: '1000' }
+const E2E_ENV = {
+  FEEDBACK_RATE_LIMIT: '1000',
+  // Signup is limited the same way and shares the same localhost bucket, so it
+  // needs the same treatment or the auth specs would throttle each other.
+  SIGNUP_RATE_LIMIT: '1000',
+}
 
 export default defineConfig({
   testDir: './tests/e2e',

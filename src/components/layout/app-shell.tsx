@@ -1,8 +1,15 @@
 import { useTranslations } from 'next-intl'
 import { Footer } from './footer'
+import type { Session } from '@/features/auth/types'
 import { Header } from './header'
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({
+  children,
+  session,
+}: {
+  children: React.ReactNode
+  session: Session | null
+}) {
   const shell = useTranslations('Shell')
 
   return (
@@ -13,7 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       >
         {shell('skipToContent')}
       </a>
-      <Header />
+      <Header session={session} />
       <main className="relative z-10 flex flex-1 flex-col" id="main-content">
         {children}
       </main>

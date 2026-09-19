@@ -17,6 +17,12 @@ export {
   publishedOrEditorial,
 } from './policies'
 export {
+  canCreateLearnerProfiles,
+  canDeleteLearnerProfiles,
+  canReadLearnerProfiles,
+  canUpdateLearnerProfiles,
+} from './learner-profiles'
+export {
   canAccessAdminPanel,
   canCreateUsers,
   canDeleteUsers,

@@ -3,6 +3,7 @@ import * as migration_20260826_220331_phase_10_related_words from './20260826_22
 import * as migration_20260905_114923_phase_12_grammar_topics from './20260905_114923_phase_12_grammar_topics';
 import * as migration_20260905_223054_phase_13_scenarios from './20260905_223054_phase_13_scenarios';
 import * as migration_20260910_001218_phase_15_feedback from './20260910_001218_phase_15_feedback';
+import * as migration_20260910_210452_phase_16_learner_accounts from './20260910_210452_phase_16_learner_accounts';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20260910_001218_phase_15_feedback.up,
     down: migration_20260910_001218_phase_15_feedback.down,
-    name: '20260910_001218_phase_15_feedback'
+    name: '20260910_001218_phase_15_feedback',
+  },
+  {
+    up: migration_20260910_210452_phase_16_learner_accounts.up,
+    down: migration_20260910_210452_phase_16_learner_accounts.down,
+    name: '20260910_210452_phase_16_learner_accounts'
   },
 ];

@@ -57,10 +57,13 @@ import { getPayloadClient, findPublished, findBySlug } from '@/lib/payload'
 - `getPayloadClient()` — Returns a cached Payload instance. Safe to call multiple times per request.
 - `findPublished(collection, options?)` — Calls `payload.find()` with `_status: 'published'` pre-filtered. Accepts `depth`, `limit`, `page`, `sort`, `where`.
 - `findBySlug(collection, slug, options?)` — Fetches a single published document by slug. Returns the document or `null`.
-- `createDocument(collection, data, options?)` — The one write path. Pins
+- `createDocument(collection, data, options?)` — The anonymous write path. Pins
   `overrideAccess: false`, which matters more here than on reads because the Local
   API defaults it to `true`. Accepts `headers` and forwards them as `req.headers`
   so collection hooks can identify the client.
+- `createDocumentAs` / `updateDocumentAs` / `findOneAs` — The authenticated
+  siblings, for writing and reading on behalf of a signed-in user. Each pins
+  `user` **and** `overrideAccess: false`, so the caller's own policies apply.
 
 ### Publishing filter
 
@@ -161,15 +164,85 @@ Payload CMS handles all authentication via the `users` collection with `auth: tr
 - Role, account status, UI locale, and support mode are stored on each user.
   Suspended users receive the same generic error as invalid credentials at login.
 - Reusable Payload policies live in `src/lib/payload/access/`. Local API calls
-  made on behalf of a user must pass both `user` and `overrideAccess: false`.
-- Public visitors browse without authentication. Learner-facing signup, login,
-  logout, and onboarding UI remain deferred to Phase 16.
+  made on behalf of a user must pass both `user` and `overrideAccess: false`;
+  `createDocumentAs`, `updateDocumentAs`, and `findOneAs` pin both.
 - No NextAuth/Auth.js unless social login becomes a requirement.
 
-The project still uses schema push for disposable local databases, so Phase 4
-does not introduce a migration. Before applying these rules to a legacy database,
-backfill every pre-Phase-4 user as active admin to preserve their previous
-effective access; administrators can demote accounts afterward.
+### Signup, login, and logout
+
+Phase 16 opened `create` on `users` to anonymous callers, because signing up
+cannot require an account. Payload mounts its REST API and cannot disable it per
+collection, so **every signup rule lives in the collection hooks**, exactly as
+the feedback rules do — see *Write path*. Three things make that safe:
+
+- `role` and `accountStatus` carry admin-only *field* access. Field access
+  deletes a value the caller may not write rather than raising, so an injected
+  `role: 'admin'` is gone before any collection hook runs.
+- `forceLearnerDefaults` then sets the trusted values, in the collection
+  `beforeValidate` that runs after the field pass.
+- `enforceSignupSubmission` re-validates with the shared Zod schema. Payload
+  enforces **no minimum password length of its own**, so that bound exists only
+  here, and it has to be here rather than in the server action to cover REST.
+
+**There is no first-user promotion.** The old `promoteFirstUser` hook made the
+first account created on an empty database an admin. That was harmless while
+`create` was admin-only and a privilege-escalation hazard the moment signup went
+public — on a fresh deploy the first stranger to sign up would have been promoted
+by our own hook. Admin accounts are now provisioned by `pnpm seed`; nothing
+reachable over HTTP can mint one. A new environment must therefore run the seed.
+
+Sessions are enabled by default on an `auth` collection (`auth.useSessions`
+defaults to `true`), so **clearing the cookie is not logging out**: the JWT stays
+valid for its full lifetime and its `users_sessions` row stays live. `AuthService.logout`
+revokes the session through Payload's `logoutOperation` first, then the cookie is
+cleared. Verified against the database: after revocation the captured token
+authenticates as nobody.
+
+`payload.login()` returns a token but sets no cookie. `src/features/auth/cookies.server.ts`
+builds it with Payload's own `generatePayloadCookie` / `generateExpiredPayloadCookie`
+from the `payload/shared` subpath, so the cookie name, `httpOnly`, `sameSite`,
+`secure`, and the expiry derived from `tokenExpiration` all follow the config
+rather than a hardcoded copy.
+
+Route protection lives in the page and layout server components, not in
+`proxy.ts`. The proxy stays locale routing only.
+
+### Learner profiles
+
+`users` is identity. `learner-profiles` is how one learner wants to study —
+support languages, German level, goal, practice style, daily target. The split
+keeps six learner-only fields off every admin and editor record, and gives that
+data its own access surface: a learner owns their profile outright through a
+`user`-keyed query scope, while `role` and `accountStatus` next door stay
+admin-only. Editors keep the reach they already had over learner preferences.
+
+`uiLocale` and `supportMode` stay on `users`, because every role has them.
+Onboarding asks for a primary and an optional secondary support language, and
+`deriveSupportMode` translates that pair into the three-valued `supportMode` —
+one pure function, so the two representations cannot drift.
+
+Ownership is never something a caller states: `forceProfileOwner` stamps `user`
+from the authenticated request, `preventDuplicateProfile` refuses a second
+profile, and a unique index backs both.
+
+### Support-mode precedence
+
+`resolveSupportMode` reads account, then cookie, then UI locale. A signed-in
+learner's stored preference wins because it follows them between devices; the
+cookie only describes one browser. Anonymous behaviour is unchanged. The cookie
+is still written when a signed-in learner toggles the switcher, so the choice
+survives a sign-out.
+
+Two cache subtleties make this work, and both cost a red test to find:
+
+- `SupportModeProvider` seeds `useState` from `initialMode`, which React ignores
+  on re-render, so the root layout keys it on the resolved mode as well as the
+  locale. Without that a preference changed on the server never reaches the
+  switcher until a full page load.
+- `getSession` is wrapped in React `cache()`, so a server action that changes the
+  preference and then re-renders in the same request would still see the old
+  value. `submitOnboarding` calls `revalidatePath('/', 'layout')` before
+  redirecting.
 
 ## i18n approach
 
@@ -223,6 +296,23 @@ Rich text is stored as `jsonb`, which does not preserve key order. Seed
 comparisons must therefore serialize rich-text values with sorted keys;
 a plain `JSON.stringify` comparison reports drift on every run and breaks
 idempotence.
+
+Phase 16 adds `seedUsers`, which runs **first** because an admin has to exist
+before anything else and nothing reachable over HTTP can create one. It matches
+by email and, unlike the content seeders, never rewrites an existing account's
+password — a rerun restores role and status without undoing a credential
+somebody changed. The admin's email and password come from `SEED_ADMIN_EMAIL`
+and `SEED_ADMIN_PASSWORD`; the development defaults are published in this
+repository, so the seeder **refuses to create an admin with one when
+`NODE_ENV=production`** rather than quietly planting an account anybody could
+sign into. The learner fixture, which exists so the browser suite has real
+credentials, is skipped in production entirely.
+
+`seedUsers` is the one place `overrideAccess: true` is correct, and it also
+passes `context: { vashabidSeed: true }`. `forceLearnerDefaults` reads that flag
+and steps aside — otherwise the hook would demote the very admin the seeder
+exists to create. The flag cannot be forged, because `createPayloadRequest`
+hardcodes `context: {}` for every REST request.
 
 ## CMS content foundations
 
@@ -414,6 +504,12 @@ than English prose, so a bilingual form chooses the wording with next-intl inste
 of being locked to whatever the server wrote. Unknown keys are dropped, so an
 injected `status` cannot ride along even before access control sees it.
 
+**Writing on behalf of a signed-in user.** `createDocument` is the anonymous
+write path. `createDocumentAs`, `updateDocumentAs`, and `findOneAs` are its
+authenticated siblings: they pass `user` *and* `overrideAccess: false`, so a
+learner editing their own profile passes exactly the access policies a REST
+request from that learner would. There is still no privileged path.
+
 **The public submits slugs, never database ids.** `FeedbackService` resolves a
 `contentType` plus slug to a published document through the word, grammar, and
 scenario *repositories* — never their services, per the import-direction rule.
@@ -491,7 +587,10 @@ migration reverses cleanly.
 |---|---|
 | Payload Local API over REST | Avoids HTTP round-trips in server components; faster, typed, same process |
 | Tailwind v4 `@theme` over `tailwind.config.ts` | Native CSS-first approach, no config file drift, works with PostCSS plugin |
-| No NextAuth/Auth.js yet | Payload handles admin auth; learner auth is planned after the public MVP unless social login becomes necessary |
+| No NextAuth/Auth.js | Payload handles both admin and learner auth. Revisit only if social login becomes a requirement |
+| Public `create` on `users`, rules in hooks | Signup cannot require an account, and Payload's REST endpoint cannot be closed per collection. Putting the rules in hooks is what makes `POST /api/users` and the form obey one rule set. Field-level access on `role` and `accountStatus` is what makes that safe |
+| Seeded admin over first-user promotion | Automatic promotion of the first account became a privilege-escalation hazard the moment signup went public. Provisioning admins from a shell is the trade for a fresh deploy having to run `pnpm seed` |
+| Server-side session revocation on logout | Sessions are on by default, so dropping the cookie would leave a valid token and a live session row |
 | Root-level `src/` | Separates route files from app code; standard Next.js convention |
 | Feature colocation | Components live with their feature, not in a global `components/` dump |
 | Route-based i18n | `/en` and `/bn` improve accessibility, shareability, and future SEO |

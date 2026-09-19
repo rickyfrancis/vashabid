@@ -81,7 +81,6 @@ describe('users collection access', () => {
     const args = createAccessArgs(editor)
 
     expect(canAccessAdminPanel({ req: createRequest(editor) })).toBe(true)
-    expect(await canCreateUsers(args)).toBe(false)
     expect(await canReadUsers(args)).toEqual(editorScope)
     expect(await canUpdateUsers(args)).toEqual(editorScope)
     expect(await canDeleteUsers(args)).toBe(false)
@@ -101,7 +100,6 @@ describe('users collection access', () => {
     const args = createAccessArgs(learner)
 
     expect(canAccessAdminPanel({ req: createRequest(learner) })).toBe(false)
-    expect(await canCreateUsers(args)).toBe(false)
     expect(await canReadUsers(args)).toEqual(selfScope)
     expect(await canUpdateUsers(args)).toEqual(selfScope)
     expect(await canDeleteUsers(args)).toBe(false)
@@ -116,11 +114,32 @@ describe('users collection access', () => {
     const args = createAccessArgs(user)
 
     expect(canAccessAdminPanel({ req: createRequest(user) })).toBe(false)
-    expect(await canCreateUsers(args)).toBe(false)
     expect(await canReadUsers(args)).toBe(false)
     expect(await canUpdateUsers(args)).toBe(false)
     expect(await canDeleteUsers(args)).toBe(false)
     expect(await canUnlockUsers(args)).toBe(false)
+  })
+})
+
+describe('public signup', () => {
+  test.each([
+    ['an anonymous visitor', null],
+    ['a learner', createUser()],
+    ['an editor', createUser({ role: 'editor' })],
+    ['an admin', createUser({ role: 'admin' })],
+  ])('lets %s reach create, because that is what signup is', async (_l, user) => {
+    expect(await canCreateUsers(createAccessArgs(user))).toBe(true)
+  })
+
+  test('does not let an open create policy widen anything else', async () => {
+    // The point of the phase-16 change is that `create` alone moved. Reading,
+    // updating and deleting other people's accounts stayed shut.
+    const anonymous = createAccessArgs(null)
+
+    expect(await canReadUsers(anonymous)).toBe(false)
+    expect(await canUpdateUsers(anonymous)).toBe(false)
+    expect(await canDeleteUsers(anonymous)).toBe(false)
+    expect(await canUnlockUsers(anonymous)).toBe(false)
   })
 })
 

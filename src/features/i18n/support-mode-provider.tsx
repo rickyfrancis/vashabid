@@ -19,22 +19,38 @@ type SupportModeContextValue = {
 
 const SupportModeContext = createContext<SupportModeContextValue | null>(null)
 
+/**
+ * Holds the current support mode for the tree below it.
+ *
+ * `persist` is supplied only when somebody is signed in: the cookie is written
+ * either way, so the choice survives a sign-out and keeps working for anonymous
+ * visitors, while a learner's account also remembers it on their next device.
+ * The write is fire-and-forget because the UI has already switched — a failed
+ * save should not roll the interface back under the reader.
+ */
 export function SupportModeProvider({
   children,
   initialMode,
+  persist,
 }: {
   children: React.ReactNode
   initialMode: SupportMode
+  persist?: (mode: SupportMode) => Promise<void>
 }) {
   const [supportMode, setSupportModeState] = useState(initialMode)
 
-  const setSupportMode = useCallback((mode: SupportMode) => {
-    setSupportModeState(mode)
-    document.cookie = serializeSupportModeCookie(
-      mode,
-      window.location.protocol === 'https:',
-    )
-  }, [])
+  const setSupportMode = useCallback(
+    (mode: SupportMode) => {
+      setSupportModeState(mode)
+      document.cookie = serializeSupportModeCookie(
+        mode,
+        window.location.protocol === 'https:',
+      )
+
+      void persist?.(mode)
+    },
+    [persist],
+  )
 
   const value = useMemo(
     () => ({ supportMode, setSupportMode }),

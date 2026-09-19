@@ -14,6 +14,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),
+      // See the comment in the stub: Next resolves this specifier itself, so
+      // Vitest needs an empty module to stand in for it.
+      'server-only': path.resolve(import.meta.dirname, './src/test/server-only.ts'),
       '@payload-config': path.resolve(import.meta.dirname, './payload.config.ts'),
       '@payload-types': path.resolve(import.meta.dirname, './payload-types.ts'),
     },

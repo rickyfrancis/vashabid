@@ -7,6 +7,7 @@ import sharp from 'sharp'
 
 import { Feedback } from './collections/Feedback'
 import { GrammarTopics } from './collections/GrammarTopics'
+import { LearnerProfiles } from './collections/LearnerProfiles'
 import { Media } from './collections/Media'
 import { Scenarios } from './collections/Scenarios'
 import { TopicTags } from './collections/TopicTags'
@@ -26,7 +27,16 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media, TopicTags, Words, GrammarTopics, Scenarios, Feedback],
+  collections: [
+    Users,
+    LearnerProfiles,
+    Media,
+    TopicTags,
+    Words,
+    GrammarTopics,
+    Scenarios,
+    Feedback,
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {

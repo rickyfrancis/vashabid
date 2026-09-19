@@ -33,7 +33,14 @@ export const canAccessAdminPanel: AdminAccess = ({ req }) => {
   return user?.role === 'admin' || user?.role === 'editor'
 }
 
-export const canCreateUsers: Access = isAdmin
+/**
+ * Anyone may create an account, including an anonymous visitor: that is what
+ * signup is. The privilege fields are guarded a layer down — `role` and
+ * `accountStatus` carry admin-only field access, and `forceLearnerDefaults`
+ * sets them — so opening this policy does not open privilege escalation with
+ * it. See the collection comment in `collections/Users.ts`.
+ */
+export const canCreateUsers: Access = () => true
 export const canDeleteUsers: Access = isAdmin
 export const canUnlockUsers: Access = isAdmin
 

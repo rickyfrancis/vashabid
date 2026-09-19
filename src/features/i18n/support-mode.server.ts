@@ -10,7 +10,13 @@ import {
 
 export async function getInitialSupportMode(
   locale: Locale,
+  accountValue?: string | null,
 ): Promise<SupportMode> {
   const cookieStore = await cookies()
-  return resolveSupportMode(cookieStore.get(SUPPORT_MODE_COOKIE)?.value, locale)
+
+  return resolveSupportMode(
+    cookieStore.get(SUPPORT_MODE_COOKIE)?.value,
+    locale,
+    accountValue,
+  )
 }

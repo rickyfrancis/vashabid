@@ -18,11 +18,22 @@ export function parseSupportMode(
   return isSupportMode(value) ? value : undefined
 }
 
+/**
+ * Decides which support mode a request should render with.
+ *
+ * Precedence is account, then cookie, then the current UI locale. A signed-in
+ * learner's stored preference wins because it follows them between devices,
+ * where the cookie only describes this browser; an anonymous visitor is
+ * unaffected, since they have no stored preference to consult.
+ */
 export function resolveSupportMode(
   cookieValue: string | null | undefined,
   locale: Locale,
+  accountValue?: string | null,
 ): SupportMode {
-  return parseSupportMode(cookieValue) ?? locale
+  return (
+    parseSupportMode(accountValue) ?? parseSupportMode(cookieValue) ?? locale
+  )
 }
 
 export function serializeSupportModeCookie(
