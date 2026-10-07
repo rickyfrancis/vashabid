@@ -58,7 +58,7 @@ The frontend lives at [http://localhost:3000](http://localhost:3000).
 |----------|------------------|---------------|----------------------|
 | `DATABASE_URL` | `postgresql://payload:payload@localhost:5432/vashabid_dev` | `postgresql://payload:payload@postgres:5432/vashabid_dev` | VPS Postgres connection string (deploy secrets only) |
 | `PAYLOAD_SECRET` | Random string (`openssl rand -base64 32`) | Disposable development-only default; override from the launch environment | Same, stored in deploy secrets |
-| `DATABASE_PUSH` | `true` (default) | `true` | `false` — required on any shared/persistent database |
+| `DATABASE_PUSH` | `true` (default) | `true` | `false` (required on any shared or persistent database) |
 
 Never point local development at your VPS database while `DATABASE_PUSH=true`. Push auto-syncs schema changes and can alter or drop columns destructively.
 
@@ -74,13 +74,13 @@ Reset local data anytime: `docker compose down -v && docker compose up -d`
 
 ## Migrations
 
-### Phase 1 — Active development (now)
+### Phase 1: Active development (now)
 
 - Use local Docker Postgres with `DATABASE_PUSH=true`
 - Change collections in `payload.config.ts` freely; schema syncs automatically
 - Do **not** run `pnpm migrate` locally while using push
 
-### Phase 2 — Schema stabilizing
+### Phase 2: Schema stabilizing
 
 When collections are ready for staging/production:
 
@@ -98,7 +98,7 @@ DATABASE_URL="your-staging-url" DATABASE_PUSH=false pnpm migrate
 
 **Rule:** Push for local Docker only. Migrations for VPS databases. Never mix both on the same database.
 
-### Phase 3 — Team data entry
+### Phase 3: Team data entry
 
 - Content entry happens on the **deployed** admin panel (`/admin`), connected to VPS Postgres
 - Developers continue using local Docker for schema work
@@ -162,7 +162,7 @@ pending migrations before starting Next.js.
 
 ### Coolify + VPS (recommended)
 
-Postgres and app on the same VPS — use private networking, no need to expose Postgres publicly.
+Postgres and app on the same VPS, so use private networking, no need to expose Postgres publicly.
 
 **Build command:**
 
